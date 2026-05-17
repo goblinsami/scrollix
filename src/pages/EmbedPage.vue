@@ -48,7 +48,7 @@ const setSnapStageEl = (element: HTMLElement | null) => {
   snapStageRef.value = element
 }
 
-const showRuntimeDiagnostics = import.meta.env.DEV && FEATURE_FLAGS.enableRuntimeDiagnostics
+const showRuntimeDiagnostics = FEATURE_FLAGS.enableRuntimeDiagnostics
 </script>
 
 

@@ -182,7 +182,7 @@ const storyUsageText = computed(() => {
 })
 
 const storyEnableCtas = computed(() => storySchema.value?.enableCtas ?? true)
-const showRuntimeDiagnostics = import.meta.env.DEV && FEATURE_FLAGS.enableRuntimeDiagnostics
+const showRuntimeDiagnostics = FEATURE_FLAGS.enableRuntimeDiagnostics
 
 const handleLogin = async () => {
   try {
