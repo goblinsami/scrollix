@@ -113,6 +113,7 @@ body.snap-mode {
   position: relative;
   z-index: 2;
   --content-max-width: 900px;
+  --content-side-padding: 128px;
   --title-max-width: 560px;
   --description-max-width: 810px;
   color: #ffffff;
@@ -131,7 +132,7 @@ body.snap-mode {
 .content--width-contained {
   margin: 0 auto;
   width: min(var(--content-max-width), 100%);
-  padding: 0 clamp(2rem, 8vw, 8rem);
+  padding: 0 min(var(--content-side-padding), 18vw);
 }
 
 .content--width-full {
@@ -147,8 +148,8 @@ body.snap-mode {
 }
 
 .content--align-left.content--width-contained {
-  padding-left: clamp(2rem, 8vw, 8rem);
-  padding-right: clamp(1rem, 4vw, 3rem);
+  padding-left: min(var(--content-side-padding), 18vw);
+  padding-right: min(var(--content-side-padding), 18vw);
 }
 
 .content--align-center {
@@ -162,8 +163,8 @@ body.snap-mode {
 }
 
 .content--align-right.content--width-contained {
-  padding-left: clamp(1rem, 4vw, 3rem);
-  padding-right: clamp(2rem, 8vw, 8rem);
+  padding-left: min(var(--content-side-padding), 18vw);
+  padding-right: min(var(--content-side-padding), 18vw);
 }
 
 .content h1 {
@@ -373,4 +374,289 @@ body.snap-mode {
 .amber {
   background-color: #f59e0b;
   color: #1f2937;
+}
+
+.panel--stack-cards .stack-cards-layout {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(420px, 1fr) minmax(320px, 48vw);
+  align-items: center;
+  gap: clamp(1rem, 3.2vw, 2.6rem);
+  height: 100%;
+  padding: clamp(1rem, 4vw, 3rem);
+  --stack-cards-layout-side-padding: 48px;
+}
+
+.panel--stack-cards .stack-cards-layout--text-left {
+  padding-left: clamp(1rem, 4vw, 3rem);
+  padding-right: clamp(1rem, 4vw, 3rem);
+}
+
+.panel--stack-cards .stack-cards-layout--text-right {
+  padding-left: clamp(1rem, 4vw, 3rem);
+  padding-right: clamp(1rem, 4vw, 3rem);
+}
+
+.panel--stack-cards .stack-cards-layout--text-right {
+  grid-template-columns: minmax(320px, 48vw) minmax(0, 1fr);
+}
+
+.panel--stack-cards .stack-cards-layout--text-right .content {
+  order: 2;
+}
+
+.panel--stack-cards .stack-cards-layout .content {
+  min-width: 0;
+  transform: translate3d(var(--stack-text-offset-x, 0px), var(--stack-text-offset-y, 0px), 0);
+}
+
+.panel--stack-cards .stack-cards-layout--text-left .cards-viewport {
+  margin-left: calc(-1 * var(--stack-cards-layout-side-padding, 48px));
+}
+
+.panel--stack-cards .stack-cards-layout--text-right .cards-viewport {
+  margin-right: calc(-1 * var(--stack-cards-layout-side-padding, 48px));
+}
+
+.panel--stack-cards .stack-cards-layout--cards-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.panel--stack-cards .content h1 {
+  width: min(var(--title-max-width), 100%);
+}
+
+.cards-viewport {
+  position: relative;
+  height: min(640px, 76vh);
+  perspective: 1900px;
+  transform-style: preserve-3d;
+  perspective-origin: var(--stack-perspective-origin-x, 62%) 48%;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  transform: translate3d(var(--stack-cards-offset-x, 0px), var(--stack-cards-offset-y, 0px), 0);
+  touch-action: pan-y;
+}
+
+.story-card {
+  position: absolute;
+  width: calc(clamp(220px, 34vw, 460px) * var(--card-width-scale, 1));
+  min-height: clamp(280px, 58vh, 520px);
+  padding: 2rem;
+  border-radius: 30px;
+  border: 0;
+  background:
+    radial-gradient(circle at 75% 15%, color-mix(in srgb, var(--card-accent), #0f172a 55%), transparent 52%),
+    linear-gradient(165deg, #0f172a, #0b1f45);
+  color: #ffffff;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--card-accent), white 42%),
+    0 30px 70px rgba(5, 12, 35, 0.5),
+    0 0 32px color-mix(in srgb, var(--card-accent), transparent 70%);
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, opacity;
+  transition: transform 180ms linear, opacity 180ms linear;
+  outline: 1px solid transparent;
+  overflow: hidden;
+}
+
+.step {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--card-accent), white 48%);
+}
+
+.story-card h3,
+.story-card p {
+  margin: 0;
+}
+
+.story-card__content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.story-card__description {
+  margin: 0;
+}
+
+.story-card h3 {
+  margin: 0.85rem 0;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  color: #e2e8f0;
+}
+
+.story-card p {
+  margin: 0;
+  max-width: 30ch;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: rgba(226, 232, 240, 0.84);
+}
+
+.card-image {
+  display: block;
+  width: 100%;
+  height: 190px;
+  margin-top: 1.2rem;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.card-image--bg {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  margin-top: 0;
+  border-radius: 0;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+@media (max-width: 1600px) {
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) {
+    position: relative;
+    display: block;
+    overflow: hidden;
+  }
+
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgba(7, 10, 18, 0.18) 0%,
+      rgba(7, 10, 18, 0.36) 44%,
+      rgba(7, 10, 18, 0.56) 100%
+    );
+  }
+
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .cards-viewport {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    height: 100%;
+    transform: translate3d(
+      calc((var(--stack-cards-offset-x, 0px) * 0.55) - 4%),
+      calc((var(--stack-cards-offset-y, 0px) * 0.55) + 5%),
+      0
+    ) scale(0.8);
+    opacity: 0.78;
+    filter: saturate(0.92) brightness(0.86);
+    pointer-events: none;
+  }
+
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .content {
+    position: relative;
+    z-index: 3;
+    width: min(100%, 760px);
+    height: 100%;
+    min-height: 100%;
+    margin: 0 auto;
+    justify-content: flex-start;
+    padding-top: clamp(2rem, 10vh, 6rem);
+    padding-bottom: clamp(1.4rem, 4vh, 2.8rem);
+    transform: translate3d(
+      calc(var(--stack-text-offset-x, 0px) * 0.55),
+      calc(var(--stack-text-offset-y, 0px) * 0.55),
+      0
+    );
+  }
+}
+
+@media (max-width: 960px) {
+  .panel--stack-cards {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .panel--stack-cards .stack-cards-layout,
+  .panel--stack-cards .stack-cards-layout--text-right {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: 1fr;
+    gap: 0;
+    height: auto;
+    min-height: 200vh;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .panel--stack-cards .stack-cards-layout--text-right .content {
+    order: 0;
+  }
+
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only)::after {
+    content: none;
+  }
+
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .cards-viewport {
+    position: relative;
+    inset: auto;
+    z-index: 1;
+    min-height: 100vh;
+    height: 100vh;
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+    filter: none;
+    pointer-events: auto;
+    margin-left: 0;
+    margin-right: 0;
+    perspective-origin: 54% 50%;
+  }
+
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .content {
+    position: relative;
+    left: auto;
+    top: auto;
+    z-index: 3;
+    width: min(100%, 640px);
+    max-width: min(92vw, 640px);
+    min-height: 100vh;
+    margin: 0 auto;
+    justify-content: center;
+    padding-top: clamp(1.8rem, 6vh, 4rem);
+    padding-bottom: clamp(1.2rem, 4vh, 2.4rem);
+    transform: translate3d(0, 0, 0);
+    align-items: center;
+    text-align: center;
+    padding-left: clamp(1rem, 4vw, 1.4rem);
+    padding-right: clamp(1rem, 4vw, 1.4rem);
+  }
+
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .content h1,
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .content .section-description,
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .content .eyebrow {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cards-viewport {
+    height: 100vh;
+    place-items: center;
+  }
+
+  .story-card {
+    min-height: clamp(240px, 48vh, 430px);
+    width: calc(min(360px, 72vw) * var(--card-width-scale, 1));
+  }
 }

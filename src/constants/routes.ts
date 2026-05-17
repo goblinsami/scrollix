@@ -11,4 +11,4 @@ export const ROUTE_PATHS = {
 } as const
 
 export const STORY_ROUTE_PARAM = 'id'
-export const DEFAULT_EDIT_STORY_ID = 'welcome'
+export const DEFAULT_EDIT_STORY_ID = '3d-stack-cards'

@@ -10,6 +10,7 @@ import {
 import {
   DEFAULT_CONTENT_ALIGN,
   DEFAULT_CONTENT_MAX_WIDTH,
+  DEFAULT_CONTENT_SIDE_PADDING,
   DEFAULT_CONTENT_WIDTH_MODE,
   DEFAULT_DESCRIPTION_LINE_HEIGHT,
   DEFAULT_PANEL_COLOR,
@@ -20,6 +21,7 @@ import {
   DEFAULT_TITLE_DESCRIPTION_GAP,
   DEFAULT_TITLE_LINE_HEIGHT,
   MAX_CONTENT_MAX_WIDTH,
+  MAX_CONTENT_SIDE_PADDING,
   MAX_DESCRIPTION_LINE_HEIGHT,
   MAX_DESCRIPTION_MAX_WIDTH,
   MAX_EYEBROW_LETTER_SPACING,
@@ -29,6 +31,7 @@ import {
   MAX_TITLE_LINE_HEIGHT,
   MAX_TITLE_MAX_WIDTH,
   MIN_CONTENT_MAX_WIDTH,
+  MIN_CONTENT_SIDE_PADDING,
   MIN_DESCRIPTION_LINE_HEIGHT,
   MIN_DESCRIPTION_MAX_WIDTH,
   MIN_EYEBROW_LETTER_SPACING,
@@ -141,6 +144,14 @@ export function useSlidePanelPresentation(props: Readonly<SlidePanelProps>) {
   const contentMaxWidthResolved = computed(() =>
     clampNumber(props.contentMaxWidth, MIN_CONTENT_MAX_WIDTH, MAX_CONTENT_MAX_WIDTH, DEFAULT_CONTENT_MAX_WIDTH)
   )
+  const contentSidePaddingResolved = computed(() =>
+    clampNumber(
+      props.contentSidePadding,
+      MIN_CONTENT_SIDE_PADDING,
+      MAX_CONTENT_SIDE_PADDING,
+      DEFAULT_CONTENT_SIDE_PADDING
+    )
+  )
   const titleMaxWidthResolved = computed(() => {
     const fallback = deriveTitleMaxWidthFromContent(contentMaxWidthResolved.value)
     return clampNumber(props.titleMaxWidth, MIN_TITLE_MAX_WIDTH, MAX_TITLE_MAX_WIDTH, fallback)
@@ -152,6 +163,7 @@ export function useSlidePanelPresentation(props: Readonly<SlidePanelProps>) {
 
   const contentStyle = computed(() => ({
     '--content-max-width': `${contentMaxWidthResolved.value}px`,
+    '--content-side-padding': `${contentSidePaddingResolved.value}px`,
     '--title-max-width': `${titleMaxWidthResolved.value}px`,
     '--description-max-width': `${descriptionMaxWidthResolved.value}px`
   }))
@@ -247,6 +259,7 @@ export function useSlidePanelPresentation(props: Readonly<SlidePanelProps>) {
     ctaHref,
     contentAlignResolved,
     contentWidthModeResolved,
+    titleMaxWidthResolved,
     contentStyle,
     eyebrowStyle,
     logoStyle,

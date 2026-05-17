@@ -1,5 +1,6 @@
 import { computed, isRef, ref, watch, type Ref } from 'vue'
 import type { ContentSchema, Panel } from '../types/navigation'
+import { TemplateType } from '../types/navigation'
 import { validateContentSchema } from '../utils/validateContent'
 import { normalizeSnapEase, type SnapEaseOption } from '../constants/snapEase'
 import { normalizeTransitionSpeed } from '../constants/transitionSpeed'
@@ -48,6 +49,7 @@ export function useStoryRuntime(contentRef: Ref<ContentSchema | null>, options: 
       }
       panelsState.value = (schema.panels ?? []).map((panel) => ({
         ...panel,
+        templateType: panel.templateType ?? TemplateType.Scroll,
         titleSize: normalizeTextSize(panel.titleSize, DEFAULT_TEXT_SIZE),
         eyebrowSize: normalizeTextSize(panel.eyebrowSize, DEFAULT_TEXT_SIZE),
         descriptionSize: normalizeTextSize(panel.descriptionSize, DEFAULT_TEXT_SIZE),

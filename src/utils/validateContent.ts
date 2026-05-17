@@ -2,12 +2,15 @@ import {
   ContentAlignValues,
   ContentWidthModeValues,
   Direction,
+  TemplateType,
+  TemplateTypeValues,
   TextSizeValues,
   type ContentSchema,
   type Panel
 } from '../types/navigation'
 import {
   MAX_CONTENT_MAX_WIDTH,
+  MAX_CONTENT_SIDE_PADDING,
   MAX_DESCRIPTION_LINE_HEIGHT,
   MAX_DESCRIPTION_MAX_WIDTH,
   MAX_EYEBROW_LETTER_SPACING,
@@ -17,6 +20,7 @@ import {
   MAX_TITLE_LINE_HEIGHT,
   MAX_TITLE_MAX_WIDTH,
   MIN_CONTENT_MAX_WIDTH,
+  MIN_CONTENT_SIDE_PADDING,
   MIN_DESCRIPTION_LINE_HEIGHT,
   MIN_DESCRIPTION_MAX_WIDTH,
   MIN_EYEBROW_LETTER_SPACING,
@@ -28,11 +32,18 @@ import {
 } from '../constants/slideStyle'
 import { MAX_TRANSITION_SPEED, MIN_TRANSITION_SPEED } from '../constants/transitionSpeed'
 import { MAX_AUTOPLAY_SPEED, MIN_AUTOPLAY_SPEED } from '../constants/autoPlaySpeed'
+import {
+  STACK_CARDS_AUTOPLAY_LIMITS,
+  STACK_CARDS_LAYOUT_OFFSET_LIMITS,
+  STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS,
+  STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS
+} from '../constants/stackCards'
 
 const VALID_DIRECTIONS: Direction[] = [Direction.Up, Direction.Down, Direction.Left, Direction.Right]
 const VALID_TEXT_SIZES = [...TextSizeValues]
 const VALID_CONTENT_ALIGNS = [...ContentAlignValues]
 const VALID_CONTENT_WIDTH_MODES = [...ContentWidthModeValues]
+const VALID_TEMPLATE_TYPES = [...TemplateTypeValues]
 
 const OPPOSITE: Record<Direction, Direction> = {
   [Direction.Up]: Direction.Down,
@@ -112,6 +123,9 @@ export function validateContentSchema(raw: unknown): ValidationResult {
 
     if (typeof p.title !== 'string' || p.title.trim() === '') {
       errors.push(`${label}: title obligatorio.`)
+    }
+    if (p.templateType !== undefined && !VALID_TEMPLATE_TYPES.includes(p.templateType)) {
+      errors.push(`${label}: templateType invalido (${String(p.templateType)}).`)
     }
 
     if (p.description !== undefined && typeof p.description !== 'string') {
@@ -299,6 +313,127 @@ export function validateContentSchema(raw: unknown): ValidationResult {
 
     if (p.nextPanelPosition !== undefined && !VALID_DIRECTIONS.includes(p.nextPanelPosition)) {
       errors.push(`${label}: nextPanelPosition invalido (${String(p.nextPanelPosition)}).`)
+    }
+
+    if (p.contentSidePadding !== undefined) {
+      if (typeof p.contentSidePadding !== 'number' || Number.isNaN(p.contentSidePadding)) {
+        errors.push(`${label}: contentSidePadding debe ser number.`)
+      } else if (p.contentSidePadding < MIN_CONTENT_SIDE_PADDING || p.contentSidePadding > MAX_CONTENT_SIDE_PADDING) {
+        errors.push(`${label}: contentSidePadding fuera de rango (${MIN_CONTENT_SIDE_PADDING}-${MAX_CONTENT_SIDE_PADDING}).`)
+      }
+    }
+
+    if (p.stackCards !== undefined) {
+      if (!p.stackCards || typeof p.stackCards !== 'object') {
+        errors.push(`${label}: stackCards debe ser objeto.`)
+      } else {
+        const settings = p.stackCards as unknown as Record<string, unknown>
+        const numberFields = [
+          'angleY',
+          'angleX',
+          'layoutSidePadding',
+          'textOffsetX',
+          'textOffsetY',
+          'cardsOffsetX',
+          'cardsOffsetY',
+          'cardGap',
+          'frontFadeWindow',
+          'cardSize',
+          'cardWidth',
+          'wheelSensitivity',
+          'mobileTouchSensitivity',
+          'autoPlaySpeed'
+        ]
+        numberFields.forEach((field) => {
+          const value = settings[field]
+          if (value !== undefined && (typeof value !== 'number' || Number.isNaN(value))) {
+            errors.push(`${label}: stackCards.${field} debe ser number.`)
+          }
+        })
+        if (settings.textSide !== undefined && settings.textSide !== 'left' && settings.textSide !== 'right') {
+          errors.push(`${label}: stackCards.textSide debe ser "left" o "right".`)
+        }
+        if (
+          settings.stackDirection !== undefined &&
+          settings.stackDirection !== 'left' &&
+          settings.stackDirection !== 'right'
+        ) {
+          errors.push(`${label}: stackCards.stackDirection debe ser "left" o "right".`)
+        }
+        if (settings.cardsOnly !== undefined && typeof settings.cardsOnly !== 'boolean') {
+          errors.push(`${label}: stackCards.cardsOnly debe ser boolean.`)
+        }
+        if (typeof settings.layoutSidePadding === 'number') {
+          if (
+            settings.layoutSidePadding < STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS.min ||
+            settings.layoutSidePadding > STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS.max
+          ) {
+            errors.push(
+              `${label}: stackCards.layoutSidePadding fuera de rango (${STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS.min}-${STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS.max}).`
+            )
+          }
+        }
+        ;(['textOffsetX', 'textOffsetY', 'cardsOffsetX', 'cardsOffsetY'] as const).forEach((field) => {
+          const value = settings[field]
+          if (typeof value === 'number') {
+            if (value < STACK_CARDS_LAYOUT_OFFSET_LIMITS.min || value > STACK_CARDS_LAYOUT_OFFSET_LIMITS.max) {
+              errors.push(
+                `${label}: stackCards.${field} fuera de rango (${STACK_CARDS_LAYOUT_OFFSET_LIMITS.min}-${STACK_CARDS_LAYOUT_OFFSET_LIMITS.max}).`
+              )
+            }
+          }
+        })
+        if (settings.autoPlayEnabled !== undefined && typeof settings.autoPlayEnabled !== 'boolean') {
+          errors.push(`${label}: stackCards.autoPlayEnabled debe ser boolean.`)
+        }
+        if (typeof settings.autoPlaySpeed === 'number') {
+          if (
+            settings.autoPlaySpeed < STACK_CARDS_AUTOPLAY_LIMITS.min ||
+            settings.autoPlaySpeed > STACK_CARDS_AUTOPLAY_LIMITS.max
+          ) {
+            errors.push(
+              `${label}: stackCards.autoPlaySpeed fuera de rango (${STACK_CARDS_AUTOPLAY_LIMITS.min}-${STACK_CARDS_AUTOPLAY_LIMITS.max}).`
+            )
+          }
+        }
+        if (typeof settings.mobileTouchSensitivity === 'number') {
+          if (
+            settings.mobileTouchSensitivity < STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.min ||
+            settings.mobileTouchSensitivity > STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.max
+          ) {
+            errors.push(
+              `${label}: stackCards.mobileTouchSensitivity fuera de rango (${STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.min}-${STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.max}).`
+            )
+          }
+        }
+        if (!Array.isArray(settings.cards)) {
+          errors.push(`${label}: stackCards.cards debe ser arreglo.`)
+        } else {
+          settings.cards.forEach((card, cardIndex) => {
+            const cardLabel = `${label}: stackCards.cards[${cardIndex}]`
+            if (!card || typeof card !== 'object') {
+              errors.push(`${cardLabel} invalida.`)
+              return
+            }
+            const item = card as Record<string, unknown>
+            if (typeof item.id !== 'string' || item.id.trim() === '') errors.push(`${cardLabel}.id debe ser string.`)
+            if (typeof item.eyebrow !== 'string') errors.push(`${cardLabel}.eyebrow debe ser string.`)
+            if (typeof item.title !== 'string') errors.push(`${cardLabel}.title debe ser string.`)
+            if (typeof item.description !== 'string') errors.push(`${cardLabel}.description debe ser string.`)
+            if (item.panelColor !== undefined && typeof item.panelColor !== 'string') {
+              errors.push(`${cardLabel}.panelColor debe ser string.`)
+            }
+            if (item.color !== undefined && typeof item.color !== 'string') {
+              errors.push(`${cardLabel}.color legado debe ser string.`)
+            }
+            if (item.image !== undefined && typeof item.image !== 'string') {
+              errors.push(`${cardLabel}.image debe ser string.`)
+            }
+          })
+        }
+      }
+    } else if (p.templateType === TemplateType.StackCards) {
+      errors.push(`${label}: templateType "stack-cards" requiere stackCards.`)
     }
   })
 

@@ -11,6 +11,7 @@ export const DEFAULT_TITLE_LINE_HEIGHT = 0.95
 export const DEFAULT_DESCRIPTION_LINE_HEIGHT = 1.75
 export const DEFAULT_EYEBROW_LETTER_SPACING = 0.18
 export const DEFAULT_CONTENT_MAX_WIDTH = 900
+export const DEFAULT_CONTENT_SIDE_PADDING = 128
 export const DEFAULT_TITLE_MAX_WIDTH = 560
 export const DEFAULT_DESCRIPTION_MAX_WIDTH = 810
 
@@ -26,6 +27,8 @@ export const MIN_EYEBROW_LETTER_SPACING = 0
 export const MAX_EYEBROW_LETTER_SPACING = 0.4
 export const MIN_CONTENT_MAX_WIDTH = 480
 export const MAX_CONTENT_MAX_WIDTH = 1600
+export const MIN_CONTENT_SIDE_PADDING = 16
+export const MAX_CONTENT_SIDE_PADDING = 240
 export const MIN_TITLE_MAX_WIDTH = 220
 export const MAX_TITLE_MAX_WIDTH = 1400
 export const MIN_DESCRIPTION_MAX_WIDTH = 320
@@ -67,6 +70,7 @@ export const TEXT_STYLE_RANGES = {
   descriptionLineHeight: { min: MIN_DESCRIPTION_LINE_HEIGHT, max: MAX_DESCRIPTION_LINE_HEIGHT, step: 0.01 },
   eyebrowLetterSpacing: { min: MIN_EYEBROW_LETTER_SPACING, max: MAX_EYEBROW_LETTER_SPACING, step: 0.01 },
   contentMaxWidth: { min: MIN_CONTENT_MAX_WIDTH, max: MAX_CONTENT_MAX_WIDTH, step: 10 },
+  contentSidePadding: { min: MIN_CONTENT_SIDE_PADDING, max: MAX_CONTENT_SIDE_PADDING, step: 2 },
   titleMaxWidth: { min: MIN_TITLE_MAX_WIDTH, max: MAX_TITLE_MAX_WIDTH, step: 10 },
   descriptionMaxWidth: { min: MIN_DESCRIPTION_MAX_WIDTH, max: MAX_DESCRIPTION_MAX_WIDTH, step: 10 }
 } as const

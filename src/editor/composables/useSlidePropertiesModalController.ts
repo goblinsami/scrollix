@@ -43,6 +43,7 @@ export function useSlidePropertiesModalController(options: UseSlidePropertiesMod
   const isTextContentOpen = ref(false)
   const isCtasOpen = ref(false)
   const isTextStyleOpen = ref(false)
+  const isStackCardsOpen = ref(false)
   const isGradientEditorOpen = ref(false)
   const isLogoEditorOpen = ref(false)
   const isImageEditorOpen = ref(false)
@@ -52,6 +53,7 @@ export function useSlidePropertiesModalController(options: UseSlidePropertiesMod
     isTextContentOpen.value = openSections.has(SlidePropertiesSection.TextContent)
     isCtasOpen.value = openSections.has(SlidePropertiesSection.Ctas)
     isTextStyleOpen.value = openSections.has(SlidePropertiesSection.TextStyle)
+    isStackCardsOpen.value = openSections.has(SlidePropertiesSection.StackCards)
     isGradientEditorOpen.value = openSections.has(SlidePropertiesSection.Fill)
     isLogoEditorOpen.value = openSections.has(SlidePropertiesSection.Logo)
     isImageEditorOpen.value = openSections.has(SlidePropertiesSection.Image)
@@ -72,6 +74,7 @@ export function useSlidePropertiesModalController(options: UseSlidePropertiesMod
     if (key === 'textContent') isTextContentOpen.value = !isTextContentOpen.value
     if (key === 'ctas') isCtasOpen.value = !isCtasOpen.value
     if (key === 'textStyle') isTextStyleOpen.value = !isTextStyleOpen.value
+    if (key === 'stackCards') isStackCardsOpen.value = !isStackCardsOpen.value
     if (key === 'gradientEditor') isGradientEditorOpen.value = !isGradientEditorOpen.value
     if (key === 'logoEditor') isLogoEditorOpen.value = !isLogoEditorOpen.value
     if (key === 'imageEditor') isImageEditorOpen.value = !isImageEditorOpen.value
@@ -157,6 +160,7 @@ export function useSlidePropertiesModalController(options: UseSlidePropertiesMod
     isTextContentOpen,
     isCtasOpen,
     isTextStyleOpen,
+    isStackCardsOpen,
     isGradientEditorOpen,
     isLogoEditorOpen,
     isImageEditorOpen,

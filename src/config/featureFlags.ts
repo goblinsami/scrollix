@@ -1,4 +1,5 @@
 export const FEATURE_FLAGS = {
-  allowNodeCreation: false
+  allowNodeCreation: false,
+  enableStackCardsMouseTilt: false,
+  enableRuntimeDiagnostics: false
 } as const
-

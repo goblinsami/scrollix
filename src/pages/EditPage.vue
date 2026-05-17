@@ -68,6 +68,8 @@
       :enable-ctas="storyEnableCtas"
       @edit-slide="openSlideEditor"
     />
+
+    <RuntimeDiagnosticsPanel :enabled="showRuntimeDiagnostics" />
   </main>
 </template>
 
@@ -75,6 +77,7 @@
 import { computed, ref } from 'vue'
 import '../styles/editor.scss'
 import EditorToggleButton from '@/components/EditorToggleButton.vue'
+import RuntimeDiagnosticsPanel from '@/components/RuntimeDiagnosticsPanel.vue'
 import StoryRenderer from '@/core/StoryRenderer.vue'
 import { useStoryRuntime } from '@/core/useStoryRuntime'
 import FlowEditor from '@/editor/components/flow-creator/FlowEditor.vue'
@@ -85,6 +88,7 @@ import EditorTopBar from '@/features/editor/components/EditorTopBar.vue'
 import { useEditorInteractionState } from '@/features/editor/composables/useEditorInteractionState'
 import { useEditorStoryActions } from '@/features/editor/composables/useEditorStoryActions'
 import { useEditorStorySource } from '@/features/editor/composables/useEditorStorySource'
+import { FEATURE_FLAGS } from '@/config/featureFlags'
 
 const { routeStoryId, storySchema, availableStories } = useEditorStorySource()
 
@@ -178,6 +182,7 @@ const storyUsageText = computed(() => {
 })
 
 const storyEnableCtas = computed(() => storySchema.value?.enableCtas ?? true)
+const showRuntimeDiagnostics = import.meta.env.DEV && FEATURE_FLAGS.enableRuntimeDiagnostics
 
 const handleLogin = async () => {
   try {

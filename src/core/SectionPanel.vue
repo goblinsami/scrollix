@@ -1,5 +1,9 @@
 <template>
-  <section class="panel panel--hero" :class="panelClass" :style="panelStyle" :data-animate="animateKey">
+  <StackCardsPanel
+    v-if="templateType === 'stack-cards' && stackCards"
+    v-bind="props"
+  />
+  <section v-else class="panel panel--hero" :class="panelClass" :style="panelStyle" :data-animate="animateKey">
     <img v-if="image" class="panel__image" :src="image" alt="" />
     <div v-if="overlayVisible" class="panel__overlay" :style="overlayStyle" />
     <article
@@ -73,6 +77,7 @@
 
 <script setup lang="ts">
 import { getDirectionIcon } from './useDirectionIcon'
+import StackCardsPanel from './StackCardsPanel.vue'
 import { useSlidePanelPresentation } from '@/composables/useSlidePanelPresentation'
 import type { SlidePanelProps } from '@/types/slidePanel'
 

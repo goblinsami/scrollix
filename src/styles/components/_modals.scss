@@ -19,6 +19,7 @@
 }
 
 .block-settings {
+  position: relative;
   width: min(420px, 92vw);
   max-height: calc(100vh - 92px);
   background: #fff;
@@ -34,6 +35,40 @@
 
 .block-settings h4 {
   margin: 0;
+}
+
+.block-settings__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.block-settings__side-toggle {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  border: 1px solid #cfd8e3;
+  background: #ffffff;
+  color: #1f2a36;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 0.22rem 0.5rem;
+  min-height: 22px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  z-index: 2;
+}
+
+.block-settings__side-toggle:hover {
+  background: #edf2f8;
+  border-color: #becbda;
+}
+
+.block-settings__side-toggle:focus-visible {
+  outline: 2px solid #9fb3c8;
+  outline-offset: 1px;
 }
 
 .block-settings label {
@@ -335,5 +370,59 @@
 .gradient-editor__actions {
   display: flex;
   gap: 0.45rem;
+}
+
+.stack-card-editor {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.6rem;
+  border: 1px solid #d7e1ea;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.stack-card-editor > .text-style-panel {
+  border: 1px solid #cad7e6;
+  background: #f4f8fd;
+}
+
+.stack-card-editor > .text-style-panel > .text-style-panel__summary {
+  background: #eaf1f9;
+  border-color: #b8c9db;
+}
+
+.stack-card-editor > .text-style-panel > .text-style-panel__summary:hover {
+  background: #e2ecf7;
+  border-color: #aebfd3;
+}
+
+.stack-card-editor > .text-style-panel > .text-style-panel__body {
+  padding-left: 0.35rem;
+  border-left: 2px solid #d3e0ef;
+}
+
+.stack-cards-group > .text-style-panel {
+  border-color: #c4d3e4;
+  background: #f2f7fc;
+}
+
+.stack-cards-group > .text-style-panel > .text-style-panel__summary {
+  background: #e6eef8;
+  border-color: #aec2d7;
+}
+
+.stack-cards-group > .text-style-panel > .text-style-panel__body {
+  padding-left: 0.45rem;
+  border-left: 3px solid #bfd2e6;
+}
+
+.stack-cards-items-group > .text-style-panel {
+  border-color: #bccde0;
+  background: #edf4fb;
+}
+
+.stack-cards-items-group > .text-style-panel > .text-style-panel__summary {
+  background: #e2ecf8;
+  border-color: #a7bdd4;
 }
 

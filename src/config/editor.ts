@@ -2,6 +2,7 @@ export const SlidePropertiesSection = {
   TextContent: 'textContent',
   Ctas: 'ctas',
   TextStyle: 'textStyle',
+  StackCards: 'stackCards',
   Fill: 'gradientEditor',
   Logo: 'logoEditor',
   Image: 'imageEditor'

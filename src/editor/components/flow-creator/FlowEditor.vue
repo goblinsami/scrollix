@@ -199,6 +199,7 @@
       :side="slideSettingsSide"
       :can-upload-images="props.canUploadImages ?? true"
       :enable-ctas="props.enableCtas ?? true"
+      @toggle-side="toggleSlideSettingsSide"
       @close="closeSettings"
       @save="saveSettings"
       @delete="deletePanel"
@@ -246,6 +247,7 @@ const {
   isAutoPlayOpen,
   isFilesOpen,
   slideSettingsSide,
+  toggleSlideSettingsSide,
   MIN_TRANSITION_SPEED,
   MAX_TRANSITION_SPEED,
   TRANSITION_SPEED_STEP,

@@ -41,8 +41,7 @@ export interface PanelCta {
   linkKey: string
 }
 
-export interface Panel {
-  id: string
+export interface ItemContent {
   eyebrow: string
   title: string
   description?: string
@@ -58,9 +57,9 @@ export interface Panel {
   descriptionLineHeight?: number
   eyebrowLetterSpacing?: number
   contentMaxWidth?: number
+  contentSidePadding?: number
   titleMaxWidth?: number
   descriptionMaxWidth?: number
-  panelClass: string
   panelColor?: string
   image?: string
   logo?: string
@@ -73,6 +72,48 @@ export interface Panel {
   ctaText?: string
   ctaLink?: string
   cta?: PanelCta
+}
+
+export const TemplateType = {
+  Scroll: 'scroll',
+  StackCards: 'stack-cards'
+} as const
+
+export const TemplateTypeValues = [TemplateType.Scroll, TemplateType.StackCards] as const
+
+export type TemplateType = (typeof TemplateType)[keyof typeof TemplateType]
+
+export interface StackCardItem extends ItemContent {
+  id: string
+}
+
+export interface StackCardsSettings {
+  textSide?: 'left' | 'right'
+  stackDirection?: 'left' | 'right'
+  cardsOnly?: boolean
+  layoutSidePadding?: number
+  textOffsetX?: number
+  textOffsetY?: number
+  cardsOffsetX?: number
+  cardsOffsetY?: number
+  angleY?: number
+  angleX?: number
+  cardGap?: number
+  frontFadeWindow?: number
+  cardSize?: number
+  cardWidth?: number
+  wheelSensitivity?: number
+  mobileTouchSensitivity?: number
+  autoPlayEnabled?: boolean
+  autoPlaySpeed?: number
+  cards: StackCardItem[]
+}
+
+export interface Panel extends ItemContent {
+  id: string
+  templateType?: TemplateType
+  stackCards?: StackCardsSettings
+  panelClass: string
   nextPanelPosition?: Direction
 }
 

@@ -49,6 +49,7 @@ interface UseFlowEditorControllerResult {
   isAutoPlayOpen: Ref<boolean>
   isFilesOpen: Ref<boolean>
   slideSettingsSide: Readonly<Ref<'left' | 'right'>>
+  toggleSlideSettingsSide: () => void
   MIN_TRANSITION_SPEED: number
   MAX_TRANSITION_SPEED: number
   TRANSITION_SPEED_STEP: number
@@ -110,6 +111,7 @@ export function useFlowEditorController(
   const isTransitionOpen = ref(false)
   const isAutoPlayOpen = ref(false)
   const isFilesOpen = ref(false)
+  const slideSettingsSideOverride = ref<'left' | 'right' | null>(null)
 
   const applyViewportMode = () => {
     const desktop = window.matchMedia(DESKTOP_BREAKPOINT_QUERY).matches
@@ -205,12 +207,17 @@ export function useFlowEditorController(
     openSettings(index)
   }
 
-  const slideSettingsSide = computed<'left' | 'right'>(() => {
+  const autoSlideSettingsSide = computed<'left' | 'right'>(() => {
     const align = selectedPanel.value?.contentAlign
     if (align === ContentAlign.Left) return 'right'
     if (align === ContentAlign.Right) return 'left'
     return 'right'
   })
+  const slideSettingsSide = computed<'left' | 'right'>(() => slideSettingsSideOverride.value ?? autoSlideSettingsSide.value)
+  const toggleSlideSettingsSide = () => {
+    const current = slideSettingsSide.value
+    slideSettingsSideOverride.value = current === 'left' ? 'right' : 'left'
+  }
 
   const importSelectedDataFile = async () => {
     if (!selectedDataFile.value) return
@@ -286,6 +293,7 @@ export function useFlowEditorController(
     isAutoPlayOpen,
     isFilesOpen,
     slideSettingsSide,
+    toggleSlideSettingsSide,
     MIN_TRANSITION_SPEED,
     MAX_TRANSITION_SPEED,
     TRANSITION_SPEED_STEP,

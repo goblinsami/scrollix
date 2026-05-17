@@ -3,6 +3,8 @@ import type {
   ContentWidthMode as SlideContentWidthMode,
   Direction,
   PanelCta,
+  StackCardsSettings,
+  TemplateType,
   TextSize as SlideTextSize
 } from './navigation'
 
@@ -10,6 +12,8 @@ export interface SlidePanelProps {
   title: string
   eyebrow?: string
   description?: string
+  templateType?: TemplateType
+  stackCards?: StackCardsSettings
   useMarkdown?: boolean
   titleSize?: SlideTextSize
   eyebrowSize?: SlideTextSize
@@ -22,6 +26,7 @@ export interface SlidePanelProps {
   descriptionLineHeight?: number
   eyebrowLetterSpacing?: number
   contentMaxWidth?: number
+  contentSidePadding?: number
   titleMaxWidth?: number
   descriptionMaxWidth?: number
   panelClass?: string

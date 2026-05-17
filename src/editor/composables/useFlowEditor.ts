@@ -1,7 +1,7 @@
 import { computed, nextTick, ref, watch, type Ref } from 'vue'
 import gsap from 'gsap'
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin'
-import { Direction, type Panel } from '../../types/navigation'
+import { Direction, TemplateType, type Panel } from '../../types/navigation'
 import {
   DEFAULT_CONTENT_ALIGN,
   DEFAULT_CONTENT_MAX_WIDTH,
@@ -65,6 +65,7 @@ export function useFlowEditor(panelsRef: Ref<Panel[]>, emitUpdatePanels: (panels
         const contentMaxWidth = p.contentMaxWidth ?? DEFAULT_CONTENT_MAX_WIDTH
         return {
           ...p,
+          templateType: p.templateType ?? TemplateType.Scroll,
           titleSize: normalizeTextSize(p.titleSize, DEFAULT_TEXT_SIZE),
           eyebrowSize: normalizeTextSize(p.eyebrowSize, DEFAULT_TEXT_SIZE),
           descriptionSize: normalizeTextSize(p.descriptionSize, DEFAULT_TEXT_SIZE),
@@ -220,6 +221,7 @@ export function useFlowEditor(panelsRef: Ref<Panel[]>, emitUpdatePanels: (panels
       const contentMaxWidth = p.contentMaxWidth ?? DEFAULT_CONTENT_MAX_WIDTH
       return {
         ...p,
+        templateType: p.templateType ?? TemplateType.Scroll,
         titleSize: normalizeTextSize(p.titleSize, DEFAULT_TEXT_SIZE),
         eyebrowSize: normalizeTextSize(p.eyebrowSize, DEFAULT_TEXT_SIZE),
         descriptionSize: normalizeTextSize(p.descriptionSize, DEFAULT_TEXT_SIZE),
@@ -272,6 +274,7 @@ export function useFlowEditor(panelsRef: Ref<Panel[]>, emitUpdatePanels: (panels
     eyebrow: DEFAULT_EYEBROW,
     title: `${DEFAULT_TITLE_PREFIX} ${position}`,
     description: '',
+    templateType: TemplateType.Scroll,
     useMarkdown: false,
     titleSize: DEFAULT_TEXT_SIZE,
     eyebrowSize: DEFAULT_TEXT_SIZE,
