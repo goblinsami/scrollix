@@ -32,7 +32,12 @@ import {
 } from '../constants/slideStyle'
 import { MAX_TRANSITION_SPEED, MIN_TRANSITION_SPEED } from '../constants/transitionSpeed'
 import { MAX_AUTOPLAY_SPEED, MIN_AUTOPLAY_SPEED } from '../constants/autoPlaySpeed'
-import { STACK_CARDS_AUTOPLAY_LIMITS, STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS } from '../constants/stackCards'
+import {
+  STACK_CARDS_AUTOPLAY_LIMITS,
+  STACK_CARDS_LAYOUT_OFFSET_LIMITS,
+  STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS,
+  STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS
+} from '../constants/stackCards'
 
 const VALID_DIRECTIONS: Direction[] = [Direction.Up, Direction.Down, Direction.Left, Direction.Right]
 const VALID_TEXT_SIZES = [...TextSizeValues]
@@ -327,11 +332,16 @@ export function validateContentSchema(raw: unknown): ValidationResult {
           'angleY',
           'angleX',
           'layoutSidePadding',
+          'textOffsetX',
+          'textOffsetY',
+          'cardsOffsetX',
+          'cardsOffsetY',
           'cardGap',
           'frontFadeWindow',
           'cardSize',
           'cardWidth',
           'wheelSensitivity',
+          'mobileTouchSensitivity',
           'autoPlaySpeed'
         ]
         numberFields.forEach((field) => {
@@ -363,6 +373,16 @@ export function validateContentSchema(raw: unknown): ValidationResult {
             )
           }
         }
+        ;(['textOffsetX', 'textOffsetY', 'cardsOffsetX', 'cardsOffsetY'] as const).forEach((field) => {
+          const value = settings[field]
+          if (typeof value === 'number') {
+            if (value < STACK_CARDS_LAYOUT_OFFSET_LIMITS.min || value > STACK_CARDS_LAYOUT_OFFSET_LIMITS.max) {
+              errors.push(
+                `${label}: stackCards.${field} fuera de rango (${STACK_CARDS_LAYOUT_OFFSET_LIMITS.min}-${STACK_CARDS_LAYOUT_OFFSET_LIMITS.max}).`
+              )
+            }
+          }
+        })
         if (settings.autoPlayEnabled !== undefined && typeof settings.autoPlayEnabled !== 'boolean') {
           errors.push(`${label}: stackCards.autoPlayEnabled debe ser boolean.`)
         }
@@ -373,6 +393,16 @@ export function validateContentSchema(raw: unknown): ValidationResult {
           ) {
             errors.push(
               `${label}: stackCards.autoPlaySpeed fuera de rango (${STACK_CARDS_AUTOPLAY_LIMITS.min}-${STACK_CARDS_AUTOPLAY_LIMITS.max}).`
+            )
+          }
+        }
+        if (typeof settings.mobileTouchSensitivity === 'number') {
+          if (
+            settings.mobileTouchSensitivity < STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.min ||
+            settings.mobileTouchSensitivity > STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.max
+          ) {
+            errors.push(
+              `${label}: stackCards.mobileTouchSensitivity fuera de rango (${STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.min}-${STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.max}).`
             )
           }
         }

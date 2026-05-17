@@ -11,6 +11,8 @@ export const STACK_CARDS_CONTROL_LIMITS = {
 } as const
 export const STACK_CARDS_AUTOPLAY_LIMITS = { min: 0.4, max: 8, step: 0.1 } as const
 export const STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS = { min: 0, max: 560, step: 2 } as const
+export const STACK_CARDS_LAYOUT_OFFSET_LIMITS = { min: -400, max: 400, step: 2 } as const
+export const STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS = { min: 0.2, max: 4, step: 0.1 } as const
 
 export const STACK_CARDS_CONTROLS = [
   { key: 'angleY', label: 'Y', ...STACK_CARDS_CONTROL_LIMITS.angleY },
@@ -33,6 +35,10 @@ export const STACK_CARDS_DEFAULTS = {
   stackDirection: 'right' as const,
   cardsOnly: false,
   layoutSidePadding: 48,
+  textOffsetX: 0,
+  textOffsetY: 0,
+  cardsOffsetX: 0,
+  cardsOffsetY: 0,
   angleY: -30,
   angleX: 0,
   cardGap: 1,
@@ -40,6 +46,7 @@ export const STACK_CARDS_DEFAULTS = {
   cardSize: 1,
   cardWidth: 1,
   wheelSensitivity: 1,
+  mobileTouchSensitivity: 0.3,
   autoPlayEnabled: false,
   autoPlaySpeed: 1.6
 } as const

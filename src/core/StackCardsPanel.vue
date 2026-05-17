@@ -18,7 +18,7 @@
           `content--width-${contentWidthModeResolved}`,
           { 'content--on-image': hasVisualBackground }
         ]"
-        :style="contentStyle"
+        :style="stackContentStyle"
       >
         <div
           v-if="logo && logoTintEnabledResolved"
@@ -50,7 +50,10 @@
         :style="cardViewportStyle"
         @wheel.prevent="onWheel"
         @pointerdown="onUserInteraction"
-        @touchstart.passive="onUserInteraction"
+        @touchstart="onTouchStartCards"
+        @touchmove="onTouchMoveCards"
+        @touchend="onTouchEndCards"
+        @touchcancel="onTouchEndCards"
         @scroll.passive="onUserInteraction"
         @mousemove="onMouseMove"
         @mouseleave="onMouseLeave"
@@ -147,6 +150,9 @@ const frontFadeWindow = computed(() => props.stackCards?.frontFadeWindow ?? STAC
 const cardSize = computed(() => props.stackCards?.cardSize ?? STACK_CARDS_DEFAULTS.cardSize)
 const cardWidth = computed(() => props.stackCards?.cardWidth ?? STACK_CARDS_DEFAULTS.cardWidth)
 const wheelSensitivity = computed(() => props.stackCards?.wheelSensitivity ?? STACK_CARDS_DEFAULTS.wheelSensitivity)
+const mobileTouchSensitivity = computed(
+  () => props.stackCards?.mobileTouchSensitivity ?? STACK_CARDS_DEFAULTS.mobileTouchSensitivity
+)
 const autoPlayEnabled = computed(() => props.stackCards?.autoPlayEnabled ?? STACK_CARDS_DEFAULTS.autoPlayEnabled)
 const autoPlaySpeed = computed(() => props.stackCards?.autoPlaySpeed ?? STACK_CARDS_DEFAULTS.autoPlaySpeed)
 const autoPlayStoppedByInteraction = ref(false)
@@ -154,6 +160,10 @@ const cardsOnly = computed(() => props.stackCards?.cardsOnly ?? STACK_CARDS_DEFA
 const layoutSidePadding = computed(
   () => props.stackCards?.layoutSidePadding ?? STACK_CARDS_DEFAULTS.layoutSidePadding
 )
+const textOffsetX = computed(() => props.stackCards?.textOffsetX ?? STACK_CARDS_DEFAULTS.textOffsetX)
+const textOffsetY = computed(() => props.stackCards?.textOffsetY ?? STACK_CARDS_DEFAULTS.textOffsetY)
+const cardsOffsetX = computed(() => props.stackCards?.cardsOffsetX ?? STACK_CARDS_DEFAULTS.cardsOffsetX)
+const cardsOffsetY = computed(() => props.stackCards?.cardsOffsetY ?? STACK_CARDS_DEFAULTS.cardsOffsetY)
 
 const wrap01 = (value: number) => ((value % 1) + 1) % 1
 
@@ -163,7 +173,14 @@ const cardViewportStyle = computed(() => ({
   '--card-width-scale': String(cardWidth.value),
   '--stack-hover-rotate-y': '0deg',
   '--stack-direction-sign': stackDirection.value === 'left' ? '-1' : '1',
-  '--stack-perspective-origin-x': stackDirection.value === 'left' ? '38%' : '62%'
+  '--stack-perspective-origin-x': stackDirection.value === 'left' ? '38%' : '62%',
+  '--stack-cards-offset-x': `${cardsOffsetX.value}px`,
+  '--stack-cards-offset-y': `${cardsOffsetY.value}px`
+}))
+const stackContentStyle = computed(() => ({
+  ...contentStyle.value,
+  '--stack-text-offset-x': `${textOffsetX.value}px`,
+  '--stack-text-offset-y': `${textOffsetY.value}px`
 }))
 const stackLayoutStyle = computed(() => ({
   ...contentStyle.value,
@@ -182,6 +199,54 @@ const onWheel = (event: WheelEvent) => {
 const onUserInteraction = () => {
   autoPlayStoppedByInteraction.value = true
   stopAutoPlay()
+}
+
+const touchTracking = ref<{
+  startX: number
+  startY: number
+  lastX: number
+  isHorizontal: boolean
+} | null>(null)
+
+const onTouchStartCards = (event: TouchEvent) => {
+  onUserInteraction()
+  const touch = event.touches[0]
+  if (!touch) return
+  touchTracking.value = {
+    startX: touch.clientX,
+    startY: touch.clientY,
+    lastX: touch.clientX,
+    isHorizontal: false
+  }
+}
+
+const onTouchMoveCards = (event: TouchEvent) => {
+  const state = touchTracking.value
+  const touch = event.touches[0]
+  if (!state || !touch) return
+
+  const deltaXFromStart = touch.clientX - state.startX
+  const deltaYFromStart = touch.clientY - state.startY
+
+  if (!state.isHorizontal) {
+    if (Math.abs(deltaXFromStart) < 10) return
+    if (Math.abs(deltaXFromStart) <= Math.abs(deltaYFromStart)) return
+    state.isHorizontal = true
+  }
+
+  event.preventDefault()
+  const deltaX = touch.clientX - state.lastX
+  state.lastX = touch.clientX
+  const direction = deltaX < 0 ? 1 : -1
+  const touchStep =
+    Math.min(0.06, Math.abs(deltaX) / 220) *
+    wheelSensitivity.value *
+    mobileTouchSensitivity.value
+  progress.value = wrap01(progress.value + direction * touchStep)
+}
+
+const onTouchEndCards = () => {
+  touchTracking.value = null
 }
 
 let autoPlayRafId: number | null = null

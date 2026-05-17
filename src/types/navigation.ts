@@ -92,6 +92,10 @@ export interface StackCardsSettings {
   stackDirection?: 'left' | 'right'
   cardsOnly?: boolean
   layoutSidePadding?: number
+  textOffsetX?: number
+  textOffsetY?: number
+  cardsOffsetX?: number
+  cardsOffsetY?: number
   angleY?: number
   angleX?: number
   cardGap?: number
@@ -99,6 +103,7 @@ export interface StackCardsSettings {
   cardSize?: number
   cardWidth?: number
   wheelSensitivity?: number
+  mobileTouchSensitivity?: number
   autoPlayEnabled?: boolean
   autoPlaySpeed?: number
   cards: StackCardItem[]

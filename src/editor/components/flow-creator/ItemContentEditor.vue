@@ -227,6 +227,62 @@
             <span>{{ formatNumber(Number(localValue.stackCards.layoutSidePadding), 0) }}px</span>
           </div>
         </label>
+        <label>
+          Text offset X
+          <div class="text-style-panel__range">
+            <input
+              v-model.number="localValue.stackCards.textOffsetX"
+              type="range"
+              :min="STACK_CARDS_LAYOUT_OFFSET_LIMITS.min"
+              :max="STACK_CARDS_LAYOUT_OFFSET_LIMITS.max"
+              :step="STACK_CARDS_LAYOUT_OFFSET_LIMITS.step"
+              @input="emitUpdate"
+            />
+            <span>{{ formatNumber(Number(localValue.stackCards.textOffsetX), 0) }}px</span>
+          </div>
+        </label>
+        <label>
+          Text offset Y
+          <div class="text-style-panel__range">
+            <input
+              v-model.number="localValue.stackCards.textOffsetY"
+              type="range"
+              :min="STACK_CARDS_LAYOUT_OFFSET_LIMITS.min"
+              :max="STACK_CARDS_LAYOUT_OFFSET_LIMITS.max"
+              :step="STACK_CARDS_LAYOUT_OFFSET_LIMITS.step"
+              @input="emitUpdate"
+            />
+            <span>{{ formatNumber(Number(localValue.stackCards.textOffsetY), 0) }}px</span>
+          </div>
+        </label>
+        <label>
+          Cards offset X
+          <div class="text-style-panel__range">
+            <input
+              v-model.number="localValue.stackCards.cardsOffsetX"
+              type="range"
+              :min="STACK_CARDS_LAYOUT_OFFSET_LIMITS.min"
+              :max="STACK_CARDS_LAYOUT_OFFSET_LIMITS.max"
+              :step="STACK_CARDS_LAYOUT_OFFSET_LIMITS.step"
+              @input="emitUpdate"
+            />
+            <span>{{ formatNumber(Number(localValue.stackCards.cardsOffsetX), 0) }}px</span>
+          </div>
+        </label>
+        <label>
+          Cards offset Y
+          <div class="text-style-panel__range">
+            <input
+              v-model.number="localValue.stackCards.cardsOffsetY"
+              type="range"
+              :min="STACK_CARDS_LAYOUT_OFFSET_LIMITS.min"
+              :max="STACK_CARDS_LAYOUT_OFFSET_LIMITS.max"
+              :step="STACK_CARDS_LAYOUT_OFFSET_LIMITS.step"
+              @input="emitUpdate"
+            />
+            <span>{{ formatNumber(Number(localValue.stackCards.cardsOffsetY), 0) }}px</span>
+          </div>
+        </label>
         <label class="block-settings__toggle">
           <div class="block-settings__toggle-row">
             <input v-model="localValue.stackCards.cardsOnly" type="checkbox" class="block-settings__toggle-input" @change="emitUpdate" />
@@ -246,6 +302,13 @@
           <div class="text-style-panel__range">
             <input v-model.number="localValue.stackCards.autoPlaySpeed" type="range" :min="STACK_CARDS_AUTOPLAY_LIMITS.min" :max="STACK_CARDS_AUTOPLAY_LIMITS.max" :step="STACK_CARDS_AUTOPLAY_LIMITS.step" :disabled="!localValue.stackCards.autoPlayEnabled" @input="emitUpdate" />
             <span>{{ formatNumber(Number(localValue.stackCards.autoPlaySpeed), 2) }}</span>
+          </div>
+        </label>
+        <label>
+          Mobile touch sensitivity
+          <div class="text-style-panel__range">
+            <input v-model.number="localValue.stackCards.mobileTouchSensitivity" type="range" :min="STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.min" :max="STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.max" :step="STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.step" @input="emitUpdate" />
+            <span>{{ formatNumber(Number(localValue.stackCards.mobileTouchSensitivity), 2) }}</span>
           </div>
         </label>
         <label v-for="control in stackCardControls" :key="control.key">
@@ -307,7 +370,9 @@ import { useGradientEditor } from '../../composables/useGradientEditor'
 import {
   STACK_CARDS_AUTOPLAY_LIMITS,
   STACK_CARDS_CONTROLS,
-  STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS
+  STACK_CARDS_LAYOUT_OFFSET_LIMITS,
+  STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS,
+  STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS
 } from '@/constants/stackCards'
 import CollapsibleSection from '../atoms/CollapsibleSection.vue'
 import ItemContentTextEditor from './ItemContentTextEditor.vue'
@@ -323,6 +388,10 @@ const props = withDefaults(defineProps<{
       stackDirection?: 'left' | 'right'
       cardsOnly?: boolean
       layoutSidePadding?: number
+      textOffsetX?: number
+      textOffsetY?: number
+      cardsOffsetX?: number
+      cardsOffsetY?: number
       angleY?: number
       angleX?: number
       cardGap?: number
@@ -330,6 +399,7 @@ const props = withDefaults(defineProps<{
       cardSize?: number
       cardWidth?: number
       wheelSensitivity?: number
+      mobileTouchSensitivity?: number
       autoPlayEnabled?: boolean
       autoPlaySpeed?: number
       cards: StackCardItem[]

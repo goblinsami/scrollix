@@ -33,7 +33,7 @@
         "linkKey": "editor"
       },
       "stackCards": {
-        "textSide": "right",
+        "textSide": "left",
         "autoPlayEnabled": true,
         "autoPlaySpeed": 0.65,
         "angleY": -28,
@@ -80,7 +80,9 @@
             "overlayIntensity": 34
           }
         ],
-        "layoutSidePadding": 560
+        "layoutSidePadding": 546,
+        "stackDirection": "right",
+        "textOffsetX": 310
       },
       "nextPanelPosition": "down"
     }
