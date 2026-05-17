@@ -93,6 +93,38 @@
         />
       </div>
     </div>
+    <div v-if="showMobileCardsDebug" class="stack-cards-mobile-debug">
+      <label>
+        Mobile cards X: {{ Math.round(debugMobileCardsOffsetX) }}px
+        <input
+          v-model.number="debugMobileCardsOffsetX"
+          type="range"
+          min="-240"
+          max="240"
+          step="1"
+        />
+      </label>
+      <label>
+        Mobile rotate X: {{ debugMobileRotateX.toFixed(1) }}deg
+        <input
+          v-model.number="debugMobileRotateX"
+          type="range"
+          min="-35"
+          max="35"
+          step="0.5"
+        />
+      </label>
+      <label>
+        Mobile rotate Y: {{ debugMobileRotateY.toFixed(1) }}deg
+        <input
+          v-model.number="debugMobileRotateY"
+          type="range"
+          min="-35"
+          max="35"
+          step="0.5"
+        />
+      </label>
+    </div>
   </section>
 </template>
 
@@ -132,6 +164,9 @@ const {
 } = useSlidePanelPresentation(props)
 
 const progress = ref(0)
+const debugMobileCardsOffsetX = ref(-57)
+const debugMobileRotateX = ref(0)
+const debugMobileRotateY = ref(0)
 const stackTitleStyle = computed(() => ({
   ...titleStyle.value,
   width: `min(${titleMaxWidthResolved.value}px, 100%)`,
@@ -157,6 +192,9 @@ const autoPlayEnabled = computed(() => props.stackCards?.autoPlayEnabled ?? STAC
 const autoPlaySpeed = computed(() => props.stackCards?.autoPlaySpeed ?? STACK_CARDS_DEFAULTS.autoPlaySpeed)
 const autoPlayStoppedByInteraction = ref(false)
 const cardsOnly = computed(() => props.stackCards?.cardsOnly ?? STACK_CARDS_DEFAULTS.cardsOnly)
+const showMobileCardsDebug = computed(
+  () => import.meta.env.DEV && FEATURE_FLAGS.enableStackCardsMobileDebugOverlay && !cardsOnly.value
+)
 const layoutSidePadding = computed(
   () => props.stackCards?.layoutSidePadding ?? STACK_CARDS_DEFAULTS.layoutSidePadding
 )
@@ -175,7 +213,10 @@ const cardViewportStyle = computed(() => ({
   '--stack-direction-sign': stackDirection.value === 'left' ? '-1' : '1',
   '--stack-perspective-origin-x': stackDirection.value === 'left' ? '38%' : '62%',
   '--stack-cards-offset-x': `${cardsOffsetX.value}px`,
-  '--stack-cards-offset-y': `${cardsOffsetY.value}px`
+  '--stack-cards-offset-y': `${cardsOffsetY.value}px`,
+  '--stack-debug-mobile-cards-offset-x': `${debugMobileCardsOffsetX.value}px`,
+  '--stack-debug-mobile-rotate-x': `${debugMobileRotateX.value}deg`,
+  '--stack-debug-mobile-rotate-y': `${debugMobileRotateY.value}deg`
 }))
 const stackContentStyle = computed(() => ({
   ...contentStyle.value,
@@ -300,7 +341,7 @@ const getCardStyle = (index: number, color?: string) => {
     '--card-accent': color || '#7c5cff',
     opacity: String(Math.max(0, Math.min(1, opacity))),
     zIndex: String(zIndex),
-    transform: `translate3d(${translateX}px, 0, ${translateZ}px) rotateY(calc((${angleY.value}deg + var(--stack-hover-rotate-y, 0deg)) * var(--stack-direction-sign, 1))) rotateX(${angleX.value}deg) scale(${scale})`
+    transform: `translate3d(${translateX}px, 0, ${translateZ}px) rotateY(calc(((${angleY.value}deg + var(--stack-hover-rotate-y, 0deg)) * var(--stack-direction-sign, 1)) + var(--stack-debug-mobile-rotate-y, 0deg))) rotateX(calc(${angleX.value}deg + var(--stack-debug-mobile-rotate-x, 0deg))) scale(${scale})`
   }
 }
 </script>

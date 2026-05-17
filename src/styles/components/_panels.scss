@@ -614,7 +614,7 @@ body.snap-mode {
     z-index: 1;
     min-height: 100vh;
     height: 100vh;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(var(--stack-debug-mobile-cards-offset-x, 0px), 0, 0) scale(1);
     opacity: 1;
     filter: none;
     pointer-events: auto;
@@ -658,5 +658,25 @@ body.snap-mode {
   .story-card {
     min-height: clamp(240px, 48vh, 430px);
     width: calc(min(360px, 72vw) * var(--card-width-scale, 1));
+  }
+
+  .stack-cards-mobile-debug {
+    position: fixed;
+    left: 10px;
+    bottom: 10px;
+    z-index: 45;
+    padding: 0.5rem 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(8, 12, 20, 0.78);
+    color: #f3f8ff;
+    font-size: 0.72rem;
+    backdrop-filter: blur(6px);
+  }
+
+  .stack-cards-mobile-debug input[type='range'] {
+    width: 180px;
+    display: block;
+    margin-top: 0.35rem;
   }
 }
