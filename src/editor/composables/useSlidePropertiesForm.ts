@@ -67,9 +67,33 @@ const clampOverlayIntensity = (value: number) => {
 
 const cloneStackCards = (cards?: StackCardItem[]) =>
   (cards && cards.length ? cards : STACK_CARDS_DEFAULT_CARDS).map((card) => ({
+    id: card.id ?? `stack-card-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    eyebrow: card.eyebrow ?? '',
     title: card.title ?? '',
     description: card.description ?? '',
-    color: card.color ?? '#0f172a',
+    useMarkdown: card.useMarkdown ?? false,
+    titleSize: normalizeTextSize(card.titleSize, DEFAULT_TEXT_SIZE),
+    eyebrowSize: normalizeTextSize(card.eyebrowSize, DEFAULT_TEXT_SIZE),
+    descriptionSize: normalizeTextSize(card.descriptionSize, DEFAULT_TEXT_SIZE),
+    contentAlign: card.contentAlign ?? DEFAULT_CONTENT_ALIGN,
+    contentWidthMode: card.contentWidthMode ?? DEFAULT_CONTENT_WIDTH_MODE,
+    eyebrowTitleGap: clampNumber(card.eyebrowTitleGap, MIN_EYEBROW_TITLE_GAP, MAX_EYEBROW_TITLE_GAP, DEFAULT_EYEBROW_TITLE_GAP),
+    titleDescriptionGap: clampNumber(card.titleDescriptionGap, MIN_EYEBROW_TITLE_GAP, MAX_EYEBROW_TITLE_GAP, DEFAULT_TITLE_DESCRIPTION_GAP),
+    titleLineHeight: clampNumber(card.titleLineHeight, MIN_TITLE_LINE_HEIGHT, MAX_TITLE_LINE_HEIGHT, DEFAULT_TITLE_LINE_HEIGHT),
+    descriptionLineHeight: clampNumber(card.descriptionLineHeight, MIN_DESCRIPTION_LINE_HEIGHT, MAX_DESCRIPTION_LINE_HEIGHT, DEFAULT_DESCRIPTION_LINE_HEIGHT),
+    eyebrowLetterSpacing: clampNumber(card.eyebrowLetterSpacing, MIN_EYEBROW_LETTER_SPACING, MAX_EYEBROW_LETTER_SPACING, DEFAULT_EYEBROW_LETTER_SPACING),
+    contentMaxWidth: clampNumber(card.contentMaxWidth, MIN_CONTENT_MAX_WIDTH, MAX_CONTENT_MAX_WIDTH, DEFAULT_CONTENT_MAX_WIDTH),
+    contentSidePadding: clampNumber(card.contentSidePadding, MIN_CONTENT_SIDE_PADDING, MAX_CONTENT_SIDE_PADDING, DEFAULT_CONTENT_SIDE_PADDING),
+    titleMaxWidth: clampNumber(card.titleMaxWidth, MIN_TITLE_MAX_WIDTH, MAX_TITLE_MAX_WIDTH, DEFAULT_TITLE_MAX_WIDTH),
+    descriptionMaxWidth: clampNumber(card.descriptionMaxWidth, MIN_DESCRIPTION_MAX_WIDTH, MAX_DESCRIPTION_MAX_WIDTH, DEFAULT_DESCRIPTION_MAX_WIDTH),
+    panelColor: card.panelColor ?? (card as unknown as { color?: string }).color ?? '#0f172a',
+    logo: card.logo ?? '',
+    logoSize: normalizeTextSize(card.logoSize, DEFAULT_TEXT_SIZE),
+    logoTintEnabled: card.logoTintEnabled ?? true,
+    logoTintColor: card.logoTintColor ?? DEFAULT_LOGO_TINT_COLOR,
+    backgroundGradient: card.backgroundGradient,
+    overlayEnabled: card.overlayEnabled ?? DEFAULT_OVERLAY_ENABLED_WITHOUT_IMAGE,
+    overlayIntensity: clampOverlayIntensity(card.overlayIntensity ?? DEFAULT_OVERLAY_INTENSITY),
     image: card.image ?? ''
   }))
 
@@ -156,6 +180,9 @@ const copyPanelToDraft = (panel: Panel, draft: Panel) => {
     panel.stackCards
       ? {
         textSide: panel.stackCards.textSide ?? STACK_CARDS_DEFAULTS.textSide,
+        stackDirection: panel.stackCards.stackDirection ?? STACK_CARDS_DEFAULTS.stackDirection,
+        cardsOnly: panel.stackCards.cardsOnly ?? STACK_CARDS_DEFAULTS.cardsOnly,
+        layoutSidePadding: panel.stackCards.layoutSidePadding ?? STACK_CARDS_DEFAULTS.layoutSidePadding,
         angleY: panel.stackCards.angleY ?? STACK_CARDS_DEFAULTS.angleY,
         angleX: panel.stackCards.angleX ?? STACK_CARDS_DEFAULTS.angleX,
         cardGap: panel.stackCards.cardGap ?? STACK_CARDS_DEFAULTS.cardGap,
@@ -169,6 +196,9 @@ const copyPanelToDraft = (panel: Panel, draft: Panel) => {
       }
       : {
         textSide: STACK_CARDS_DEFAULTS.textSide,
+        stackDirection: STACK_CARDS_DEFAULTS.stackDirection,
+        cardsOnly: STACK_CARDS_DEFAULTS.cardsOnly,
+        layoutSidePadding: STACK_CARDS_DEFAULTS.layoutSidePadding,
         angleY: STACK_CARDS_DEFAULTS.angleY,
         angleX: STACK_CARDS_DEFAULTS.angleX,
         cardGap: STACK_CARDS_DEFAULTS.cardGap,
@@ -225,6 +255,9 @@ export function useSlidePropertiesForm(options: UseSlidePropertiesFormOptions) {
     cta: undefined,
     stackCards: {
       textSide: STACK_CARDS_DEFAULTS.textSide,
+      stackDirection: STACK_CARDS_DEFAULTS.stackDirection,
+      cardsOnly: STACK_CARDS_DEFAULTS.cardsOnly,
+      layoutSidePadding: STACK_CARDS_DEFAULTS.layoutSidePadding,
       angleY: STACK_CARDS_DEFAULTS.angleY,
       angleX: STACK_CARDS_DEFAULTS.angleX,
       cardGap: STACK_CARDS_DEFAULTS.cardGap,

@@ -32,7 +32,7 @@ import {
 } from '../constants/slideStyle'
 import { MAX_TRANSITION_SPEED, MIN_TRANSITION_SPEED } from '../constants/transitionSpeed'
 import { MAX_AUTOPLAY_SPEED, MIN_AUTOPLAY_SPEED } from '../constants/autoPlaySpeed'
-import { STACK_CARDS_AUTOPLAY_LIMITS } from '../constants/stackCards'
+import { STACK_CARDS_AUTOPLAY_LIMITS, STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS } from '../constants/stackCards'
 
 const VALID_DIRECTIONS: Direction[] = [Direction.Up, Direction.Down, Direction.Left, Direction.Right]
 const VALID_TEXT_SIZES = [...TextSizeValues]
@@ -326,6 +326,7 @@ export function validateContentSchema(raw: unknown): ValidationResult {
         const numberFields = [
           'angleY',
           'angleX',
+          'layoutSidePadding',
           'cardGap',
           'frontFadeWindow',
           'cardSize',
@@ -341,6 +342,26 @@ export function validateContentSchema(raw: unknown): ValidationResult {
         })
         if (settings.textSide !== undefined && settings.textSide !== 'left' && settings.textSide !== 'right') {
           errors.push(`${label}: stackCards.textSide debe ser "left" o "right".`)
+        }
+        if (
+          settings.stackDirection !== undefined &&
+          settings.stackDirection !== 'left' &&
+          settings.stackDirection !== 'right'
+        ) {
+          errors.push(`${label}: stackCards.stackDirection debe ser "left" o "right".`)
+        }
+        if (settings.cardsOnly !== undefined && typeof settings.cardsOnly !== 'boolean') {
+          errors.push(`${label}: stackCards.cardsOnly debe ser boolean.`)
+        }
+        if (typeof settings.layoutSidePadding === 'number') {
+          if (
+            settings.layoutSidePadding < STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS.min ||
+            settings.layoutSidePadding > STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS.max
+          ) {
+            errors.push(
+              `${label}: stackCards.layoutSidePadding fuera de rango (${STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS.min}-${STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS.max}).`
+            )
+          }
         }
         if (settings.autoPlayEnabled !== undefined && typeof settings.autoPlayEnabled !== 'boolean') {
           errors.push(`${label}: stackCards.autoPlayEnabled debe ser boolean.`)
@@ -365,9 +386,16 @@ export function validateContentSchema(raw: unknown): ValidationResult {
               return
             }
             const item = card as Record<string, unknown>
+            if (typeof item.id !== 'string' || item.id.trim() === '') errors.push(`${cardLabel}.id debe ser string.`)
+            if (typeof item.eyebrow !== 'string') errors.push(`${cardLabel}.eyebrow debe ser string.`)
             if (typeof item.title !== 'string') errors.push(`${cardLabel}.title debe ser string.`)
             if (typeof item.description !== 'string') errors.push(`${cardLabel}.description debe ser string.`)
-            if (typeof item.color !== 'string') errors.push(`${cardLabel}.color debe ser string.`)
+            if (item.panelColor !== undefined && typeof item.panelColor !== 'string') {
+              errors.push(`${cardLabel}.panelColor debe ser string.`)
+            }
+            if (item.color !== undefined && typeof item.color !== 'string') {
+              errors.push(`${cardLabel}.color legado debe ser string.`)
+            }
             if (item.image !== undefined && typeof item.image !== 'string') {
               errors.push(`${cardLabel}.image debe ser string.`)
             }

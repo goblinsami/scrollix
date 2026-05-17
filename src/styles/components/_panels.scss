@@ -380,11 +380,22 @@ body.snap-mode {
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 48vw);
+  grid-template-columns: minmax(420px, 1fr) minmax(320px, 48vw);
   align-items: center;
-  gap: min(var(--content-side-padding), 18vw);
+  gap: clamp(1rem, 3.2vw, 2.6rem);
   height: 100%;
   padding: clamp(1rem, 4vw, 3rem);
+  --stack-cards-layout-side-padding: 48px;
+}
+
+.panel--stack-cards .stack-cards-layout--text-left {
+  padding-left: clamp(1rem, 4vw, 3rem);
+  padding-right: clamp(1rem, 4vw, 3rem);
+}
+
+.panel--stack-cards .stack-cards-layout--text-right {
+  padding-left: clamp(1rem, 4vw, 3rem);
+  padding-right: clamp(1rem, 4vw, 3rem);
 }
 
 .panel--stack-cards .stack-cards-layout--text-right {
@@ -393,6 +404,22 @@ body.snap-mode {
 
 .panel--stack-cards .stack-cards-layout--text-right .content {
   order: 2;
+}
+
+.panel--stack-cards .stack-cards-layout .content {
+  min-width: 0;
+}
+
+.panel--stack-cards .stack-cards-layout--text-left .cards-viewport {
+  margin-left: calc(-1 * var(--stack-cards-layout-side-padding, 48px));
+}
+
+.panel--stack-cards .stack-cards-layout--text-right .cards-viewport {
+  margin-right: calc(-1 * var(--stack-cards-layout-side-padding, 48px));
+}
+
+.panel--stack-cards .stack-cards-layout--cards-only {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .panel--stack-cards .content h1 {
@@ -404,7 +431,7 @@ body.snap-mode {
   height: min(640px, 76vh);
   perspective: 1900px;
   transform-style: preserve-3d;
-  perspective-origin: 62% 48%;
+  perspective-origin: var(--stack-perspective-origin-x, 62%) 48%;
   display: grid;
   place-items: center;
   overflow: visible;
@@ -432,6 +459,7 @@ body.snap-mode {
   will-change: transform, opacity;
   transition: transform 180ms linear, opacity 180ms linear;
   outline: 1px solid transparent;
+  overflow: hidden;
 }
 
 .step {
@@ -442,6 +470,17 @@ body.snap-mode {
 
 .story-card h3,
 .story-card p {
+  margin: 0;
+}
+
+.story-card__content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.story-card__description {
   margin: 0;
 }
 
@@ -467,6 +506,16 @@ body.snap-mode {
   object-fit: cover;
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.card-image--bg {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  margin-top: 0;
+  border-radius: 0;
+  z-index: 0;
+  opacity: 0.4;
 }
 
 @media (max-width: 960px) {

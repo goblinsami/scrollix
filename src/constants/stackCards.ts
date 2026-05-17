@@ -10,6 +10,7 @@ export const STACK_CARDS_CONTROL_LIMITS = {
   wheelSensitivity: { min: 0.4, max: 4, step: 0.1 }
 } as const
 export const STACK_CARDS_AUTOPLAY_LIMITS = { min: 0.4, max: 8, step: 0.1 } as const
+export const STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS = { min: 0, max: 560, step: 2 } as const
 
 export const STACK_CARDS_CONTROLS = [
   { key: 'angleY', label: 'Y', ...STACK_CARDS_CONTROL_LIMITS.angleY },
@@ -22,13 +23,16 @@ export const STACK_CARDS_CONTROLS = [
 ] as const
 
 export const STACK_CARDS_DEFAULT_CARDS: StackCardItem[] = [
-  { title: 'Card 1', description: 'Description 1', color: '#0f172a' },
-  { title: 'Card 2', description: 'Description 2', color: '#1d4ed8' },
-  { title: 'Card 3', description: 'Description 3', color: '#0ea5e9' }
+  { id: 'stack-card-1', title: 'Card 1', eyebrow: 'STEP 01', description: 'Description 1', panelColor: '#0f172a' },
+  { id: 'stack-card-2', title: 'Card 2', eyebrow: 'STEP 02', description: 'Description 2', panelColor: '#1d4ed8' },
+  { id: 'stack-card-3', title: 'Card 3', eyebrow: 'STEP 03', description: 'Description 3', panelColor: '#0ea5e9' }
 ]
 
 export const STACK_CARDS_DEFAULTS = {
   textSide: 'left' as const,
+  stackDirection: 'right' as const,
+  cardsOnly: false,
+  layoutSidePadding: 48,
   angleY: -30,
   angleX: 0,
   cardGap: 1,

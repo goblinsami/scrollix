@@ -12,14 +12,17 @@
       :show-watermark="embedWatermarkEnabled"
       :enable-ctas="embedEnableCtas"
     />
+    <RuntimeDiagnosticsPanel :enabled="showRuntimeDiagnostics" />
   </main>
 </template>
 
 <script setup lang="ts">
 import '../styles/embed.scss'
+import RuntimeDiagnosticsPanel from '@/components/RuntimeDiagnosticsPanel.vue'
 import StoryRenderer from '../core/StoryRenderer.vue'
 import { useStoryRuntime } from '../core/useStoryRuntime'
 import { useEmbedStoryLoader } from '@/features/embed/composables/useEmbedStoryLoader'
+import { FEATURE_FLAGS } from '@/config/featureFlags'
 
 const {
   storySchema,
@@ -44,6 +47,8 @@ const setSnapShellEl = (element: HTMLElement | null) => {
 const setSnapStageEl = (element: HTMLElement | null) => {
   snapStageRef.value = element
 }
+
+const showRuntimeDiagnostics = import.meta.env.DEV && FEATURE_FLAGS.enableRuntimeDiagnostics
 </script>
 
 

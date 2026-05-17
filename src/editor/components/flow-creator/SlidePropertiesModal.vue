@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div
     v-if="open"
     class="block-settings-overlay"
@@ -18,572 +18,18 @@
         </button>
       </div>
 
-      <CollapsibleSection
-        title="Text Content"
-        panel-id="text-content-panel-body"
-        :open="isTextContentOpen"
-        body-class="text-style-panel__body text-content-panel__body"
-        @toggle="togglePanel('textContent')"
-      >
-          <label>
-            Template
-            <select v-model="draft.templateType" @change="save">
-              <option value="scroll">Scroll</option>
-              <option value="stack-cards">Stack Cards</option>
-            </select>
-          </label>
-
-          <label>
-            Name
-            <div class="text-input-row">
-              <input v-if="!draft.useMarkdown" v-model="draft.title" type="text" @input="save" />
-              <MarkdownField
-                v-else
-                :model-value="draft.title"
-                :rows="3"
-                @update:model-value="(value) => { draft.title = value; save() }"
-              />
-              <TextSizeSelector
-                :model-value="draft.titleSize ?? DEFAULT_TEXT_SIZE"
-                @update:model-value="(value) => { draft.titleSize = value; save() }"
-              />
-            </div>
-          </label>
-
-          <label>
-            Eyebrow
-            <div class="text-input-row">
-              <input v-if="!draft.useMarkdown" v-model="draft.eyebrow" type="text" @input="save" />
-              <MarkdownField
-                v-else
-                :model-value="draft.eyebrow"
-                :rows="2"
-                @update:model-value="(value) => { draft.eyebrow = value; save() }"
-              />
-              <TextSizeSelector
-                :model-value="draft.eyebrowSize ?? DEFAULT_TEXT_SIZE"
-                @update:model-value="(value) => { draft.eyebrowSize = value; save() }"
-              />
-            </div>
-          </label>
-
-          <label>
-            Description
-            <div class="text-input-row">
-              <textarea v-if="!draft.useMarkdown" v-model="draft.description" rows="3" @input="save" />
-              <MarkdownField
-                v-else
-                :model-value="draft.description ?? ''"
-                :rows="6"
-                @update:model-value="(value) => { draft.description = value; save() }"
-              />
-              <TextSizeSelector
-                :model-value="draft.descriptionSize ?? DEFAULT_TEXT_SIZE"
-                @update:model-value="(value) => { draft.descriptionSize = value; save() }"
-              />
-            </div>
-          </label>
-
-          <label class="block-settings__toggle">
-            <div class="block-settings__toggle-row">
-              <input
-                v-model="draft.useMarkdown"
-                type="checkbox"
-                class="block-settings__toggle-input"
-                @change="save"
-              />
-              <span class="block-settings__toggle-switch" aria-hidden="true" />
-              <span class="block-settings__toggle-text">Enable markdown</span>
-            </div>
-          </label>
-
-          <label>
-            Text Align
-            <select v-model="draft.contentAlign" @change="save">
-              <option
-                v-for="option in contentAlignOptions"
-                :key="option.value"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
-
-          <label class="block-settings__toggle">
-            <span>Content Width</span>
-            <div class="block-settings__toggle-row">
-              <input
-                :checked="isContentWidthContained"
-                type="checkbox"
-                class="block-settings__toggle-input"
-                @change="onContentWidthModeToggle"
-              />
-              <span class="block-settings__toggle-switch" aria-hidden="true" />
-              <span class="block-settings__toggle-text">
-                {{ isContentWidthContained ? 'Contained' : 'Expanded (light padding)' }}
-              </span>
-            </div>
-          </label>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        v-if="draft.templateType === 'stack-cards' && draft.stackCards"
-        title="Stack Cards"
-        panel-id="stack-cards-panel-body"
-        :open="isStackCardsOpen"
-        body-class="text-style-panel__body text-content-panel__body"
-        @toggle="togglePanel('stackCards')"
-      >
-          <label>
-            Text Side
-            <select v-model="draft.stackCards.textSide" @change="save">
-              <option value="left">Left</option>
-              <option value="right">Right</option>
-            </select>
-          </label>
-          <label class="block-settings__toggle">
-            <div class="block-settings__toggle-row">
-              <input
-                v-model="draft.stackCards.autoPlayEnabled"
-                type="checkbox"
-                class="block-settings__toggle-input"
-                @change="save"
-              />
-              <span class="block-settings__toggle-switch" aria-hidden="true" />
-              <span class="block-settings__toggle-text">Autoplay cards</span>
-            </div>
-          </label>
-          <label>
-            Autoplay speed (s)
-            <div class="text-style-panel__range">
-              <input
-                v-model.number="draft.stackCards.autoPlaySpeed"
-                type="range"
-                :min="STACK_CARDS_AUTOPLAY_LIMITS.min"
-                :max="STACK_CARDS_AUTOPLAY_LIMITS.max"
-                :step="STACK_CARDS_AUTOPLAY_LIMITS.step"
-                :disabled="!draft.stackCards.autoPlayEnabled"
-                @input="save"
-              />
-              <span>{{ formatNumber(Number(draft.stackCards.autoPlaySpeed), 2) }}</span>
-            </div>
-          </label>
-          <label v-for="control in stackCardControls" :key="control.key">
-            {{ control.label }}
-            <div class="text-style-panel__range">
-              <input
-                v-model.number="draft.stackCards[control.key]"
-                type="range"
-                :min="control.min"
-                :max="control.max"
-                :step="control.step"
-                @input="save"
-              />
-              <span>{{ formatNumber(Number(draft.stackCards[control.key]), 2) }}</span>
-            </div>
-          </label>
-
-          <div v-for="(card, cardIndex) in draft.stackCards.cards" :key="`stack-card-item-${cardIndex}`" class="stack-card-editor">
-            <label>
-              Card {{ cardIndex + 1 }} title
-              <input v-model="card.title" type="text" @input="save" />
-            </label>
-            <label>
-              Card {{ cardIndex + 1 }} description
-              <textarea v-model="card.description" rows="2" @input="save" />
-            </label>
-            <label>
-              Card {{ cardIndex + 1 }} color
-              <div class="logo-row__tint">
-                <input v-model="card.color" type="color" @input="save" />
-                <input v-model="card.color" type="text" @input="save" />
-              </div>
-            </label>
-            <label>
-              Card {{ cardIndex + 1 }} image
-              <input v-model="card.image" type="text" placeholder="https://..." @input="save" />
-            </label>
-            <button
-              type="button"
-              class="ui-btn ui-btn--danger"
-              :disabled="draft.stackCards.cards.length <= 1"
-              @click="removeStackCard(cardIndex)"
-            >
-              Remove card
-            </button>
-          </div>
-
-          <button type="button" class="ui-btn" @click="addStackCard">Add card</button>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        v-if="enableCtas"
-        title="CTAs"
-        panel-id="ctas-panel-body"
-        :open="isCtasOpen"
-        body-class="text-style-panel__body text-content-panel__body"
-        @toggle="togglePanel('ctas')"
-      >
-          <label>
-            CTA Text
-            <input
-              v-model="draft.ctaText"
-              type="text"
-              placeholder="Start Creating"
-              @input="save"
-            />
-          </label>
-          <label>
-            CTA Link
-            <input
-              v-model="draft.ctaLink"
-              type="text"
-              placeholder="https://example.com"
-              @input="save"
-            />
-          </label>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        title="Text Style"
-        panel-id="text-style-panel-body"
-        :open="isTextStyleOpen"
-        @toggle="togglePanel('textStyle')"
-      >
-          <div class="text-style-panel__grid">
-            <label class="text-style-panel__field text-style-panel__field--wide">
-              <span>Text gap</span>
-              <div class="text-style-panel__range">
-                <input
-                  :value="textGapValue"
-                  type="range"
-                  :min="textStyleRanges.textGap.min"
-                  :max="textStyleRanges.textGap.max"
-                  :step="textStyleRanges.textGap.step"
-                  @input="onTextGapInput"
-                />
-                <span>{{ formatNumber(textGapValue, 0) }}px</span>
-              </div>
-            </label>
-
-            <label class="text-style-panel__field">
-              <span>Title line</span>
-              <div class="text-style-panel__range">
-                <input
-                  v-model.number="draft.titleLineHeight"
-                  type="range"
-                  :min="textStyleRanges.titleLineHeight.min"
-                  :max="textStyleRanges.titleLineHeight.max"
-                  :step="textStyleRanges.titleLineHeight.step"
-                  @input="save"
-                />
-                <span>{{ formatNumber(draft.titleLineHeight, 2) }}</span>
-              </div>
-            </label>
-
-            <label class="text-style-panel__field">
-              <span>Subtitle line</span>
-              <div class="text-style-panel__range">
-                <input
-                  v-model.number="draft.descriptionLineHeight"
-                  type="range"
-                  :min="textStyleRanges.descriptionLineHeight.min"
-                  :max="textStyleRanges.descriptionLineHeight.max"
-                  :step="textStyleRanges.descriptionLineHeight.step"
-                  @input="save"
-                />
-                <span>{{ formatNumber(draft.descriptionLineHeight, 2) }}</span>
-              </div>
-            </label>
-
-            <label class="text-style-panel__field">
-              <span>Eyebrow spacing</span>
-              <div class="text-style-panel__range">
-                <input
-                  v-model.number="draft.eyebrowLetterSpacing"
-                  type="range"
-                  :min="textStyleRanges.eyebrowLetterSpacing.min"
-                  :max="textStyleRanges.eyebrowLetterSpacing.max"
-                  :step="textStyleRanges.eyebrowLetterSpacing.step"
-                  @input="save"
-                />
-                <span>{{ formatNumber(draft.eyebrowLetterSpacing, 2) }}em</span>
-              </div>
-            </label>
-
-            <label class="text-style-panel__field">
-              <span>Content width</span>
-              <div class="text-style-panel__range">
-                <input
-                  v-model.number="draft.contentMaxWidth"
-                  type="range"
-                  :min="textStyleRanges.contentMaxWidth.min"
-                  :max="textStyleRanges.contentMaxWidth.max"
-                  :step="textStyleRanges.contentMaxWidth.step"
-                  @input="save"
-                />
-                <span>{{ formatNumber(draft.contentMaxWidth, 0) }}px</span>
-              </div>
-            </label>
-
-            <label v-if="isContentWidthContained" class="text-style-panel__field">
-              <span>Side padding</span>
-              <div class="text-style-panel__range">
-                <input
-                  v-model.number="draft.contentSidePadding"
-                  type="range"
-                  :min="textStyleRanges.contentSidePadding.min"
-                  :max="textStyleRanges.contentSidePadding.max"
-                  :step="textStyleRanges.contentSidePadding.step"
-                  @input="save"
-                />
-                <span>{{ formatNumber(draft.contentSidePadding, 0) }}px</span>
-              </div>
-            </label>
-
-            <label class="text-style-panel__field">
-              <span>Title width</span>
-              <div class="text-style-panel__range">
-                <input
-                  v-model.number="draft.titleMaxWidth"
-                  type="range"
-                  :min="textStyleRanges.titleMaxWidth.min"
-                  :max="textStyleRanges.titleMaxWidth.max"
-                  :step="textStyleRanges.titleMaxWidth.step"
-                  @input="save"
-                />
-                <span>{{ formatNumber(draft.titleMaxWidth, 0) }}px</span>
-              </div>
-            </label>
-
-            <label class="text-style-panel__field">
-              <span>Subtitle width</span>
-              <div class="text-style-panel__range">
-                <input
-                  v-model.number="draft.descriptionMaxWidth"
-                  type="range"
-                  :min="textStyleRanges.descriptionMaxWidth.min"
-                  :max="textStyleRanges.descriptionMaxWidth.max"
-                  :step="textStyleRanges.descriptionMaxWidth.step"
-                  @input="save"
-                />
-                <span>{{ formatNumber(draft.descriptionMaxWidth, 0) }}px</span>
-              </div>
-            </label>
-          </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        title="Fill"
-        panel-id="gradient-editor-panel-body"
-        :open="isGradientEditorOpen"
-        body-class="text-style-panel__body gradient-editor"
-        @toggle="togglePanel('gradientEditor')"
-      >
-          <label>
-            Slide Color
-            <div class="logo-row__tint">
-              <input
-                :value="draft.panelColor || DEFAULT_SLIDE_COLOR"
-                type="color"
-                @input="onPanelColorInput"
-              />
-              <input
-                :value="draft.panelColor"
-                type="text"
-                :placeholder="DEFAULT_SLIDE_COLOR"
-                @input="onPanelColorInput"
-              />
-            </div>
-          </label>
-
-          <label>
-            Type
-            <select v-model="gradientType" @change="applyGradient">
-              <option value="linear">Linear</option>
-              <option value="radial">Radial</option>
-              <option value="conic">Conic</option>
-            </select>
-          </label>
-
-          <label>
-            Orientation
-            <select v-model="gradientOrientation" @change="applyGradient">
-              <option
-                v-for="option in orientationOptions"
-                :key="option.value"
-                :value="option.value"
-              >
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
-
-          <div class="gradient-editor__colors">
-            <label
-              v-for="(_color, index) in gradientColors"
-              :key="`gradient-color-${index}`"
-            >
-              Color {{ index + 1 }}
-              <div class="logo-row__tint">
-                <input
-                  v-model="gradientColors[index]"
-                  type="color"
-                  @input="applyGradient"
-                />
-                <input
-                  v-model="gradientColors[index]"
-                  type="text"
-                  @input="applyGradient"
-                />
-              </div>
-            </label>
-          </div>
-
-          <div
-            class="gradient-editor__preview"
-            :style="{ background: draft.backgroundGradient || draft.panelColor || DEFAULT_SLIDE_COLOR }"
-          />
-
-          <div class="gradient-editor__actions">
-            <button type="button" class="ui-btn" @click="applyGradient">Apply gradient</button>
-            <button type="button" class="ui-btn" @click="clearGradient">Clear gradient</button>
-          </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        title="Logo"
-        panel-id="logo-editor-panel-body"
-        :open="isLogoEditorOpen"
-        body-class="text-style-panel__body logo-row"
-        @toggle="togglePanel('logoEditor')"
-      >
-          <input
-            v-model="draft.logo"
-            type="text"
-            :placeholder="DROP_LOGO_EMPTY_TEXT"
-            @input="save"
-          />
-          <input
-            ref="logoFileInputRef"
-            type="file"
-            accept="image/*"
-            class="image-dropzone__input"
-            @change="onLogoFileChange"
-          />
-          <div class="logo-row__actions">
-            <button type="button" class="ui-btn" @click="openLogoFilePicker">Choose Logo</button>
-            <button v-if="draft.logo" type="button" class="ui-btn" @click="clearLogo">Remove</button>
-          </div>
-          <label>
-            Logo Size
-            <TextSizeSelector
-              :model-value="draft.logoSize ?? DEFAULT_TEXT_SIZE"
-              @update:model-value="(value) => { draft.logoSize = value; save() }"
-            />
-          </label>
-          <label class="block-settings__toggle">
-            <div class="block-settings__toggle-row">
-              <input
-                v-model="draft.logoTintEnabled"
-                type="checkbox"
-                class="block-settings__toggle-input"
-                :disabled="!draft.logo"
-                @change="save"
-              />
-              <span class="block-settings__toggle-switch" aria-hidden="true" />
-              <span class="block-settings__toggle-text">Tint logo</span>
-            </div>
-          </label>
-          <div class="logo-row__tint">
-            <input
-              v-model="draft.logoTintColor"
-              type="color"
-              :disabled="!draft.logo || !draft.logoTintEnabled"
-              @input="save"
-            />
-            <input
-              v-model="draft.logoTintColor"
-              type="text"
-              :disabled="!draft.logo || !draft.logoTintEnabled"
-              :placeholder="DEFAULT_LOGO_TINT_COLOR"
-              @input="save"
-            />
-          </div>
-          <small>{{ draft.logo ? DROP_LOGO_LOADED_TEXT : 'No logo (default)' }}</small>
-      </CollapsibleSection>
-
-      <CollapsibleSection
-        title="Image"
-        panel-id="image-editor-panel-body"
-        :open="isImageEditorOpen"
-        body-class="text-style-panel__body image-editor"
-        @toggle="togglePanel('imageEditor')"
-      >
-          <label>
-            Panel Image
-            <p v-if="!canUploadImages" class="upgrade-hint">Login with Google to upload persistent images.</p>
-            <div
-              class="image-dropzone"
-              :class="{ 'image-dropzone--active': isDragging }"
-              @dragenter.prevent="isDragging = true"
-              @dragover.prevent="isDragging = true"
-              @dragleave.prevent="isDragging = false"
-              @drop.prevent="onDropImage"
-            >
-              <input
-                ref="fileInputRef"
-                type="file"
-                accept="image/*"
-                class="image-dropzone__input"
-                :disabled="!canUploadImages"
-                @change="onFileChange"
-              />
-              <div class="image-dropzone__content">
-                <p>{{ draft.image ? DROP_IMAGE_LOADED_TEXT : DROP_IMAGE_EMPTY_TEXT }}</p>
-                <div class="image-dropzone__actions">
-                  <button type="button" class="ui-btn" :disabled="!canUploadImages" @click="openFilePicker">Choose Image</button>
-                  <button type="button" class="ui-btn" :disabled="!canUploadImages" @click="setRandomImage">Random Image</button>
-                  <button v-if="draft.image" type="button" class="ui-btn" :disabled="!canUploadImages" @click="clearImage">Remove</button>
-                </div>
-              </div>
-            </div>
-          </label>
-
-          <label>
-            Image Overlay
-            <div class="overlay-controls">
-              <label class="block-settings__toggle">
-                <div class="block-settings__toggle-row">
-                  <input
-                    v-model="draft.overlayEnabled"
-                    type="checkbox"
-                    class="block-settings__toggle-input"
-                    :disabled="!draft.image"
-                    @change="save"
-                  />
-                  <span class="block-settings__toggle-switch" aria-hidden="true" />
-                  <span class="block-settings__toggle-text">
-                    {{ draft.image ? 'Show overlay' : 'Add image to enable' }}
-                  </span>
-                </div>
-              </label>
-              <div class="overlay-intensity">
-                <input
-                  v-model.number="draft.overlayIntensity"
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  :disabled="!draft.image || !draft.overlayEnabled"
-                  @input="save"
-                />
-                <span>{{ Math.max(0, Math.min(100, Number(draft.overlayIntensity ?? 55))) }}%</span>
-              </div>
-            </div>
-          </label>
-      </CollapsibleSection>
+      <ItemContentEditor
+        v-if="draft"
+        :model-value="draft"
+        :default-text-size="DEFAULT_TEXT_SIZE"
+        :enable-ctas="enableCtas"
+        :can-upload-images="canUploadImages"
+        :show-template-selector="true"
+        :enable-stack-cards="true"
+        id-prefix="slide-main"
+        :text-content-labels="mainContentLabels"
+        @update:model-value="onDraftUpdate"
+      />
 
       <div class="block-settings__actions">
         <button class="ui-btn ui-btn--danger" @click="deleteAndClose">Delete Slide</button>
@@ -595,24 +41,9 @@
 </template>
 
 <script setup lang="ts">
-import { toRef } from 'vue'
+import { reactive, toRef, watch } from 'vue'
 import { TextSize, type Panel } from '../../../types/navigation'
-import { STACK_CARDS_AUTOPLAY_LIMITS, STACK_CARDS_CONTROLS } from '../../../constants/stackCards'
-import TextSizeSelector from '../atoms/TextSizeSelector.vue'
-import MarkdownField from '../atoms/MarkdownField.vue'
-import CollapsibleSection from '../atoms/CollapsibleSection.vue'
-import { useSlidePropertiesModalController } from '../../composables/useSlidePropertiesModalController'
-import {
-  DEFAULT_LOGO_TINT_COLOR,
-  DEFAULT_SLIDE_COLOR,
-  contentAlignOptions,
-  DROP_IMAGE_EMPTY_TEXT,
-  DROP_IMAGE_LOADED_TEXT,
-  DROP_LOGO_EMPTY_TEXT,
-  DROP_LOGO_LOADED_TEXT,
-  textStyleRanges,
-  useSlidePropertiesForm
-} from '../../composables/useSlidePropertiesForm'
+import ItemContentEditor from './ItemContentEditor.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -637,81 +68,56 @@ const emit = defineEmits<{
 }>()
 
 const DEFAULT_TEXT_SIZE = TextSize.Medium
-
-const {
-  draft,
-  fileInputRef,
-  logoFileInputRef,
-  isDragging,
-  openFilePicker,
-  openLogoFilePicker,
-  onFileChange,
-  onLogoFileChange,
-  onDropImage,
-  clearImage,
-  clearLogo,
-  setRandomImage,
-  save,
-  resetDraft
-} = useSlidePropertiesForm({
-  panelRef: toRef(props, 'panel'),
-  emitSave: (panel) => emit('save', panel)
+const draft = reactive<Panel>({
+  id: '',
+  title: '',
+  eyebrow: '',
+  panelClass: ''
+})
+const original = reactive<Panel>({
+  id: '',
+  title: '',
+  eyebrow: '',
+  panelClass: ''
 })
 
-const {
-  isContentWidthContained,
-  onContentWidthModeToggle,
-  textGapValue,
-  onTextGapInput,
-  isTextContentOpen,
-  isCtasOpen,
-  isTextStyleOpen,
-  isGradientEditorOpen,
-  isLogoEditorOpen,
-  isImageEditorOpen,
-  isStackCardsOpen,
-  gradientType,
-  gradientOrientation,
-  gradientColors,
-  orientationOptions,
-  togglePanel,
-  onPanelColorInput,
-  applyGradient,
-  clearGradient,
-  formatNumber,
-  saveAndClose,
-  cancelAndClose,
-  deleteAndClose
-} = useSlidePropertiesModalController({
-  openRef: toRef(props, 'open'),
-  panelRef: toRef(props, 'panel'),
-  draft,
-  save,
-  resetDraft,
-  emitClose: () => emit('close'),
-  emitSave: (panel) => emit('save', panel),
-  emitDelete: () => emit('delete')
-})
+watch(
+  () => props.panel,
+  (panel) => {
+    if (!panel) return
+    Object.assign(draft, panel)
+    Object.assign(original, panel)
+  },
+  { immediate: true }
+)
 
-const stackCardControls = STACK_CARDS_CONTROLS
+const mainContentLabels = {
+  title: 'Name',
+  eyebrow: 'Eyebrow',
+  description: 'Description',
+  align: 'Text Align',
+  contentWidth: 'Content Width'
+} as const
 
-const addStackCard = () => {
-  if (!draft.stackCards) return
-  draft.stackCards.cards.push({
-    title: `Card ${draft.stackCards.cards.length + 1}`,
-    description: '',
-    color: '#0f172a',
-    image: ''
-  })
-  save()
+const onDraftUpdate = (value: Partial<Panel> & Record<string, unknown>) => {
+  Object.assign(draft, value)
+  emit('save', { ...draft })
 }
 
-const removeStackCard = (index: number) => {
-  if (!draft.stackCards || draft.stackCards.cards.length <= 1) return
-  draft.stackCards.cards.splice(index, 1)
-  save()
+const saveAndClose = () => {
+  emit('save', { ...draft })
+  emit('close')
 }
 
-void fileInputRef
-void logoFileInputRef
+const cancelAndClose = () => {
+  emit('save', { ...original })
+  emit('close')
+}
+
+const deleteAndClose = () => {
+  emit('delete')
+  emit('close')
+}
+
+void toRef
 </script>

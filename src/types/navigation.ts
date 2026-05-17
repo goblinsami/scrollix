@@ -41,43 +41,10 @@ export interface PanelCta {
   linkKey: string
 }
 
-export const TemplateType = {
-  Scroll: 'scroll',
-  StackCards: 'stack-cards'
-} as const
-
-export const TemplateTypeValues = [TemplateType.Scroll, TemplateType.StackCards] as const
-
-export type TemplateType = (typeof TemplateType)[keyof typeof TemplateType]
-
-export interface StackCardItem {
-  title: string
-  description: string
-  color: string
-  image?: string
-}
-
-export interface StackCardsSettings {
-  textSide?: 'left' | 'right'
-  angleY?: number
-  angleX?: number
-  cardGap?: number
-  frontFadeWindow?: number
-  cardSize?: number
-  cardWidth?: number
-  wheelSensitivity?: number
-  autoPlayEnabled?: boolean
-  autoPlaySpeed?: number
-  cards: StackCardItem[]
-}
-
-export interface Panel {
-  id: string
+export interface ItemContent {
   eyebrow: string
   title: string
   description?: string
-  templateType?: TemplateType
-  stackCards?: StackCardsSettings
   useMarkdown?: boolean
   titleSize?: TextSize
   eyebrowSize?: TextSize
@@ -93,7 +60,6 @@ export interface Panel {
   contentSidePadding?: number
   titleMaxWidth?: number
   descriptionMaxWidth?: number
-  panelClass: string
   panelColor?: string
   image?: string
   logo?: string
@@ -106,6 +72,43 @@ export interface Panel {
   ctaText?: string
   ctaLink?: string
   cta?: PanelCta
+}
+
+export const TemplateType = {
+  Scroll: 'scroll',
+  StackCards: 'stack-cards'
+} as const
+
+export const TemplateTypeValues = [TemplateType.Scroll, TemplateType.StackCards] as const
+
+export type TemplateType = (typeof TemplateType)[keyof typeof TemplateType]
+
+export interface StackCardItem extends ItemContent {
+  id: string
+}
+
+export interface StackCardsSettings {
+  textSide?: 'left' | 'right'
+  stackDirection?: 'left' | 'right'
+  cardsOnly?: boolean
+  layoutSidePadding?: number
+  angleY?: number
+  angleX?: number
+  cardGap?: number
+  frontFadeWindow?: number
+  cardSize?: number
+  cardWidth?: number
+  wheelSensitivity?: number
+  autoPlayEnabled?: boolean
+  autoPlaySpeed?: number
+  cards: StackCardItem[]
+}
+
+export interface Panel extends ItemContent {
+  id: string
+  templateType?: TemplateType
+  stackCards?: StackCardsSettings
+  panelClass: string
   nextPanelPosition?: Direction
 }
 
