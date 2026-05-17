@@ -311,6 +311,20 @@
             <span>{{ formatNumber(Number(localValue.stackCards.mobileTouchSensitivity), 2) }}</span>
           </div>
         </label>
+        <label class="block-settings__toggle">
+          <div class="block-settings__toggle-row">
+            <input v-model="localValue.stackCards.mobileTouchHorizontalEnabled" type="checkbox" class="block-settings__toggle-input" @change="emitUpdate" />
+            <span class="block-settings__toggle-switch" aria-hidden="true" />
+            <span class="block-settings__toggle-text">Mobile touch horizontal</span>
+          </div>
+        </label>
+        <label class="block-settings__toggle">
+          <div class="block-settings__toggle-row">
+            <input v-model="localValue.stackCards.mobileTouchVerticalEnabled" type="checkbox" class="block-settings__toggle-input" @change="emitUpdate" />
+            <span class="block-settings__toggle-switch" aria-hidden="true" />
+            <span class="block-settings__toggle-text">Mobile touch vertical</span>
+          </div>
+        </label>
         <label v-for="control in stackCardControls" :key="control.key">
           {{ control.label }}
           <div class="text-style-panel__range">
@@ -400,6 +414,8 @@ const props = withDefaults(defineProps<{
       cardWidth?: number
       wheelSensitivity?: number
       mobileTouchSensitivity?: number
+      mobileTouchHorizontalEnabled?: boolean
+      mobileTouchVerticalEnabled?: boolean
       autoPlayEnabled?: boolean
       autoPlaySpeed?: number
       cards: StackCardItem[]

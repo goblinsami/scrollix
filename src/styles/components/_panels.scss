@@ -437,7 +437,7 @@ body.snap-mode {
   place-items: center;
   overflow: visible;
   transform: translate3d(var(--stack-cards-offset-x, 0px), var(--stack-cards-offset-y, 0px), 0);
-  touch-action: pan-y;
+  touch-action: none;
 }
 
 .story-card {

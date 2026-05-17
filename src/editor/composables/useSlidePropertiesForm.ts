@@ -196,6 +196,10 @@ const copyPanelToDraft = (panel: Panel, draft: Panel) => {
         wheelSensitivity: panel.stackCards.wheelSensitivity ?? STACK_CARDS_DEFAULTS.wheelSensitivity,
         mobileTouchSensitivity:
           panel.stackCards.mobileTouchSensitivity ?? STACK_CARDS_DEFAULTS.mobileTouchSensitivity,
+        mobileTouchHorizontalEnabled:
+          panel.stackCards.mobileTouchHorizontalEnabled ?? STACK_CARDS_DEFAULTS.mobileTouchHorizontalEnabled,
+        mobileTouchVerticalEnabled:
+          panel.stackCards.mobileTouchVerticalEnabled ?? STACK_CARDS_DEFAULTS.mobileTouchVerticalEnabled,
         autoPlayEnabled: panel.stackCards.autoPlayEnabled ?? STACK_CARDS_DEFAULTS.autoPlayEnabled,
         autoPlaySpeed: panel.stackCards.autoPlaySpeed ?? STACK_CARDS_DEFAULTS.autoPlaySpeed,
         cards: cloneStackCards(panel.stackCards.cards)
@@ -217,6 +221,8 @@ const copyPanelToDraft = (panel: Panel, draft: Panel) => {
         cardWidth: STACK_CARDS_DEFAULTS.cardWidth,
         wheelSensitivity: STACK_CARDS_DEFAULTS.wheelSensitivity,
         mobileTouchSensitivity: STACK_CARDS_DEFAULTS.mobileTouchSensitivity,
+        mobileTouchHorizontalEnabled: STACK_CARDS_DEFAULTS.mobileTouchHorizontalEnabled,
+        mobileTouchVerticalEnabled: STACK_CARDS_DEFAULTS.mobileTouchVerticalEnabled,
         autoPlayEnabled: STACK_CARDS_DEFAULTS.autoPlayEnabled,
         autoPlaySpeed: STACK_CARDS_DEFAULTS.autoPlaySpeed,
         cards: cloneStackCards()
@@ -281,6 +287,8 @@ export function useSlidePropertiesForm(options: UseSlidePropertiesFormOptions) {
       cardWidth: STACK_CARDS_DEFAULTS.cardWidth,
       wheelSensitivity: STACK_CARDS_DEFAULTS.wheelSensitivity,
       mobileTouchSensitivity: STACK_CARDS_DEFAULTS.mobileTouchSensitivity,
+      mobileTouchHorizontalEnabled: STACK_CARDS_DEFAULTS.mobileTouchHorizontalEnabled,
+      mobileTouchVerticalEnabled: STACK_CARDS_DEFAULTS.mobileTouchVerticalEnabled,
       autoPlayEnabled: STACK_CARDS_DEFAULTS.autoPlayEnabled,
       autoPlaySpeed: STACK_CARDS_DEFAULTS.autoPlaySpeed,
       cards: cloneStackCards()

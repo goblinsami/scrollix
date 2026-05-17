@@ -2,5 +2,5 @@ export const FEATURE_FLAGS = {
   allowNodeCreation: false,
   enableStackCardsMouseTilt: false,
   enableRuntimeDiagnostics: false,
-  enableStackCardsMobileDebugOverlay: true
+  enableStackCardsMobileDebugOverlay: false
 } as const

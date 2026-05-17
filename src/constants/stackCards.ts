@@ -47,6 +47,8 @@ export const STACK_CARDS_DEFAULTS = {
   cardWidth: 1,
   wheelSensitivity: 1,
   mobileTouchSensitivity: 1,
+  mobileTouchHorizontalEnabled: true,
+  mobileTouchVerticalEnabled: true,
   autoPlayEnabled: false,
   autoPlaySpeed: 1.6
 } as const

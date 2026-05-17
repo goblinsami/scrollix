@@ -104,6 +104,8 @@ export interface StackCardsSettings {
   cardWidth?: number
   wheelSensitivity?: number
   mobileTouchSensitivity?: number
+  mobileTouchHorizontalEnabled?: boolean
+  mobileTouchVerticalEnabled?: boolean
   autoPlayEnabled?: boolean
   autoPlaySpeed?: number
   cards: StackCardItem[]

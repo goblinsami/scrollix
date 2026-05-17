@@ -188,6 +188,16 @@ const wheelSensitivity = computed(() => props.stackCards?.wheelSensitivity ?? ST
 const mobileTouchSensitivity = computed(
   () => props.stackCards?.mobileTouchSensitivity ?? STACK_CARDS_DEFAULTS.mobileTouchSensitivity
 )
+const mobileTouchHorizontalEnabled = computed(
+  () =>
+    props.stackCards?.mobileTouchHorizontalEnabled ??
+    STACK_CARDS_DEFAULTS.mobileTouchHorizontalEnabled
+)
+const mobileTouchVerticalEnabled = computed(
+  () =>
+    props.stackCards?.mobileTouchVerticalEnabled ??
+    STACK_CARDS_DEFAULTS.mobileTouchVerticalEnabled
+)
 const autoPlayEnabled = computed(() => props.stackCards?.autoPlayEnabled ?? STACK_CARDS_DEFAULTS.autoPlayEnabled)
 const autoPlaySpeed = computed(() => props.stackCards?.autoPlaySpeed ?? STACK_CARDS_DEFAULTS.autoPlaySpeed)
 const autoPlayStoppedByInteraction = ref(false)
@@ -246,6 +256,8 @@ const touchTracking = ref<{
   startX: number
   startY: number
   lastX: number
+  lastY: number
+  axis: 'pending' | 'horizontal' | 'vertical'
   isHorizontal: boolean
 } | null>(null)
 
@@ -257,6 +269,8 @@ const onTouchStartCards = (event: TouchEvent) => {
     startX: touch.clientX,
     startY: touch.clientY,
     lastX: touch.clientX,
+    lastY: touch.clientY,
+    axis: 'pending',
     isHorizontal: false
   }
 }
@@ -269,18 +283,26 @@ const onTouchMoveCards = (event: TouchEvent) => {
   const deltaXFromStart = touch.clientX - state.startX
   const deltaYFromStart = touch.clientY - state.startY
 
-  if (!state.isHorizontal) {
-    if (Math.abs(deltaXFromStart) < 10) return
-    if (Math.abs(deltaXFromStart) <= Math.abs(deltaYFromStart)) return
-    state.isHorizontal = true
+  if (state.axis === 'pending') {
+    const lockThreshold = 10
+    if (Math.abs(deltaXFromStart) < lockThreshold && Math.abs(deltaYFromStart) < lockThreshold) return
+    const preferredAxis = Math.abs(deltaXFromStart) >= Math.abs(deltaYFromStart) ? 'horizontal' : 'vertical'
+    if (preferredAxis === 'horizontal' && !mobileTouchHorizontalEnabled.value) return
+    if (preferredAxis === 'vertical' && !mobileTouchVerticalEnabled.value) return
+    state.axis = preferredAxis
+    state.isHorizontal = state.axis === 'horizontal'
   }
 
   event.preventDefault()
-  const deltaX = touch.clientX - state.lastX
+  const deltaPrimary =
+    state.axis === 'horizontal'
+      ? touch.clientX - state.lastX
+      : touch.clientY - state.lastY
   state.lastX = touch.clientX
-  const direction = deltaX < 0 ? 1 : -1
+  state.lastY = touch.clientY
+  const direction = deltaPrimary < 0 ? 1 : -1
   const touchStep =
-    Math.min(0.06, Math.abs(deltaX) / 220) *
+    Math.min(0.06, Math.abs(deltaPrimary) / 220) *
     wheelSensitivity.value *
     mobileTouchSensitivity.value
   progress.value = wrap01(progress.value + direction * touchStep)

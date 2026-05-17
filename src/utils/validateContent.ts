@@ -363,6 +363,18 @@ export function validateContentSchema(raw: unknown): ValidationResult {
         if (settings.cardsOnly !== undefined && typeof settings.cardsOnly !== 'boolean') {
           errors.push(`${label}: stackCards.cardsOnly debe ser boolean.`)
         }
+        if (
+          settings.mobileTouchHorizontalEnabled !== undefined &&
+          typeof settings.mobileTouchHorizontalEnabled !== 'boolean'
+        ) {
+          errors.push(`${label}: stackCards.mobileTouchHorizontalEnabled debe ser boolean.`)
+        }
+        if (
+          settings.mobileTouchVerticalEnabled !== undefined &&
+          typeof settings.mobileTouchVerticalEnabled !== 'boolean'
+        ) {
+          errors.push(`${label}: stackCards.mobileTouchVerticalEnabled debe ser boolean.`)
+        }
         if (typeof settings.layoutSidePadding === 'number') {
           if (
             settings.layoutSidePadding < STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS.min ||
