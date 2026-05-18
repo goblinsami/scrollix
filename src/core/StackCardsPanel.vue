@@ -212,6 +212,9 @@ const textOffsetX = computed(() => props.stackCards?.textOffsetX ?? STACK_CARDS_
 const textOffsetY = computed(() => props.stackCards?.textOffsetY ?? STACK_CARDS_DEFAULTS.textOffsetY)
 const cardsOffsetX = computed(() => props.stackCards?.cardsOffsetX ?? STACK_CARDS_DEFAULTS.cardsOffsetX)
 const cardsOffsetY = computed(() => props.stackCards?.cardsOffsetY ?? STACK_CARDS_DEFAULTS.cardsOffsetY)
+const mobileTextCardsGap = computed(
+  () => props.stackCards?.mobileTextCardsGap ?? STACK_CARDS_DEFAULTS.mobileTextCardsGap
+)
 
 const wrap01 = (value: number) => ((value % 1) + 1) % 1
 
@@ -235,7 +238,8 @@ const stackContentStyle = computed(() => ({
 }))
 const stackLayoutStyle = computed(() => ({
   ...contentStyle.value,
-  '--stack-cards-layout-side-padding': `${layoutSidePadding.value}px`
+  '--stack-cards-layout-side-padding': `${layoutSidePadding.value}px`,
+  '--stack-mobile-text-cards-gap': `${mobileTextCardsGap.value}px`
 }))
 const { onMouseMove, onMouseLeave } = useStackCardHoverTilt({
   enabled: FEATURE_FLAGS.enableStackCardsMouseTilt
@@ -259,6 +263,8 @@ const touchTracking = ref<{
   lastY: number
   axis: 'pending' | 'horizontal' | 'vertical'
   isHorizontal: boolean
+  pendingDelta: number
+  rafId: number | null
 } | null>(null)
 
 const onTouchStartCards = (event: TouchEvent) => {
@@ -272,7 +278,25 @@ const onTouchStartCards = (event: TouchEvent) => {
     lastY: touch.clientY,
     axis: 'pending',
     isHorizontal: false
+    ,
+    pendingDelta: 0,
+    rafId: null
   }
+}
+
+const flushTouchDelta = () => {
+  const state = touchTracking.value
+  if (!state) return
+  const deltaPrimary = state.pendingDelta
+  state.pendingDelta = 0
+  state.rafId = null
+  if (Math.abs(deltaPrimary) < 0.5) return
+  const direction = deltaPrimary < 0 ? 1 : -1
+  const touchStep =
+    Math.min(0.06, Math.abs(deltaPrimary) / 220) *
+    wheelSensitivity.value *
+    mobileTouchSensitivity.value
+  progress.value = wrap01(progress.value + direction * touchStep)
 }
 
 const onTouchMoveCards = (event: TouchEvent) => {
@@ -300,15 +324,18 @@ const onTouchMoveCards = (event: TouchEvent) => {
       : touch.clientY - state.lastY
   state.lastX = touch.clientX
   state.lastY = touch.clientY
-  const direction = deltaPrimary < 0 ? 1 : -1
-  const touchStep =
-    Math.min(0.06, Math.abs(deltaPrimary) / 220) *
-    wheelSensitivity.value *
-    mobileTouchSensitivity.value
-  progress.value = wrap01(progress.value + direction * touchStep)
+  state.pendingDelta += deltaPrimary
+  if (state.rafId === null) {
+    state.rafId = requestAnimationFrame(flushTouchDelta)
+  }
 }
 
 const onTouchEndCards = () => {
+  const state = touchTracking.value
+  if (state && state.rafId !== null) {
+    cancelAnimationFrame(state.rafId)
+    state.rafId = null
+  }
   touchTracking.value = null
 }
 

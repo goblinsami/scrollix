@@ -35,6 +35,7 @@ import { MAX_AUTOPLAY_SPEED, MIN_AUTOPLAY_SPEED } from '../constants/autoPlaySpe
 import {
   STACK_CARDS_AUTOPLAY_LIMITS,
   STACK_CARDS_LAYOUT_OFFSET_LIMITS,
+  STACK_CARDS_MOBILE_TEXT_CARDS_GAP_LIMITS,
   STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS,
   STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS
 } from '../constants/stackCards'
@@ -336,6 +337,7 @@ export function validateContentSchema(raw: unknown): ValidationResult {
           'textOffsetY',
           'cardsOffsetX',
           'cardsOffsetY',
+          'mobileTextCardsGap',
           'cardGap',
           'frontFadeWindow',
           'cardSize',
@@ -395,6 +397,16 @@ export function validateContentSchema(raw: unknown): ValidationResult {
             }
           }
         })
+        if (typeof settings.mobileTextCardsGap === 'number') {
+          if (
+            settings.mobileTextCardsGap < STACK_CARDS_MOBILE_TEXT_CARDS_GAP_LIMITS.min ||
+            settings.mobileTextCardsGap > STACK_CARDS_MOBILE_TEXT_CARDS_GAP_LIMITS.max
+          ) {
+            errors.push(
+              `${label}: stackCards.mobileTextCardsGap fuera de rango (${STACK_CARDS_MOBILE_TEXT_CARDS_GAP_LIMITS.min}-${STACK_CARDS_MOBILE_TEXT_CARDS_GAP_LIMITS.max}).`
+            )
+          }
+        }
         if (settings.autoPlayEnabled !== undefined && typeof settings.autoPlayEnabled !== 'boolean') {
           errors.push(`${label}: stackCards.autoPlayEnabled debe ser boolean.`)
         }

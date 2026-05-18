@@ -96,6 +96,7 @@ export interface StackCardsSettings {
   textOffsetY?: number
   cardsOffsetX?: number
   cardsOffsetY?: number
+  mobileTextCardsGap?: number
   angleY?: number
   angleX?: number
   cardGap?: number

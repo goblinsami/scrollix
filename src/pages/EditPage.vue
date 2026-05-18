@@ -69,7 +69,7 @@
       @edit-slide="openSlideEditor"
     />
 
-    <RuntimeDiagnosticsPanel :enabled="showRuntimeDiagnostics" />
+    <RuntimeDiagnosticsPanel v-if="showRuntimeDiagnostics" />
   </main>
 </template>
 

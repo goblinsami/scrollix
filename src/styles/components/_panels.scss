@@ -521,76 +521,24 @@ body.snap-mode {
   opacity: 0.4;
 }
 
-@media (max-width: 1600px) {
-  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) {
-    position: relative;
-    display: block;
-    overflow: hidden;
-  }
-
-  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only)::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    background: linear-gradient(
-      180deg,
-      rgba(7, 10, 18, 0.18) 0%,
-      rgba(7, 10, 18, 0.36) 44%,
-      rgba(7, 10, 18, 0.56) 100%
-    );
-  }
-
-  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .cards-viewport {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    height: 100%;
-    transform: translate3d(
-      calc((var(--stack-cards-offset-x, 0px) * 0.55) - 4%),
-      calc((var(--stack-cards-offset-y, 0px) * 0.55) + 5%),
-      0
-    ) scale(0.8);
-    opacity: 0.78;
-    filter: saturate(0.92) brightness(0.86);
-    pointer-events: none;
-  }
-
-  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .content {
-    position: relative;
-    z-index: 3;
-    width: min(100%, 760px);
-    height: 100%;
-    min-height: 100%;
-    margin: 0 auto;
-    justify-content: flex-start;
-    padding-top: clamp(2rem, 10vh, 6rem);
-    padding-bottom: clamp(1.4rem, 4vh, 2.8rem);
-    transform: translate3d(
-      calc(var(--stack-text-offset-x, 0px) * 0.55),
-      calc(var(--stack-text-offset-y, 0px) * 0.55),
-      0
-    );
-  }
-}
-
-@media (max-width: 960px) {
+@media (max-width: 1200px) {
   .panel--stack-cards {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .panel--stack-cards .stack-cards-layout {
+    --stack-cards-layout-side-padding: 0px;
   }
 
   .panel--stack-cards .stack-cards-layout,
   .panel--stack-cards .stack-cards-layout--text-right {
     display: flex;
     flex-direction: column;
-    grid-template-columns: 1fr;
-    gap: 0;
+    grid-template-columns: none;
+    gap: clamp(0.6rem, 2.5vh, 1.4rem);
     height: auto;
-    min-height: 200vh;
-    padding-top: 0;
-    padding-bottom: 0;
+    min-height: 100vh;
   }
 
   .panel--stack-cards .stack-cards-layout--text-right .content {
@@ -598,7 +546,6 @@ body.snap-mode {
   }
 
   .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) {
-    position: relative;
     display: flex;
     flex-direction: column;
     overflow: visible;
@@ -612,8 +559,8 @@ body.snap-mode {
     position: relative;
     inset: auto;
     z-index: 1;
-    min-height: 100vh;
-    height: 100vh;
+    min-height: min(72vh, 620px);
+    height: min(72vh, 620px);
     transform: translate3d(var(--stack-debug-mobile-cards-offset-x, 0px), 0, 0) scale(1);
     opacity: 1;
     filter: none;
@@ -621,6 +568,7 @@ body.snap-mode {
     margin-left: 0;
     margin-right: 0;
     perspective-origin: 54% 50%;
+    margin-top: var(--stack-mobile-text-cards-gap, 0px);
   }
 
   .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .content {
@@ -628,14 +576,14 @@ body.snap-mode {
     left: auto;
     top: auto;
     z-index: 3;
-    width: min(100%, 640px);
-    max-width: min(92vw, 640px);
-    min-height: 100vh;
+    width: min(100%, 760px);
+    max-width: min(94vw, 760px);
+    min-height: auto;
     margin: 0 auto;
     justify-content: center;
-    padding-top: clamp(1.8rem, 6vh, 4rem);
-    padding-bottom: clamp(1.2rem, 4vh, 2.4rem);
-    transform: translate3d(0, 0, 0);
+    padding-top: clamp(1.2rem, 4vh, 2.2rem);
+    padding-bottom: clamp(0.8rem, 3vh, 1.8rem);
+    transform: none;
     align-items: center;
     text-align: center;
     padding-left: clamp(1rem, 4vw, 1.4rem);
@@ -651,7 +599,7 @@ body.snap-mode {
   }
 
   .cards-viewport {
-    height: 100vh;
+    height: min(72vh, 620px);
     place-items: center;
   }
 
@@ -678,5 +626,13 @@ body.snap-mode {
     width: 180px;
     display: block;
     margin-top: 0.35rem;
+  }
+}
+
+@media (max-width: 960px) {
+  .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .cards-viewport,
+  .panel--stack-cards .cards-viewport {
+    min-height: min(68vh, 520px);
+    height: min(68vh, 520px);
   }
 }

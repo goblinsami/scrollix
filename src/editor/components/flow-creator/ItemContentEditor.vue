@@ -305,6 +305,13 @@
           </div>
         </label>
         <label>
+          Mobile text-cards gap
+          <div class="text-style-panel__range">
+            <input v-model.number="localValue.stackCards.mobileTextCardsGap" type="range" :min="STACK_CARDS_MOBILE_TEXT_CARDS_GAP_LIMITS.min" :max="STACK_CARDS_MOBILE_TEXT_CARDS_GAP_LIMITS.max" :step="STACK_CARDS_MOBILE_TEXT_CARDS_GAP_LIMITS.step" @input="emitUpdate" />
+            <span>{{ formatNumber(Number(localValue.stackCards.mobileTextCardsGap), 0) }}px</span>
+          </div>
+        </label>
+        <label>
           Mobile touch sensitivity
           <div class="text-style-panel__range">
             <input v-model.number="localValue.stackCards.mobileTouchSensitivity" type="range" :min="STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.min" :max="STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.max" :step="STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS.step" @input="emitUpdate" />
@@ -386,6 +393,7 @@ import {
   STACK_CARDS_CONTROLS,
   STACK_CARDS_LAYOUT_OFFSET_LIMITS,
   STACK_CARDS_LAYOUT_SIDE_PADDING_LIMITS,
+  STACK_CARDS_MOBILE_TEXT_CARDS_GAP_LIMITS,
   STACK_CARDS_MOBILE_TOUCH_SENSITIVITY_LIMITS
 } from '@/constants/stackCards'
 import CollapsibleSection from '../atoms/CollapsibleSection.vue'
@@ -406,6 +414,7 @@ const props = withDefaults(defineProps<{
       textOffsetY?: number
       cardsOffsetX?: number
       cardsOffsetY?: number
+      mobileTextCardsGap?: number
       angleY?: number
       angleX?: number
       cardGap?: number
