@@ -12,7 +12,7 @@
       :show-watermark="embedWatermarkEnabled"
       :enable-ctas="embedEnableCtas"
     />
-    <RuntimeDiagnosticsPanel :enabled="showRuntimeDiagnostics" />
+    <RuntimeDiagnosticsPanel v-if="showRuntimeDiagnostics" />
   </main>
 </template>
 
