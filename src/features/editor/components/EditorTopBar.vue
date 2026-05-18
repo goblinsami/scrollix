@@ -14,6 +14,9 @@
       <div class="user-bar__left">
         <button class="edit-slide-button" type="button" @click="$emit('editCurrentSlide')">Edit Slide</button>
         <EditorToggleButton :is-open="isFlowEditorOpen" :logo-url="editorToggleLogoUrl" @toggle="$emit('toggleEditor')" />
+        <button class="theme-toggle-button" type="button" @click="$emit('toggleTheme')">
+          {{ isDarkTheme ? 'Dark' : 'Light' }}
+        </button>
       </div>
 
       <div class="user-bar__identity">
@@ -92,7 +95,9 @@
               <li v-for="story in myStories" :key="story.id" class="my-stories__item">
                 <div class="my-stories__meta">
                   <strong class="my-stories__story-title">{{ story.title }}</strong>
-                  <span class="my-stories__date">{{ story.updated_at }} <b v-if="story.published">• Published</b></span>
+                  <span class="my-stories__date" :title="formatStoryUpdatedAtFull(story.updated_at)">
+                    {{ formatStoryUpdatedAt(story.updated_at) }} <b v-if="story.published">• Published</b>
+                  </span>
                 </div>
                 <button
                   class="my-stories__open-button"
@@ -115,6 +120,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import EditorToggleButton from '@/components/EditorToggleButton.vue'
 import type { StoryListItem } from '@/types/stories'
+import { formatStoryUpdatedAt, formatStoryUpdatedAtFull } from '@/utils/storyTimestamp'
 import GoogleLogoIcon from './icons/GoogleLogoIcon.vue'
 
 defineProps<{
@@ -125,6 +131,7 @@ defineProps<{
   userEmail: string | null
   isAuthenticated: boolean
   role: string
+  isDarkTheme: boolean
   showUpgradePrompts: boolean
   storyUsageText: string
   isSavingStory: boolean
@@ -141,6 +148,7 @@ defineEmits<{
   toggleMobileMenu: []
   editCurrentSlide: []
   toggleEditor: []
+  toggleTheme: []
   login: []
   logout: []
   saveStory: []

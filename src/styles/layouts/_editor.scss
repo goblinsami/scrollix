@@ -1,41 +1,71 @@
-.flow-creator {
-  position: fixed;
-  top: 12px;
-  left: 12px;
-  z-index: 1000;
+@use '../mixins/editor-primitives' as ui;
+@use '../tokens/zindex' as z;
+
+.sandbox {
+  background: var(--editor-bg-hero);
+  color: var(--editor-text-primary);
+  font-family: var(--editor-font-family);
 }
 
+.sandbox::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(90% 120% at 8% 0%, color-mix(in srgb, var(--editor-accent-soft) 52%, transparent), transparent 52%),
+    radial-gradient(110% 120% at 95% 8%, color-mix(in srgb, var(--editor-accent-soft) 40%, transparent), transparent 56%);
+  opacity: 0.6;
+  z-index: 0;
+}
+
+.sandbox .snap-shell {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--editor-border-soft) 28%, transparent);
+}
+
+.flow-creator {
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: z.$z-flow-ui;
+  font-family: var(--editor-font-family);
+}
 
 .flow-toggle {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: #d7d7d7;
-  border-radius: 10px;
-  padding: 0 0.8rem;
+  @include ui.editor-control-base;
+  border-radius: var(--editor-radius-pill);
+  background: color-mix(in srgb, var(--editor-surface-2) 84%, transparent);
+  border-color: color-mix(in srgb, var(--editor-accent) 24%, var(--editor-border-soft));
+  padding: 0 0.92rem;
   position: relative;
-  z-index: 1002;
+  z-index: z.$z-flow-toggle;
+  box-shadow: var(--editor-shadow-xs);
 }
 
 .flow-toggle h3 {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.012em;
+  font-weight: 650;
 }
 
 .flow-modal {
-  background: rgba(255, 255, 255, 0.97);
-  border: 1px solid #d8d8d8;
-  border-radius: 12px;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
-  padding: 0.8rem;
+  @include ui.editor-glass-panel(var(--editor-radius-lg), var(--editor-spacing-lg));
   display: flex;
   flex-direction: column;
+  background: color-mix(in srgb, var(--editor-surface-1) 72%, transparent);
+  border-color: color-mix(in srgb, var(--editor-border-soft) 58%, transparent);
+  box-shadow: 0 20px 56px rgba(6, 10, 22, 0.28);
 }
 
 .flow-modal__debug {
   display: grid;
-  gap: 0.6rem;
-  padding-bottom: 0.55rem;
-  margin-bottom: 0.65rem;
-  border-bottom: 1px solid #e4e8ee;
+  gap: var(--editor-spacing-sm);
+  padding: 0.35rem 0.42rem 0.62rem;
+  margin: -0.2rem -0.2rem 0.1rem;
+  border-bottom: 1px solid var(--editor-divider-strong);
+  background: color-mix(in srgb, var(--editor-item-hover-bg) 36%, transparent);
+  border-radius: 12px;
 }
 
 .flow-modal--resizable {
@@ -46,52 +76,53 @@
 .flow-sidebar-overlay {
   position: fixed;
   inset: 0;
-  z-index: 998;
-  background: rgba(0, 0, 0, var(--modal-overlay-opacity));
+  z-index: z.$z-flow-overlay;
+  background: rgba(0, 0, 0, var(--editor-flow-overlay-opacity, 0.42));
 }
 
 .flow-sidebar {
   position: fixed;
-  top: 56px;
-  right: 12px;
-  bottom: 12px;
-  left: 12px;
-  min-width: 280px;
+  top: 64px;
+  right: 14px;
+  bottom: 14px;
+  left: 14px;
+  min-width: 300px;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(12px);
-  transition: transform 0.2s ease, opacity 0.2s ease;
-  z-index: 1001;
+  transform: translateY(12px) scale(0.985);
+  transition: transform var(--editor-transition-standard), opacity var(--editor-transition-standard);
+  z-index: z.$z-flow-sidebar;
 }
 
 .flow-sidebar--open {
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 .flow-creator--settings-open .flow-sidebar--open,
 .flow-creator--settings-open .flow-toggle {
   opacity: 0;
-  transition: opacity 0.18s ease;
+  transition: opacity var(--editor-transition-fast);
 }
 
 .flow-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.8rem;
-  margin-bottom: 0.7rem;
-  font-size: 0.85rem;
+  gap: var(--editor-spacing-sm);
+  margin-bottom: var(--editor-spacing-sm);
+  font-size: 0.8rem;
 }
 
 .flow-toolbar p {
   margin: 0;
+  color: var(--editor-text-secondary);
 }
 
 .flow-toolbar__actions {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--editor-spacing-xs);
 }
 
 .flow-canvas {
@@ -99,37 +130,38 @@
   min-height: 0;
   min-width: 0;
   position: relative;
-  border: 1px dashed #cfcfcf;
-  border-radius: 10px;
-  background: #f9fafb;
+  border: 1px solid color-mix(in srgb, var(--editor-border-soft) 62%, transparent);
+  border-radius: var(--editor-radius-md);
+  background:
+    radial-gradient(120% 100% at 0% 0%, color-mix(in srgb, var(--editor-accent-soft) 30%, transparent), transparent 58%),
+    color-mix(in srgb, var(--editor-surface-3) 72%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--editor-border-soft) 52%, transparent),
+    0 10px 26px rgba(8, 14, 28, 0.18);
   overflow: auto;
 }
 
 .flow-canvas-loop-toggle {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   z-index: 4;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.35rem;
-  border: 1px solid rgba(201, 210, 219, 0.9);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(4px);
+  gap: 0.42rem;
+  padding: 0.3rem 0.46rem;
+  border: 1px solid color-mix(in srgb, var(--editor-accent) 28%, var(--editor-border-soft));
+  border-radius: var(--editor-radius-pill);
+  background: color-mix(in srgb, var(--editor-surface-2) 88%, transparent);
+  box-shadow: var(--editor-shadow-xs);
 }
 
 .flow-canvas-loop-toggle__label {
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #5a6d81;
+  @include ui.editor-section-label;
 }
 
 .flow-canvas-loop-toggle .flow-switch__track {
-  width: 34px;
+  width: 36px;
   height: 20px;
 }
 
@@ -141,29 +173,29 @@
 }
 
 .flow-canvas-loop-toggle .flow-switch__input:checked + .flow-switch__track::after {
-  transform: translateX(14px);
+  transform: translateX(16px);
 }
 
 @media (min-width: 1024px) {
   .flow-creator {
-    top: 16px;
+    top: 18px;
     left: auto;
-    right: 16px;
+    right: 18px;
   }
 
   .flow-sidebar {
-    top: 64px;
-    right: 16px;
-    bottom: 16px;
+    top: 72px;
+    right: 18px;
+    bottom: 18px;
     left: auto;
-    width: 420px;
-    min-width: 320px;
-    max-width: min(70vw, 760px);
-    transform: translateX(calc(100% + 24px));
+    width: 468px;
+    min-width: 340px;
+    max-width: min(74vw, 840px);
+    transform: translateX(calc(100% + 26px)) scale(0.988);
   }
 
   .flow-sidebar--open {
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
   }
 
   .flow-modal--resizable {
@@ -171,10 +203,9 @@
   }
 }
 
-
 .block-settings__actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: var(--editor-spacing-xs);
 }
 

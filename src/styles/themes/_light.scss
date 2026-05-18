@@ -1,0 +1,41 @@
+body[data-editor-theme='light'] {
+  --editor-bg: #edf2f8;
+  --editor-bg-elevated: #ffffff;
+  --editor-bg-hero: radial-gradient(120% 150% at 6% -6%, rgba(61, 118, 255, 0.24) 0%, transparent 56%),
+    radial-gradient(120% 150% at 95% 0%, rgba(81, 178, 255, 0.2) 0%, transparent 52%),
+    linear-gradient(175deg, #f6f9ff 0%, #ebf1fa 50%, #eef4fd 100%);
+  --editor-surface-1: rgba(255, 255, 255, 0.94);
+  --editor-surface-2: rgba(255, 255, 255, 0.99);
+  --editor-surface-3: rgba(244, 248, 255, 1);
+  --editor-surface-inverse: #111827;
+  --editor-border-soft: rgba(57, 79, 108, 0.28);
+  --editor-border-strong: rgba(46, 69, 99, 0.42);
+  --editor-divider-soft: rgba(58, 83, 114, 0.22);
+  --editor-divider-strong: rgba(48, 72, 102, 0.36);
+  --editor-text-primary: #0f2037;
+  --editor-text-secondary: #314a69;
+  --editor-text-muted: #4f6686;
+  --editor-text-inverse: #f8fbff;
+  --editor-accent: #2f63e6;
+  --editor-accent-strong: #2454d1;
+  --editor-accent-soft: rgba(47, 99, 230, 0.2);
+  --editor-item-hover-bg: rgb(255, 255, 255);
+  --editor-item-active-bg: rgba(255, 255, 255, 0.2);
+  --editor-item-active-border: rgba(47, 99, 230, 0.44);
+  --editor-success: #1f8b58;
+  --editor-danger: #c13d3d;
+  --editor-shadow-xs: 0 2px 12px rgba(14, 34, 62, 0.12);
+  --editor-shadow-sm: 0 12px 30px rgba(17, 41, 72, 0.18);
+  --editor-shadow-md: 0 24px 58px rgba(19, 45, 80, 0.22);
+  --editor-shadow-lg: 0 36px 92px rgba(19, 45, 80, 0.28);
+  --editor-scrim: rgba(20, 41, 68, 0.34);
+  --editor-scrollix-icon-filter: brightness(0) saturate(100%);
+  --editor-scrollix-icon-opacity: 0.9;
+  --editor-scrollix-watermark-filter: brightness(0) saturate(100%);
+  --editor-scrollix-watermark-opacity: 0.06;
+}
+
+body[data-editor-theme='light'] {
+  background: var(--editor-bg);
+  color: var(--editor-text-primary);
+}

@@ -1,6 +1,7 @@
 <template>
   <button
     class="editor-toggle-button"
+    :class="{ 'editor-toggle-button--open': isOpen }"
     type="button"
     :aria-label="isOpen ? 'Hide editor' : 'Show editor'"
     :title="isOpen ? 'Hide editor' : 'Show editor'"
@@ -20,4 +21,3 @@ defineEmits<{
   toggle: []
 }>()
 </script>
-

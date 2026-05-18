@@ -55,6 +55,9 @@
           :cta-text="step.panel.ctaText"
           :cta-link="step.panel.ctaLink"
           :cta="step.panel.cta"
+          :panel-id="step.panel.id"
+          :active-text-content-target-id="activeTextContentTargetId"
+          :active-text-content-highlight-scope="activeTextContentHighlightScope"
           :direction="step.directionToNext"
           animate-key="intro"
         />
@@ -77,11 +80,15 @@ const props = withDefaults(
     showEditTrigger?: boolean
     showWatermark?: boolean
     enableCtas?: boolean
+    activeTextContentTargetId?: string | null
+    activeTextContentHighlightScope?: 'content' | 'eyebrow' | 'title' | 'description'
   }>(),
   {
     showEditTrigger: false,
     showWatermark: false,
-    enableCtas: true
+    enableCtas: true,
+    activeTextContentTargetId: null,
+    activeTextContentHighlightScope: 'content'
   }
 )
 

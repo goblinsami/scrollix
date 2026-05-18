@@ -20,6 +20,7 @@
         :default-text-size="defaultTextSize"
         :labels="textContentLabels"
         @update:model-value="onItemContentUpdate"
+        @text-content-editing-change="onTextContentEditingChange"
       />
     </CollapsibleSection>
 
@@ -42,56 +43,61 @@
     </CollapsibleSection>
 
     <CollapsibleSection title="Text Style" :panel-id="`${idPrefix}-text-style-panel-body`" :open="isTextStyleOpen" @toggle="isTextStyleOpen = !isTextStyleOpen">
+      <div ref="textStyleGridRef" class="text-style-panel__interactive-zone" @mouseleave="onTextStyleGridLeave" @focusout="onTextStyleGridFocusOut">
       <div class="text-style-panel__grid">
+        <p class="text-style-panel__group-title text-style-panel__field--wide">Typography & spacing</p>
+        <label class="text-style-panel__field">
+          <span>Eyebrow spacing</span>
+          <div class="text-style-panel__range">
+            <input v-model.number="localValue.eyebrowLetterSpacing" type="range" :min="textStyleRanges.eyebrowLetterSpacing.min" :max="textStyleRanges.eyebrowLetterSpacing.max" :step="textStyleRanges.eyebrowLetterSpacing.step" @input="onTextStyleSliderInput('eyebrow')" @pointerenter="activateTextStyleHighlight('eyebrow')" @focus="activateTextStyleHighlight('eyebrow')" />
+            <span>{{ formatNumber(localValue.eyebrowLetterSpacing, 2) }}em</span>
+          </div>
+        </label>
         <label class="text-style-panel__field text-style-panel__field--wide">
           <span>Text gap</span>
           <div class="text-style-panel__range">
-            <input :value="textGapValue" type="range" :min="textStyleRanges.textGap.min" :max="textStyleRanges.textGap.max" :step="textStyleRanges.textGap.step" @input="onTextGapInput" />
+            <input :value="textGapValue" type="range" :min="textStyleRanges.textGap.min" :max="textStyleRanges.textGap.max" :step="textStyleRanges.textGap.step" @input="onTextGapInput" @pointerenter="activateTextStyleHighlight('content')" @focus="activateTextStyleHighlight('content')" />
             <span>{{ formatNumber(textGapValue, 0) }}px</span>
           </div>
         </label>
         <label class="text-style-panel__field">
           <span>Title line</span>
           <div class="text-style-panel__range">
-            <input v-model.number="localValue.titleLineHeight" type="range" :min="textStyleRanges.titleLineHeight.min" :max="textStyleRanges.titleLineHeight.max" :step="textStyleRanges.titleLineHeight.step" @input="emitUpdate" />
+            <input v-model.number="localValue.titleLineHeight" type="range" :min="textStyleRanges.titleLineHeight.min" :max="textStyleRanges.titleLineHeight.max" :step="textStyleRanges.titleLineHeight.step" @input="onTextStyleSliderInput('title')" @pointerenter="activateTextStyleHighlight('title')" @focus="activateTextStyleHighlight('title')" />
             <span>{{ formatNumber(localValue.titleLineHeight, 2) }}</span>
           </div>
         </label>
         <label class="text-style-panel__field">
           <span>Subtitle line</span>
           <div class="text-style-panel__range">
-            <input v-model.number="localValue.descriptionLineHeight" type="range" :min="textStyleRanges.descriptionLineHeight.min" :max="textStyleRanges.descriptionLineHeight.max" :step="textStyleRanges.descriptionLineHeight.step" @input="emitUpdate" />
+            <input v-model.number="localValue.descriptionLineHeight" type="range" :min="textStyleRanges.descriptionLineHeight.min" :max="textStyleRanges.descriptionLineHeight.max" :step="textStyleRanges.descriptionLineHeight.step" @input="onTextStyleSliderInput('description')" @pointerenter="activateTextStyleHighlight('description')" @focus="activateTextStyleHighlight('description')" />
             <span>{{ formatNumber(localValue.descriptionLineHeight, 2) }}</span>
           </div>
         </label>
-        <label class="text-style-panel__field">
-          <span>Eyebrow spacing</span>
-          <div class="text-style-panel__range">
-            <input v-model.number="localValue.eyebrowLetterSpacing" type="range" :min="textStyleRanges.eyebrowLetterSpacing.min" :max="textStyleRanges.eyebrowLetterSpacing.max" :step="textStyleRanges.eyebrowLetterSpacing.step" @input="emitUpdate" />
-            <span>{{ formatNumber(localValue.eyebrowLetterSpacing, 2) }}em</span>
-          </div>
-        </label>
+
+        <p class="text-style-panel__group-title text-style-panel__field--wide">Widths</p>
         <label class="text-style-panel__field">
           <span>Content width</span>
           <div class="text-style-panel__range">
-            <input v-model.number="localValue.contentMaxWidth" type="range" :min="textStyleRanges.contentMaxWidth.min" :max="textStyleRanges.contentMaxWidth.max" :step="textStyleRanges.contentMaxWidth.step" @input="emitUpdate" />
+            <input v-model.number="localValue.contentMaxWidth" type="range" :min="textStyleRanges.contentMaxWidth.min" :max="textStyleRanges.contentMaxWidth.max" :step="textStyleRanges.contentMaxWidth.step" @input="onTextStyleSliderInput('content')" @pointerenter="activateTextStyleHighlight('content')" @focus="activateTextStyleHighlight('content')" />
             <span>{{ formatNumber(localValue.contentMaxWidth, 0) }}px</span>
           </div>
         </label>
         <label class="text-style-panel__field">
           <span>Title width</span>
           <div class="text-style-panel__range">
-            <input v-model.number="localValue.titleMaxWidth" type="range" :min="textStyleRanges.titleMaxWidth.min" :max="textStyleRanges.titleMaxWidth.max" :step="textStyleRanges.titleMaxWidth.step" @input="emitUpdate" />
+            <input v-model.number="localValue.titleMaxWidth" type="range" :min="textStyleRanges.titleMaxWidth.min" :max="textStyleRanges.titleMaxWidth.max" :step="textStyleRanges.titleMaxWidth.step" @input="onTextStyleSliderInput('title')" @pointerenter="activateTextStyleHighlight('title')" @focus="activateTextStyleHighlight('title')" />
             <span>{{ formatNumber(localValue.titleMaxWidth, 0) }}px</span>
           </div>
         </label>
         <label class="text-style-panel__field">
           <span>Subtitle width</span>
           <div class="text-style-panel__range">
-            <input v-model.number="localValue.descriptionMaxWidth" type="range" :min="textStyleRanges.descriptionMaxWidth.min" :max="textStyleRanges.descriptionMaxWidth.max" :step="textStyleRanges.descriptionMaxWidth.step" @input="emitUpdate" />
+            <input v-model.number="localValue.descriptionMaxWidth" type="range" :min="textStyleRanges.descriptionMaxWidth.min" :max="textStyleRanges.descriptionMaxWidth.max" :step="textStyleRanges.descriptionMaxWidth.step" @input="onTextStyleSliderInput('description')" @pointerenter="activateTextStyleHighlight('description')" @focus="activateTextStyleHighlight('description')" />
             <span>{{ formatNumber(localValue.descriptionMaxWidth, 0) }}px</span>
           </div>
         </label>
+      </div>
       </div>
     </CollapsibleSection>
 
@@ -183,8 +189,16 @@
             </div>
           </label>
           <div class="overlay-intensity">
-            <input v-model.number="localValue.overlayIntensity" type="range" min="0" max="100" step="1" :disabled="!localValue.image || !localValue.overlayEnabled" @input="emitUpdate" />
-            <span>{{ Math.max(0, Math.min(100, Number(localValue.overlayIntensity ?? 55))) }}%</span>
+            <input
+              v-model.number="localValue.overlayIntensity"
+              type="range"
+              :min="PANEL_OVERLAY_OPACITY_LIMITS.min"
+              :max="PANEL_OVERLAY_OPACITY_LIMITS.max"
+              :step="PANEL_OVERLAY_OPACITY_LIMITS.step"
+              :disabled="!localValue.image || !localValue.overlayEnabled"
+              @input="emitUpdate"
+            />
+            <span>{{ Math.max(PANEL_OVERLAY_OPACITY_LIMITS.min, Math.min(PANEL_OVERLAY_OPACITY_LIMITS.max, Number(localValue.overlayIntensity ?? DEFAULT_OVERLAY_INTENSITY))) }}%</span>
           </div>
         </div>
       </label>
@@ -359,6 +373,7 @@
             :show-template-selector="false"
             :enable-stack-cards="false"
             :id-prefix="`${idPrefix}-stack-card-content-${cardIndex}`"
+            :text-content-editing-target-id="card.id ?? null"
             :text-content-labels="{
               title: `Card ${cardIndex + 1} title`,
               eyebrow: `Card ${cardIndex + 1} eyebrow`,
@@ -367,6 +382,7 @@
               contentWidth: 'Card content width'
             }"
             @update:model-value="(value) => onStackCardUpdate(cardIndex, value)"
+            @text-content-editing-change="onNestedTextContentEditingChange"
           />
           <button type="button" class="ui-btn ui-btn--danger" :disabled="localValue.stackCards.cards.length <= 1" @click="removeStackCard(cardIndex)">Remove card</button>
         </CollapsibleSection>
@@ -380,6 +396,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { ContentWidthMode, type ItemContent, type StackCardItem, type TextSize } from '@/types/navigation'
+import type { TextContentEditingChangePayload, TextContentHighlightScope } from '@/types/textContentHighlight'
 import {
   DEFAULT_LOGO_TINT_COLOR,
   DEFAULT_SLIDE_COLOR,
@@ -388,6 +405,7 @@ import {
   textStyleRanges
 } from '../../composables/useSlidePropertiesForm'
 import { useGradientEditor } from '../../composables/useGradientEditor'
+import { DEFAULT_OVERLAY_INTENSITY, PANEL_OVERLAY_OPACITY_LIMITS } from '@/constants/slideStyle'
 import {
   STACK_CARDS_AUTOPLAY_LIMITS,
   STACK_CARDS_CONTROLS,
@@ -443,6 +461,7 @@ const props = withDefaults(defineProps<{
     align: string
     contentWidth: string
   }
+  textContentEditingTargetId?: string | null
 }>(), {
   enableCtas: true,
   canUploadImages: true,
@@ -455,14 +474,20 @@ const props = withDefaults(defineProps<{
     description: 'Description',
     align: 'Text Align',
     contentWidth: 'Content Width'
-  })
+  }),
+  textContentEditingTargetId: null
 })
 
 const idPrefix = computed(() => props.idPrefix)
 
-const emit = defineEmits<{ 'update:modelValue': [value: ItemContent & Record<string, unknown>] }>()
+const emit = defineEmits<{
+  'update:modelValue': [value: ItemContent & Record<string, unknown>]
+  'text-content-editing-change': [payload: TextContentEditingChangePayload]
+}>()
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const logoFileInputRef = ref<HTMLInputElement | null>(null)
+const textStyleGridRef = ref<HTMLElement | null>(null)
+const activeTextStyleScope = ref<TextContentHighlightScope>('content')
 
 const localValue = computed({
   get: () => props.modelValue,
@@ -498,12 +523,55 @@ const onItemContentUpdate = (value: ItemContent) => {
   emitUpdate()
 }
 
+const emitTextContentEditingChange = (active: boolean, scope: TextContentHighlightScope = 'content') => {
+  activeTextStyleScope.value = scope
+  emit('text-content-editing-change', {
+    targetId: props.textContentEditingTargetId,
+    active,
+    scope
+  })
+}
+
+const onTextContentEditingChange = (active: boolean) => {
+  emitTextContentEditingChange(active, 'content')
+}
+
+const onNestedTextContentEditingChange = (payload: TextContentEditingChangePayload) => {
+  emit('text-content-editing-change', payload)
+}
+
 const textGapValue = computed(() => Number(localValue.value.eyebrowTitleGap ?? localValue.value.titleDescriptionGap ?? 24))
 const onTextGapInput = (event: Event) => {
+  activateTextStyleHighlight('content')
   const value = Number((event.target as HTMLInputElement).value)
   localValue.value.eyebrowTitleGap = value
   localValue.value.titleDescriptionGap = value
   emitUpdate()
+}
+
+const onTextStyleSliderInput = (scope: TextContentHighlightScope) => {
+  activateTextStyleHighlight(scope)
+  emitUpdate()
+}
+
+const activateTextStyleHighlight = (scope: TextContentHighlightScope) => {
+  emitTextContentEditingChange(true, scope)
+}
+
+const deactivateTextStyleHighlight = () => {
+  emitTextContentEditingChange(false, activeTextStyleScope.value)
+}
+
+const onTextStyleGridLeave = () => {
+  if (textStyleGridRef.value?.contains(document.activeElement)) return
+  deactivateTextStyleHighlight()
+}
+
+const onTextStyleGridFocusOut = () => {
+  requestAnimationFrame(() => {
+    if (textStyleGridRef.value?.contains(document.activeElement)) return
+    deactivateTextStyleHighlight()
+  })
 }
 
 const applyGradient = () => {

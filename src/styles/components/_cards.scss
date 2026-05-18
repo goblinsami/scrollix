@@ -11,9 +11,9 @@
 .flow-link {
   position: absolute;
   height: 2px;
-  background: #9fb3c8;
+  background: color-mix(in srgb, var(--editor-accent) 64%, var(--editor-border-soft));
   transform-origin: left center;
-  opacity: 0.9;
+  opacity: 0.86;
 }
 
 .flow-node {
@@ -26,12 +26,12 @@
   position: absolute;
   top: -8px;
   right: -8px;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
-  border: 1px solid #b42318;
-  background: #fff;
-  color: #b42318;
+  border: 1px solid color-mix(in srgb, var(--editor-danger) 72%, var(--editor-border-soft));
+  background: color-mix(in srgb, var(--editor-danger) 24%, var(--editor-surface-2));
+  color: color-mix(in srgb, var(--editor-danger) 86%, var(--editor-text-primary));
   font-size: 12px;
   line-height: 1;
   padding: 0;
@@ -46,34 +46,45 @@
 
 .flow-block {
   position: relative;
-  min-width: 66px;
-  min-height: 66px;
-  border: 1px solid #cfd6de;
-  border-radius: 10px;
-  background: #ffffff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  padding: 0.45rem;
+  min-width: 76px;
+  min-height: 76px;
+  border: 1px solid color-mix(in srgb, var(--editor-accent) 24%, var(--editor-border-soft));
+  border-radius: var(--editor-radius-sm);
+  background: color-mix(in srgb, var(--editor-surface-2) 82%, transparent);
+  box-shadow: var(--editor-shadow-xs);
+  padding: 0.5rem;
   display: grid;
   place-items: center;
+  transition: transform var(--editor-transition-fast), box-shadow var(--editor-transition-fast),
+    border-color var(--editor-transition-fast);
+}
+
+.flow-node:hover .flow-block {
+  transform: translateY(-2px);
+  box-shadow: var(--editor-shadow-sm);
+  border-color: color-mix(in srgb, var(--editor-accent) 58%, var(--editor-border-soft));
 }
 
 .flow-block__index {
   position: absolute;
   top: 4px;
   left: 6px;
-  font-size: 0.75rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
   line-height: 1;
-  color: #3b4652;
+  color: var(--editor-text-secondary);
 }
 
 .flow-block span {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   word-break: break-word;
+  color: var(--editor-text-primary);
 }
 
 .flow-block small {
-  font-size: 0.68rem;
-  color: #5d6a78;
+  font-size: 0.67rem;
+  color: var(--editor-text-muted);
   text-transform: uppercase;
 }
 
@@ -83,18 +94,19 @@
   display: grid;
   justify-content: center;
   align-items: center;
-  font-size: 28px;
+  font-size: 30px;
+  color: var(--editor-text-primary);
   line-height: 1;
 }
 
 .flow-handle {
   position: absolute;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
-  border: 1px solid #7b8a97;
-  background: #fff;
-  color: #3c4954;
+  border: 1px solid color-mix(in srgb, var(--editor-accent) 56%, var(--editor-border-soft));
+  background: color-mix(in srgb, var(--editor-surface-2) 90%, transparent);
+  color: var(--editor-text-primary);
   font-size: 12px;
   line-height: 1;
   padding: 0;
@@ -103,13 +115,19 @@
   place-items: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.14s ease;
+  transition: opacity var(--editor-transition-fast), transform var(--editor-transition-fast),
+    border-color var(--editor-transition-fast);
 }
 
 .flow-node:hover .flow-node__delete,
 .flow-node:hover .flow-handle {
   opacity: 1;
   pointer-events: auto;
+}
+
+.flow-handle:hover {
+  transform: scale(1.06);
+  border-color: color-mix(in srgb, var(--editor-accent) 76%, var(--editor-border-soft));
 }
 
 .flow-handle--up {

@@ -1,4 +1,6 @@
 import type { Panel } from '@/types/navigation'
+import type { TextContentEditingChangePayload } from '@/types/textContentHighlight'
+export type { TextContentEditingChangePayload } from '@/types/textContentHighlight'
 
 export interface FlowEditorProps {
   panels: Panel[]
@@ -23,6 +25,7 @@ export type FlowEditorEmit = {
   (event: 'update:auto-play-speed', speed: number): void
   (event: 'update:loopEnabled', enabled: boolean): void
   (event: 'focusStep', index: number): void
+  (event: 'text-content-editing-change', payload: TextContentEditingChangePayload): void
 }
 
 export interface FlowEditorExposed {

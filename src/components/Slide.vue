@@ -7,34 +7,40 @@
       :class="[
         `content--align-${contentAlignResolved}`,
         `content--width-${contentWidthModeResolved}`,
-        { 'content--on-image': hasVisualBackground }
+        {
+          'content--on-image': hasVisualBackground,
+          'debug-container debug-container--content': showDebugContainers
+        }
       ]"
       :style="contentStyle"
     >
       <div
         v-if="logo && logoTintEnabledResolved"
         class="slide-logo slide-logo--tint"
+        :class="{ 'debug-container debug-container--logo': showDebugContainers }"
         :style="logoTintStyle"
       />
       <img
         v-else-if="logo"
         class="slide-logo"
+        :class="{ 'debug-container debug-container--logo': showDebugContainers }"
         :src="logo"
         alt=""
         :style="logoStyle"
       />
-      <p class="eyebrow" :style="eyebrowStyle">
+      <p class="eyebrow" :class="{ 'debug-container debug-container--eyebrow': showDebugContainers }" :style="eyebrowStyle">
         <span v-if="useMarkdown" v-html="eyebrowHtml" />
         <template v-else>{{ eyebrow }}</template>
         <span v-if="showDirectionIcon">{{ getDirectionIcon(direction) }}</span>
       </p>
-      <h1 :style="titleStyle">
+      <h1 :class="{ 'debug-container debug-container--title': showDebugContainers }" :style="titleStyle">
         <span v-if="useMarkdown" v-html="titleHtml" />
         <template v-else>{{ title }}</template>
       </h1>
       <p
         v-if="description"
         class="section-description"
+        :class="{ 'debug-container debug-container--description': showDebugContainers }"
         :style="descriptionStyle"
       >
         <span v-if="useMarkdown" v-html="descriptionHtml" />
@@ -73,10 +79,12 @@
 
 <script setup lang="ts">
 import { getDirectionIcon } from '../composables/useDirectionIcon'
+import { FEATURE_FLAGS } from '@/config/featureFlags'
 import { useSlidePanelPresentation } from '@/composables/useSlidePanelPresentation'
 import type { SlidePanelProps } from '@/types/slidePanel'
 
 const props = defineProps<SlidePanelProps>()
+const showDebugContainers = FEATURE_FLAGS.enableDebugContainers
 
 const {
   titleHtml,

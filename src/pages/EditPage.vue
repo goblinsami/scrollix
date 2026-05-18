@@ -8,6 +8,7 @@
       :user-email="user?.email ?? null"
       :is-authenticated="isAuthenticated"
       :role="role"
+      :is-dark-theme="isDarkTheme"
       :show-upgrade-prompts="showUpgradePrompts"
       :story-usage-text="storyUsageText"
       :is-saving-story="isSavingStory"
@@ -21,6 +22,7 @@
       @toggle-mobile-menu="toggleMobileMenu"
       @edit-current-slide="handleEditCurrentSlide"
       @toggle-editor="handleToggleEditor"
+      @toggle-theme="toggleTheme"
       @login="handleLogin"
       @logout="handleLogout"
       @save-story="handleSaveStory"
@@ -55,6 +57,7 @@
       @update:auto-play-speed="handleAutoPlaySpeedUpdate"
       @update:loop-enabled="handleLoopEnabledUpdate"
       @focus-step="focusStep"
+      @text-content-editing-change="handleTextContentEditingChange"
     />
 
     <StoryRenderer
@@ -66,6 +69,8 @@
       :show-edit-trigger="false"
       :show-watermark="showWatermark"
       :enable-ctas="storyEnableCtas"
+      :active-text-content-target-id="activeTextContentTargetId"
+      :active-text-content-highlight-scope="activeTextContentHighlightScope"
       @edit-slide="openSlideEditor"
     />
 
@@ -74,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import '../styles/editor.scss'
 import EditorToggleButton from '@/components/EditorToggleButton.vue'
 import RuntimeDiagnosticsPanel from '@/components/RuntimeDiagnosticsPanel.vue'
@@ -88,7 +93,10 @@ import EditorTopBar from '@/features/editor/components/EditorTopBar.vue'
 import { useEditorInteractionState } from '@/features/editor/composables/useEditorInteractionState'
 import { useEditorStoryActions } from '@/features/editor/composables/useEditorStoryActions'
 import { useEditorStorySource } from '@/features/editor/composables/useEditorStorySource'
+import { useEditorTheme } from '@/features/editor/composables/useEditorTheme'
 import { FEATURE_FLAGS } from '@/config/featureFlags'
+import type { TextContentEditingChangePayload } from '@/editor/types/flowEditor'
+import type { TextContentHighlightScope } from '@/types/textContentHighlight'
 
 const { routeStoryId, storySchema, availableStories } = useEditorStorySource()
 
@@ -175,6 +183,7 @@ const {
 
 const editorToggleLogoUrl = `${import.meta.env.BASE_URL}favicon.png`
 const isAuthenticated = computed(() => Boolean(user.value))
+const { isDarkTheme, toggleTheme } = useEditorTheme()
 
 const storyUsageText = computed(() => {
   if (!Number.isFinite(maxStories.value)) return `${storyCount.value} stories used`
@@ -183,6 +192,8 @@ const storyUsageText = computed(() => {
 
 const storyEnableCtas = computed(() => storySchema.value?.enableCtas ?? true)
 const showRuntimeDiagnostics = FEATURE_FLAGS.enableRuntimeDiagnostics
+const activeTextContentTargetId = ref<string | null>(null)
+const activeTextContentHighlightScope = ref<TextContentHighlightScope>('content')
 
 const handleLogin = async () => {
   try {
@@ -207,6 +218,21 @@ const setSnapShellEl = (element: HTMLElement | null) => {
 const setSnapStageEl = (element: HTMLElement | null) => {
   snapStageRef.value = element
 }
+
+const handleTextContentEditingChange = (payload: TextContentEditingChangePayload) => {
+  activeTextContentTargetId.value = payload.active ? payload.targetId : null
+  activeTextContentHighlightScope.value = payload.scope ?? 'content'
+}
+
+watch(
+  () => isFlowEditorOpen.value,
+  (isOpen) => {
+    if (!isOpen) {
+      activeTextContentTargetId.value = null
+      activeTextContentHighlightScope.value = 'content'
+    }
+  }
+)
 
 void flowEditorRef
 </script>

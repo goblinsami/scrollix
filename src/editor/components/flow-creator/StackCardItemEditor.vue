@@ -50,7 +50,15 @@
     <label>
       Card {{ index + 1 }} overlay intensity
       <div class="text-style-panel__range">
-        <input v-model.number="localCard.overlayIntensity" type="range" min="0" max="100" step="1" :disabled="!localCard.image || !localCard.overlayEnabled" @input="emitUpdate" />
+        <input
+          v-model.number="localCard.overlayIntensity"
+          type="range"
+          :min="PANEL_OVERLAY_OPACITY_LIMITS.min"
+          :max="PANEL_OVERLAY_OPACITY_LIMITS.max"
+          :step="PANEL_OVERLAY_OPACITY_LIMITS.step"
+          :disabled="!localCard.image || !localCard.overlayEnabled"
+          @input="emitUpdate"
+        />
         <span>{{ formatNumber(localCard.overlayIntensity, 0) }}%</span>
       </div>
     </label>
@@ -85,6 +93,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ItemContent, StackCardItem, TextSize } from '@/types/navigation'
+import { PANEL_OVERLAY_OPACITY_LIMITS } from '@/constants/slideStyle'
 import TextSizeSelector from '../atoms/TextSizeSelector.vue'
 import ItemContentTextEditor from './ItemContentTextEditor.vue'
 

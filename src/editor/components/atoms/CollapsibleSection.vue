@@ -1,7 +1,8 @@
 <template>
-  <section class="text-style-panel">
+  <section class="text-style-panel" :class="{ 'text-style-panel--open': open }">
     <div
       class="text-style-panel__summary"
+      :class="{ 'text-style-panel__summary--open': open }"
       role="button"
       tabindex="0"
       :aria-expanded="open ? 'true' : 'false'"

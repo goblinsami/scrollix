@@ -8,6 +8,8 @@
 @use './tokens/zindex' as tokens-zindex;
 
 @use './themes/default';
+@use './themes/dark';
+@use './themes/light';
 
 @use './base/reset';
 @use './base/globals';

@@ -26,9 +26,11 @@
         :can-upload-images="canUploadImages"
         :show-template-selector="true"
         :enable-stack-cards="true"
+        :text-content-editing-target-id="draft.id || panel?.id || null"
         id-prefix="slide-main"
         :text-content-labels="mainContentLabels"
         @update:model-value="onDraftUpdate"
+        @text-content-editing-change="onTextContentEditingChange"
       />
 
       <div class="block-settings__actions">
@@ -43,6 +45,7 @@
 <script setup lang="ts">
 import { reactive, toRef, watch } from 'vue'
 import { TextSize, type Panel } from '../../../types/navigation'
+import type { TextContentEditingChangePayload } from '@/types/textContentHighlight'
 import ItemContentEditor from './ItemContentEditor.vue'
 
 const props = withDefaults(
@@ -65,6 +68,7 @@ const emit = defineEmits<{
   save: [panel: Panel]
   delete: []
   'toggle-side': []
+  'text-content-editing-change': [payload: TextContentEditingChangePayload]
 }>()
 
 const DEFAULT_TEXT_SIZE = TextSize.Medium
@@ -102,6 +106,10 @@ const mainContentLabels = {
 const onDraftUpdate = (value: Partial<Panel> & Record<string, unknown>) => {
   Object.assign(draft, value)
   emit('save', { ...draft })
+}
+
+const onTextContentEditingChange = (payload: TextContentEditingChangePayload) => {
+  emit('text-content-editing-change', payload)
 }
 
 const saveAndClose = () => {

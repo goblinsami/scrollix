@@ -4,7 +4,7 @@
       <h3>{{ showModal ? 'Hide Flow Editor' : 'Flow Editor' }}</h3>
     </button>
 
-    <div v-if="showModal" class="flow-sidebar-overlay" @click="toggleModal" />
+    <div v-if="showModal && !showSettings" class="flow-sidebar-overlay" @click="toggleModal" />
 
     <aside
       class="flow-sidebar flow-modal flow-modal--resizable"
@@ -13,7 +13,7 @@
       <div class="flow-modal__debug">
         <div class="flow-controls-row flow-controls-row--top">
           <div class="flow-controls-group flow-controls-group--fields">
-            <div class="flow-subcategory">
+            <div class="flow-subcategory" :class="{ 'flow-subcategory--open': isTransitionOpen }">
               <button type="button" class="flow-subcategory__header" @click="isTransitionOpen = !isTransitionOpen">
                 <span class="flow-subcategory__title">Transition</span>
                 <span class="flow-subcategory__chevron" :class="{ 'flow-subcategory__chevron--open': isTransitionOpen }">▸</span>
@@ -57,7 +57,7 @@
               </div>
             </div>
 
-            <div class="flow-subcategory">
+            <div class="flow-subcategory" :class="{ 'flow-subcategory--open': isAutoPlayOpen }">
               <button type="button" class="flow-subcategory__header" @click="isAutoPlayOpen = !isAutoPlayOpen">
                 <span class="flow-subcategory__title">AutoPlay</span>
                 <span class="flow-subcategory__chevron" :class="{ 'flow-subcategory__chevron--open': isAutoPlayOpen }">▸</span>
@@ -98,7 +98,7 @@
         </div>
 
         <div class="flow-controls-row flow-controls-row--bottom">
-          <div class="flow-subcategory">
+          <div class="flow-subcategory" :class="{ 'flow-subcategory--open': isFilesOpen }">
             <button type="button" class="flow-subcategory__header" @click="isFilesOpen = !isFilesOpen">
               <span class="flow-subcategory__title">Files</span>
               <span class="flow-subcategory__chevron" :class="{ 'flow-subcategory__chevron--open': isFilesOpen }">▸</span>
@@ -200,9 +200,10 @@
       :can-upload-images="props.canUploadImages ?? true"
       :enable-ctas="props.enableCtas ?? true"
       @toggle-side="toggleSlideSettingsSide"
-      @close="closeSettings"
+      @close="handleCloseSettings"
       @save="saveSettings"
       @delete="deletePanel"
+      @text-content-editing-change="emitTextContentEditingChange"
     />
   </section>
 </template>
@@ -211,7 +212,11 @@
 import FlowNodeCard from './FlowNodeCard.vue'
 import SlidePropertiesModal from './SlidePropertiesModal.vue'
 import { useFlowEditorController } from '../../composables/useFlowEditorController'
-import type { FlowEditorEmit, FlowEditorProps } from '../../types/flowEditor'
+import type {
+  FlowEditorEmit,
+  FlowEditorProps,
+  TextContentEditingChangePayload
+} from '../../types/flowEditor'
 
 const props = defineProps<FlowEditorProps>()
 const emit = defineEmits<FlowEditorEmit>()
@@ -267,6 +272,15 @@ const {
   openJsonFilePicker,
   exposed
 } = useFlowEditorController(props, emit)
+
+const emitTextContentEditingChange = (payload: TextContentEditingChangePayload) => {
+  emit('text-content-editing-change', payload)
+}
+
+const handleCloseSettings = () => {
+  emitTextContentEditingChange({ targetId: null, active: false })
+  closeSettings()
+}
 
 defineExpose(exposed)
 

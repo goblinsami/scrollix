@@ -1,35 +1,81 @@
+@use '../mixins/editor-primitives' as ui;
+
 .ui-btn {
+  @include ui.editor-control-base;
   appearance: none;
-  border: 1px solid #cfd6de;
-  background: #ffffff;
-  color: #24303c;
-  border-radius: 10px;
-  height: 32px;
-  padding: 0 0.75rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+  gap: 0.4rem;
+  padding: 0 0.88rem;
   cursor: pointer;
-  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  text-decoration: none;
+  position: relative;
 }
 
 .ui-btn:hover {
-  background: #f6f8fa;
-  border-color: #b9c4cf;
+  @include ui.editor-control-hover;
+  transform: translateY(-1px);
+}
+
+.ui-btn:active {
+  transform: translateY(0);
 }
 
 .ui-btn:focus-visible {
-  outline: 2px solid #9fb3c8;
-  outline-offset: 2px;
+  @include ui.editor-focus-ring;
+}
+
+.ui-btn:disabled {
+  cursor: default;
+  opacity: 0.52;
+  transform: none;
+}
+
+.ui-btn--primary {
+  border-color: color-mix(in srgb, var(--editor-accent) 64%, var(--editor-border-soft));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--editor-accent) 68%, var(--editor-surface-2)) 0%,
+    color-mix(in srgb, var(--editor-accent-strong) 70%, var(--editor-surface-2)) 100%
+  );
+  color: var(--editor-text-inverse);
+  box-shadow: var(--editor-shadow-xs);
+}
+
+.ui-btn--primary:hover {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--editor-accent) 76%, var(--editor-surface-2)) 0%,
+    color-mix(in srgb, var(--editor-accent-strong) 80%, var(--editor-surface-2)) 100%
+  );
+  border-color: color-mix(in srgb, var(--editor-accent) 78%, var(--editor-border-soft));
+}
+
+.ui-btn--secondary {
+  background: color-mix(in srgb, var(--editor-surface-2) 72%, var(--editor-accent-soft));
+  border-color: color-mix(in srgb, var(--editor-accent) 45%, var(--editor-border-soft));
+  color: var(--editor-text-primary);
+}
+
+.ui-btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--editor-text-secondary);
+}
+
+.ui-btn--ghost:hover {
+  background: color-mix(in srgb, var(--editor-surface-2) 58%, transparent);
+  border-color: color-mix(in srgb, var(--editor-border-soft) 64%, transparent);
 }
 
 .ui-btn--danger {
-  background: #b42318;
-  color: #fff;
-  border: 1px solid #9f1f16;
+  background: color-mix(in srgb, var(--editor-danger) 30%, var(--editor-surface-2));
+  border: 1px solid color-mix(in srgb, var(--editor-danger) 72%, var(--editor-border-soft));
+  color: color-mix(in srgb, var(--editor-danger) 84%, var(--editor-text-primary));
 }
 
 .ui-btn--danger:hover {
-  background: #9f1f16;
-  border-color: #8f1b14;
+  background: color-mix(in srgb, var(--editor-danger) 38%, var(--editor-surface-2));
+  border-color: color-mix(in srgb, var(--editor-danger) 86%, var(--editor-border-soft));
 }

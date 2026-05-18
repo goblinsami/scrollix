@@ -1,4 +1,4 @@
 @mixin glass-panel($bg: rgba(255, 255, 255, 0.9), $blur: 10px) {
   background: $bg;
-  backdrop-filter: blur($blur);
+  backdrop-filter: none;
 }

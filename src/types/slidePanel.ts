@@ -7,6 +7,7 @@ import type {
   TemplateType,
   TextSize as SlideTextSize
 } from './navigation'
+import type { TextContentHighlightScope } from './textContentHighlight'
 
 export interface SlidePanelProps {
   title: string
@@ -43,6 +44,9 @@ export interface SlidePanelProps {
   ctaText?: string
   ctaLink?: string
   cta?: PanelCta
+  panelId?: string
+  activeTextContentTargetId?: string | null
+  activeTextContentHighlightScope?: TextContentHighlightScope
   animateKey?: string
   direction: Direction
   showDirectionIcon?: boolean

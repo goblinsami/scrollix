@@ -16,31 +16,58 @@
         :class="[
           `content--align-${contentAlignResolved}`,
           `content--width-${contentWidthModeResolved}`,
-          { 'content--on-image': hasVisualBackground }
+          {
+            'content--on-image': hasVisualBackground,
+            'content--text-content-editing': isMainTextContentEditingActive,
+            'debug-container debug-container--content': showDebugContainers
+          }
         ]"
         :style="stackContentStyle"
       >
         <div
           v-if="logo && logoTintEnabledResolved"
           class="slide-logo slide-logo--tint"
+          :class="{ 'debug-container debug-container--logo': showDebugContainers }"
           :style="logoTintStyle"
         />
         <img
           v-else-if="logo"
           class="slide-logo"
+          :class="{ 'debug-container debug-container--logo': showDebugContainers }"
           :src="logo"
           alt=""
           :style="logoStyle"
         />
-        <p class="eyebrow" :style="eyebrowStyle">
+        <p
+          class="eyebrow"
+          :class="{
+            'text-content-highlight-target': isMainEyebrowHighlightActive,
+            'debug-container debug-container--eyebrow': showDebugContainers
+          }"
+          :style="eyebrowStyle"
+        >
           <span v-if="useMarkdown" v-html="eyebrowHtml" />
           <template v-else>{{ eyebrow }}</template>
         </p>
-        <h1 :style="stackTitleStyle">
+        <h1
+          :class="{
+            'text-content-highlight-target': isMainTitleHighlightActive,
+            'debug-container debug-container--title': showDebugContainers
+          }"
+          :style="stackTitleStyle"
+        >
           <span v-if="useMarkdown" v-html="titleHtml" />
           <template v-else>{{ title }}</template>
         </h1>
-        <p v-if="description" class="section-description" :style="descriptionStyle">
+        <p
+          v-if="description"
+          class="section-description"
+          :class="{
+            'text-content-highlight-target': isMainDescriptionHighlightActive,
+            'debug-container debug-container--description': showDebugContainers
+          }"
+          :style="descriptionStyle"
+        >
           <span v-if="useMarkdown" v-html="descriptionHtml" />
           <template v-else>{{ description }}</template>
         </p>
@@ -89,6 +116,8 @@
           :background-gradient="card.backgroundGradient"
           :overlay-enabled="card.overlayEnabled"
           :overlay-intensity="card.overlayIntensity"
+          :is-text-content-editing-active="isCardTextContentEditingActive(card.id)"
+          :text-content-highlight-scope="cardTextContentHighlightScope(card.id)"
           :direction="Direction.Down"
         />
       </div>
@@ -142,6 +171,7 @@ const STEP = 0.03
 const BACK_FADE_WINDOW = 0.65
 
 const props = defineProps<SlidePanelProps>()
+const showDebugContainers = FEATURE_FLAGS.enableDebugContainers
 
 const {
   titleHtml,
@@ -173,6 +203,22 @@ const stackTitleStyle = computed(() => ({
   maxWidth: `min(${titleMaxWidthResolved.value}px, 100%)`
 }))
 const cards = computed(() => props.stackCards?.cards ?? [])
+const isMainTextContentEditingActive = computed(
+  () => Boolean(props.panelId) && props.activeTextContentTargetId === props.panelId
+)
+const isMainEyebrowHighlightActive = computed(
+  () => isMainTextContentEditingActive.value && props.activeTextContentHighlightScope === 'eyebrow'
+)
+const isMainTitleHighlightActive = computed(
+  () => isMainTextContentEditingActive.value && props.activeTextContentHighlightScope === 'title'
+)
+const isMainDescriptionHighlightActive = computed(
+  () => isMainTextContentEditingActive.value && props.activeTextContentHighlightScope === 'description'
+)
+const isCardTextContentEditingActive = (cardId: string | undefined) =>
+  Boolean(cardId) && props.activeTextContentTargetId === cardId
+const cardTextContentHighlightScope = (cardId: string | undefined) =>
+  isCardTextContentEditingActive(cardId) ? props.activeTextContentHighlightScope : 'content'
 const totalCards = computed(() => Math.max(1, cards.value.length))
 const textSide = computed(() => props.stackCards?.textSide ?? STACK_CARDS_DEFAULTS.textSide)
 const stackDirection = computed(

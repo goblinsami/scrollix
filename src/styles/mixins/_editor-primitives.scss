@@ -1,0 +1,65 @@
+@mixin editor-focus-ring {
+  outline: none;
+  box-shadow: var(--editor-focus-ring);
+}
+
+@mixin editor-control-base {
+  min-height: var(--editor-control-height);
+  border-radius: var(--editor-radius-sm);
+  border: 1px solid var(--editor-border-soft);
+  background: var(--editor-surface-2);
+  color: var(--editor-text-primary);
+  font-family: var(--editor-font-family);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  transition:
+    border-color var(--editor-transition-fast),
+    background-color var(--editor-transition-fast),
+    box-shadow var(--editor-transition-fast),
+    color var(--editor-transition-fast),
+    transform var(--editor-transition-fast);
+}
+
+@mixin editor-control-hover {
+  border-color: var(--editor-border-strong);
+  background: color-mix(in srgb, var(--editor-surface-2) 74%, var(--editor-accent-soft));
+}
+
+@mixin editor-glass-panel($radius: var(--editor-radius-md), $padding: var(--editor-spacing-lg)) {
+  border-radius: $radius;
+  border: 1px solid var(--editor-border-soft);
+  background: color-mix(in srgb, var(--editor-surface-1) 86%, transparent);
+  box-shadow: var(--editor-shadow-sm);
+  padding: $padding;
+}
+
+@mixin editor-section-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--editor-text-muted);
+}
+
+@mixin editor-range-track {
+  height: 5px;
+  border-radius: var(--editor-radius-pill);
+  border: 1px solid var(--editor-border-soft);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--editor-accent) 72%, transparent) 0%,
+    color-mix(in srgb, var(--editor-accent) 30%, var(--editor-surface-3)) 100%
+  );
+}
+
+@mixin editor-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--editor-accent) 70%, var(--editor-border-soft));
+  background: var(--editor-surface-inverse);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--editor-accent-soft) 85%, transparent),
+    var(--editor-shadow-xs);
+}

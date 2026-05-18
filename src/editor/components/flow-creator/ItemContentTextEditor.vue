@@ -1,4 +1,5 @@
 <template>
+  <div ref="rootRef" class="item-content-text-editor" @focusin="handleFocusIn" @focusout="handleFocusOut">
   <label>
     {{ labels.title }}
     <div class="text-input-row">
@@ -87,10 +88,11 @@
       </span>
     </div>
   </label>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import type { ItemContent, TextSize } from '@/types/navigation'
 import TextSizeSelector from '../atoms/TextSizeSelector.vue'
 import MarkdownField from '../atoms/MarkdownField.vue'
@@ -110,18 +112,41 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: ItemContent]
+  'text-content-editing-change': [active: boolean]
 }>()
 
 const localValue = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
+const rootRef = ref<HTMLElement | null>(null)
+const isEditing = ref(false)
 
-const emitUpdate = () => emit('update:modelValue', { ...localValue.value })
+const emitUpdate = () => {
+  emitEditingChange(true)
+  emit('update:modelValue', { ...localValue.value })
+}
+const emitEditingChange = (active: boolean) => {
+  if (isEditing.value === active) return
+  isEditing.value = active
+  emit('text-content-editing-change', active)
+}
 
 const onContentWidthModeToggle = (event: Event) => {
   const checked = (event.target as HTMLInputElement).checked
   localValue.value.contentWidthMode = checked ? 'contained' : 'full'
   emitUpdate()
 }
+
+const handleFocusIn = () => emitEditingChange(true)
+
+const handleFocusOut = () => {
+  requestAnimationFrame(() => {
+    const activeElement = document.activeElement
+    if (activeElement && rootRef.value?.contains(activeElement)) return
+    emitEditingChange(false)
+  })
+}
+
+onBeforeUnmount(() => emitEditingChange(false))
 </script>

@@ -26,7 +26,7 @@
   width: auto;
   height: 1.1em;
   object-fit: contain;
-  opacity: 0.05;
-  filter: brightness(0) invert(1);
+  opacity: var(--editor-scrollix-watermark-opacity);
+  filter: var(--editor-scrollix-watermark-filter);
   margin-right: 0.5rem;
 }
