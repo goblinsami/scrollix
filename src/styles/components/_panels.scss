@@ -583,6 +583,7 @@ body.snap-mode {
 
   .panel--stack-cards .stack-cards-layout {
     --stack-cards-layout-side-padding: 0px;
+    padding-bottom: clamp(1rem, 4vh, 2.2rem);
   }
 
   .panel--stack-cards .stack-cards-layout,
