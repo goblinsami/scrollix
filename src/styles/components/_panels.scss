@@ -583,7 +583,8 @@ body.snap-mode {
 
   .panel--stack-cards .stack-cards-layout {
     --stack-cards-layout-side-padding: 0px;
-    padding-bottom: clamp(1rem, 4vh, 2.2rem);
+    --stack-mobile-cards-bottom-space: 65px;
+    padding-bottom: 0;
   }
 
   .panel--stack-cards .stack-cards-layout,
@@ -624,6 +625,7 @@ body.snap-mode {
     margin-right: 0;
     perspective-origin: 54% 50%;
     margin-top: var(--stack-mobile-text-cards-gap, 0px);
+    margin-bottom: var(--stack-mobile-cards-bottom-space, 56px);
   }
 
   .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .content {
