@@ -1,6 +1,5 @@
 ﻿import * as React from 'react'
 import { addPropertyControls, ControlType } from 'framer'
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { useScrollixRuntime } from './useScrollixRuntime'
 
 type TextSize = 's' | 'm' | 'l'
@@ -16,6 +15,7 @@ interface FramerCard {
 }
 
 interface ScrollixCardsProps {
+  style?: React.CSSProperties
   projectId: string
   supabaseUrl: string
   supabaseAnonKey: string
@@ -154,81 +154,182 @@ const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
   }
 })
 
-const getSupabaseClient = (supabaseUrl: string, supabaseAnonKey: string): SupabaseClient | null => {
+interface SupabaseRestContext {
+  restBaseUrl: string
+  anonKey: string
+}
+
+const normalizeSupabaseBaseUrl = (rawUrl: string) => rawUrl.trim().replace(/\/+$/, '').replace(/\/rest\/v1$/i, '')
+
+const getSupabaseRestContext = (supabaseUrl: string, supabaseAnonKey: string): SupabaseRestContext | null => {
   const trimmedUrl = supabaseUrl.trim()
   const trimmedKey = supabaseAnonKey.trim()
   if (!trimmedUrl || !trimmedKey) return null
 
-  return createClient(trimmedUrl.replace(/\/+$/, '').replace(/\/rest\/v1$/i, ''), trimmedKey)
+  return {
+    restBaseUrl: normalizeSupabaseBaseUrl(trimmedUrl),
+    anonKey: trimmedKey
+  }
+}
+
+const resolveStoriesEndpoint = (restBaseUrl: string, storiesTable: string) => {
+  const table = storiesTable.trim() || 'stories'
+  return `${restBaseUrl}/rest/v1/${encodeURIComponent(table)}`
+}
+
+const parseSupabaseError = async (response: Response) => {
+  const fallback = `${response.status} ${response.statusText}`
+
+  try {
+    const payload = (await response.json()) as {
+      message?: string
+      details?: string
+      hint?: string
+      code?: string
+    }
+
+    const details = [payload.message, payload.details, payload.hint].filter(Boolean).join(' ')
+    if (details) return details
+    if (payload.code) return payload.code
+    return fallback
+  } catch (_error) {
+    return fallback
+  }
+}
+
+const parseSupabaseRows = async (response: Response): Promise<Array<Record<string, unknown>>> => {
+  if (response.status === 204) return []
+
+  const text = await response.text()
+  if (!text) return []
+
+  try {
+    const parsed = JSON.parse(text) as unknown
+    if (Array.isArray(parsed)) return parsed as Array<Record<string, unknown>>
+    if (parsed && typeof parsed === 'object') return [parsed as Record<string, unknown>]
+    return []
+  } catch (_error) {
+    return []
+  }
+}
+
+const supabaseRestMutation = async ({
+  context,
+  endpoint,
+  method,
+  body,
+  prefer
+}: {
+  context: SupabaseRestContext
+  endpoint: string
+  method: 'POST' | 'PATCH'
+  body: Record<string, unknown>
+  prefer: string
+}) => {
+  const response = await fetch(endpoint, {
+    method,
+    headers: {
+      apikey: context.anonKey,
+      Authorization: `Bearer ${context.anonKey}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      Prefer: prefer
+    },
+    body: JSON.stringify(body)
+  })
+
+  if (!response.ok) {
+    const message = await parseSupabaseError(response)
+    throw new Error(`[Scrollix] Supabase save failed: ${message}`)
+  }
+
+  return parseSupabaseRows(response)
 }
 
 const persistHostedStory = async ({
-  client,
+  context,
   storiesTable,
   projectId,
   payload
 }: {
-  client: SupabaseClient
+  context: SupabaseRestContext
   storiesTable: string
   projectId: string
   payload: HostedSavePayload
 }) => {
   const normalizedProjectId = projectId.trim()
+  const storiesEndpoint = resolveStoriesEndpoint(context.restBaseUrl, storiesTable)
 
   if (normalizedProjectId) {
-    const { data: updateResult, error: updateError } = await client
-      .from(storiesTable)
-      .update({
+    const updateUrl = new URL(storiesEndpoint)
+    updateUrl.searchParams.set('id', `eq.${normalizedProjectId}`)
+    updateUrl.searchParams.set('select', 'id')
+
+    const updateRows = await supabaseRestMutation({
+      context,
+      endpoint: updateUrl.toString(),
+      method: 'PATCH',
+      body: {
         type: payload.type,
         config: payload.config,
         updated_at: new Date().toISOString()
-      })
-      .eq('id', normalizedProjectId)
-      .select('id')
-      .maybeSingle()
+      },
+      prefer: 'return=representation'
+    })
 
-    if (!updateError && updateResult?.id) return String(updateResult.id)
-
-    const { data: upsertResult, error: upsertError } = await client
-      .from(storiesTable)
-      .upsert(
-        {
-          id: normalizedProjectId,
-          type: payload.type,
-          config: payload.config,
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: 'id' }
-      )
-      .select('id')
-      .single()
-
-    if (upsertError || !upsertResult) {
-      throw upsertError ?? new Error('Failed to upsert hosted story.')
+    if (updateRows.length > 0 && typeof updateRows[0].id === 'string') {
+      return updateRows[0].id
     }
 
-    return String(upsertResult.id)
+    const upsertUrl = new URL(storiesEndpoint)
+    upsertUrl.searchParams.set('on_conflict', 'id')
+    upsertUrl.searchParams.set('select', 'id')
+
+    const upsertRows = await supabaseRestMutation({
+      context,
+      endpoint: upsertUrl.toString(),
+      method: 'POST',
+      body: {
+        id: normalizedProjectId,
+        type: payload.type,
+        config: payload.config,
+        updated_at: new Date().toISOString()
+      },
+      prefer: 'resolution=merge-duplicates,return=representation'
+    })
+
+    if (upsertRows.length === 0 || typeof upsertRows[0].id !== 'string') {
+      throw new Error('Failed to upsert hosted story.')
+    }
+
+    return upsertRows[0].id
   }
 
-  const { data: insertResult, error: insertError } = await client
-    .from(storiesTable)
-    .insert({
+  const insertUrl = new URL(storiesEndpoint)
+  insertUrl.searchParams.set('select', 'id')
+
+  const insertRows = await supabaseRestMutation({
+    context,
+    endpoint: insertUrl.toString(),
+    method: 'POST',
+    body: {
       type: payload.type,
       config: payload.config
-    })
-    .select('id')
-    .single()
+    },
+    prefer: 'return=representation'
+  })
 
-  if (insertError || !insertResult) {
-    throw insertError ?? new Error('Failed to create hosted story.')
+  if (insertRows.length === 0 || typeof insertRows[0].id !== 'string') {
+    throw new Error('Failed to create hosted story.')
   }
 
-  return String(insertResult.id)
+  return insertRows[0].id
 }
 
 const runtimePlaceholderStyle: React.CSSProperties = {
   width: '100%',
   height: '100%',
+  minHeight: '320px',
   display: 'grid',
   placeItems: 'center',
   padding: '12px',
@@ -273,6 +374,17 @@ export function ScrollixCards(props: ScrollixCardsProps) {
   const [resolvedProjectId, setResolvedProjectId] = React.useState(props.projectId.trim())
   const [saveState, setSaveState] = React.useState<SaveState>({ status: 'idle', errorMessage: '' })
   const lastSavedSignatureRef = React.useRef('')
+  const hasProjectId = resolvedProjectId.trim().length > 0
+  const hasSupabaseCredentials = props.supabaseUrl.trim().length > 0 && props.supabaseAnonKey.trim().length > 0
+  const frameStyle = React.useMemo<React.CSSProperties>(
+    () => ({
+      width: '100%',
+      height: '100%',
+      minHeight: 320,
+      ...(props.style ?? {})
+    }),
+    [props.style]
+  )
 
   React.useEffect(() => {
     setResolvedProjectId(props.projectId.trim())
@@ -311,8 +423,8 @@ export function ScrollixCards(props: ScrollixCardsProps) {
   React.useEffect(() => {
     if (!runtimeInitialized) return
 
-    const client = getSupabaseClient(props.supabaseUrl, props.supabaseAnonKey)
-    if (!client) return
+    const context = getSupabaseRestContext(props.supabaseUrl, props.supabaseAnonKey)
+    if (!context) return
 
     const debounceMs = Math.min(1000, Math.max(500, props.autoSaveDelayMs))
 
@@ -323,7 +435,7 @@ export function ScrollixCards(props: ScrollixCardsProps) {
       setSaveState((current) => ({ ...current, status: 'saving', errorMessage: '' }))
 
       void persistHostedStory({
-        client,
+        context,
         storiesTable: props.storiesTable,
         projectId: resolvedProjectId,
         payload
@@ -358,15 +470,45 @@ export function ScrollixCards(props: ScrollixCardsProps) {
   if (runtimeLoadError || runtimeInitError) {
     const errorMessage = runtimeLoadError ?? runtimeInitError ?? 'Runtime failed to initialize.'
     return (
-      <div style={runtimePlaceholderStyle} data-runtime-ready="false" data-runtime-error={errorMessage}>
+      <div
+        style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }}
+        data-runtime-ready="false"
+        data-runtime-error={errorMessage}
+      >
         <span>{errorMessage}</span>
+      </div>
+    )
+  }
+
+  if (!hasProjectId && !hasSupabaseCredentials) {
+    return (
+      <div style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }} data-runtime-ready="false">
+        <span>
+          Set `Supabase URL` + `Anon Key` to auto-create a hosted story, or provide an existing `Project ID`.
+        </span>
+      </div>
+    )
+  }
+
+  if (!hasProjectId && hasSupabaseCredentials) {
+    if (saveState.status === 'error') {
+      return (
+        <div style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }} data-runtime-ready="false">
+          <span>{saveState.errorMessage || 'Failed to create hosted story.'}</span>
+        </div>
+      )
+    }
+
+    return (
+      <div style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }} data-runtime-ready="false">
+        <span>Creating hosted story...</span>
       </div>
     )
   }
 
   if (runtimeLoading || !runtimeInitialized) {
     return (
-      <div style={runtimePlaceholderStyle} data-runtime-ready="false" data-runtime-loading="true">
+      <div style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }} data-runtime-ready="false" data-runtime-loading="true">
         <span>Loading Scrollix runtime...</span>
       </div>
     )
@@ -374,7 +516,7 @@ export function ScrollixCards(props: ScrollixCardsProps) {
 
   return (
     <div
-      style={{ width: '100%', height: '100%' }}
+      style={frameStyle}
       data-runtime-ready={runtimeInitialized ? 'true' : 'false'}
       data-save-state={saveState.status}
       data-save-error={saveState.errorMessage}
