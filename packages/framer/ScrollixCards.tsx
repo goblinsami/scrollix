@@ -21,6 +21,7 @@ interface ScrollixCardsProps {
   supabaseAnonKey: string
   storiesTable: string
   runtimeScriptUrl: string
+  runtimeVersion: string
   autoSaveDelayMs: number
   cards: FramerCard[]
   title: string
@@ -238,9 +239,33 @@ const runtimePlaceholderStyle: React.CSSProperties = {
   textAlign: 'center'
 }
 
+const AUTO_RUNTIME_VERSION = `framer-${Date.now()}`
+
+const resolveRuntimeUrl = (runtimeScriptUrl: string, runtimeVersion: string) => {
+  const trimmedUrl = runtimeScriptUrl.trim()
+  if (!trimmedUrl) return ''
+
+  const trimmedVersion = runtimeVersion.trim()
+  if (!trimmedVersion) return trimmedUrl
+
+  try {
+    const url = new URL(trimmedUrl, window.location.href)
+    url.searchParams.set('v', trimmedVersion)
+    return url.toString()
+  } catch (_error) {
+    const separator = trimmedUrl.includes('?') ? '&' : '?'
+    return `${trimmedUrl}${separator}v=${encodeURIComponent(trimmedVersion)}`
+  }
+}
+
 export function ScrollixCards(props: ScrollixCardsProps) {
+  const resolvedRuntimeScriptUrl = React.useMemo(
+    () => resolveRuntimeUrl(props.runtimeScriptUrl, props.runtimeVersion),
+    [props.runtimeScriptUrl, props.runtimeVersion]
+  )
+
   const { ready: runtimeReady, loading: runtimeLoading, error: runtimeLoadError } = useScrollixRuntime(
-    props.runtimeScriptUrl
+    resolvedRuntimeScriptUrl
   )
 
   const [runtimeInitialized, setRuntimeInitialized] = React.useState(false)
@@ -370,6 +395,7 @@ ScrollixCards.defaultProps = {
   supabaseAnonKey: '',
   storiesTable: 'stories',
   runtimeScriptUrl: 'https://cdn.scrollix.app/scrollix-runtime.js',
+  runtimeVersion: AUTO_RUNTIME_VERSION,
   autoSaveDelayMs: 800,
   cards: [
     {
@@ -443,6 +469,12 @@ addPropertyControls(ScrollixCards, {
     type: ControlType.String,
     title: 'Runtime JS',
     defaultValue: 'https://cdn.scrollix.app/scrollix-runtime.js'
+  },
+  runtimeVersion: {
+    type: ControlType.String,
+    title: 'Runtime Ver',
+    defaultValue: AUTO_RUNTIME_VERSION,
+    placeholder: 'auto cache-bust key'
   },
   autoSaveDelayMs: {
     type: ControlType.Number,
