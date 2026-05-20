@@ -1,0 +1,13 @@
+{
+  "name": "@scrollix/framer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "peerDependencies": {
+    "framer": "*",
+    "react": "*"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.4"
+  }
+}
