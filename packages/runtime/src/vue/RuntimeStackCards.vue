@@ -51,6 +51,7 @@ const props = withDefaults(
     projectId: string
     supabaseUrl?: string
     supabaseAnonKey?: string
+    storiesFunctionUrl?: string
     storiesTable?: string
     schema?: string
     liveUpdates?: boolean
@@ -58,6 +59,7 @@ const props = withDefaults(
   {
     supabaseUrl: '',
     supabaseAnonKey: '',
+    storiesFunctionUrl: '',
     storiesTable: 'stories',
     schema: 'public',
     liveUpdates: false
@@ -91,6 +93,7 @@ const loadHostedStory = async () => {
     const story = await loadStory(projectId, {
       supabaseUrl: props.supabaseUrl,
       supabaseAnonKey: props.supabaseAnonKey,
+      storiesFunctionUrl: props.storiesFunctionUrl,
       storiesTable: props.storiesTable,
       schema: props.schema
     })
@@ -117,6 +120,7 @@ const loadHostedStory = async () => {
         {
           supabaseUrl: props.supabaseUrl,
           supabaseAnonKey: props.supabaseAnonKey,
+          storiesFunctionUrl: props.storiesFunctionUrl,
           storiesTable: props.storiesTable,
           schema: props.schema
         }
@@ -129,7 +133,7 @@ const loadHostedStory = async () => {
 }
 
 watch(
-  () => [props.projectId, props.supabaseUrl, props.supabaseAnonKey, props.storiesTable, props.schema, props.liveUpdates],
+  () => [props.projectId, props.supabaseUrl, props.supabaseAnonKey, props.storiesFunctionUrl, props.storiesTable, props.schema, props.liveUpdates],
   () => {
     void loadHostedStory()
   },

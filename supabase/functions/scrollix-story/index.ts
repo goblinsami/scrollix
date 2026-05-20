@@ -3,10 +3,12 @@ import { createClient } from "npm:@supabase/supabase-js@2"
 type StoryPayload = {
   projectId?: string
   type?: string
+  storiesTable?: string
   config?: Record<string, unknown>
 }
 
 const TABLE = Deno.env.get("SCROLLIX_STORIES_TABLE")?.trim() || "stories"
+const TABLE_NAME_REGEX = /^[a-zA-Z0-9_]+$/
 const DEFAULT_FRAMER_DOMAINS = [
   "framer.com",
   "framer.app",
@@ -19,6 +21,13 @@ const parseAllowedOrigins = () =>
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean)
+
+const resolveStoriesTable = (candidate?: string | null) => {
+  const trimmed = (candidate ?? '').trim()
+  if (!trimmed) return TABLE
+  if (!TABLE_NAME_REGEX.test(trimmed)) return TABLE
+  return trimmed
+}
 
 const isFramerOrigin = (origin: string) => {
   try {
@@ -96,12 +105,13 @@ Deno.serve(async (req) => {
 
     if (req.method === "GET") {
       const projectId = (url.searchParams.get("projectId") || "").trim()
+      const storiesTable = resolveStoriesTable(url.searchParams.get("storiesTable"))
       if (!projectId) {
         return jsonResponse(400, { error: "projectId is required" }, origin)
       }
 
       const { data, error } = await admin
-        .from(TABLE)
+        .from(storiesTable)
         .select("id,type,config,content_json,updated_at")
         .eq("id", projectId)
         .maybeSingle()
@@ -121,6 +131,7 @@ Deno.serve(async (req) => {
       const body = (await req.json()) as StoryPayload
       const projectId = (body.projectId || "").trim()
       const type = (body.type || "3d-stack-cards").trim()
+      const storiesTable = resolveStoriesTable(body.storiesTable)
       const config = body.config
 
       if (!config || typeof config !== "object") {
@@ -144,7 +155,7 @@ Deno.serve(async (req) => {
       }
 
       const { data, error } = await admin
-        .from(TABLE)
+        .from(storiesTable)
         .upsert(row, { onConflict: "id" })
         .select("id")
         .single()

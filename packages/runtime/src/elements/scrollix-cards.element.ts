@@ -8,6 +8,7 @@ interface RuntimeElementProps {
   projectId: string
   supabaseUrl: string
   supabaseAnonKey: string
+  storiesFunctionUrl: string
   storiesTable: string
   schema: string
   liveUpdates: boolean
@@ -17,7 +18,7 @@ const readBooleanAttribute = (value: string | null) => value !== null && value !
 
 export class ScrollixCardsElement extends HTMLElement {
   static get observedAttributes() {
-    return ['project-id', 'supabase-url', 'supabase-anon-key', 'stories-table', 'schema', 'live-updates']
+    return ['project-id', 'supabase-url', 'supabase-anon-key', 'stories-function-url', 'stories-table', 'schema', 'live-updates']
   }
 
   private app: App<Element> | null = null
@@ -26,6 +27,7 @@ export class ScrollixCardsElement extends HTMLElement {
     projectId: '',
     supabaseUrl: '',
     supabaseAnonKey: '',
+    storiesFunctionUrl: '',
     storiesTable: 'stories',
     schema: 'public',
     liveUpdates: false
@@ -70,6 +72,7 @@ export class ScrollixCardsElement extends HTMLElement {
     const projectIdAttr = this.getAttribute('project-id')
     const supabaseUrlAttr = this.getAttribute('supabase-url')
     const supabaseAnonKeyAttr = this.getAttribute('supabase-anon-key')
+    const storiesFunctionUrlAttr = this.getAttribute('stories-function-url')
     const storiesTableAttr = this.getAttribute('stories-table')
     const schemaAttr = this.getAttribute('schema')
 
@@ -78,6 +81,10 @@ export class ScrollixCardsElement extends HTMLElement {
       supabaseUrlAttr !== null ? supabaseUrlAttr.trim() : runtimeConfig.supabaseUrl
     this.props.supabaseAnonKey =
       supabaseAnonKeyAttr !== null ? supabaseAnonKeyAttr.trim() : runtimeConfig.supabaseAnonKey
+    this.props.storiesFunctionUrl =
+      storiesFunctionUrlAttr !== null
+        ? storiesFunctionUrlAttr.trim()
+        : runtimeConfig.storiesFunctionUrl
     this.props.storiesTable =
       storiesTableAttr !== null
         ? storiesTableAttr.trim() || 'stories'
@@ -88,6 +95,7 @@ export class ScrollixCardsElement extends HTMLElement {
     const nextConfig: Parameters<typeof setRuntimeConfig>[0] = {}
     if (supabaseUrlAttr !== null) nextConfig.supabaseUrl = this.props.supabaseUrl
     if (supabaseAnonKeyAttr !== null) nextConfig.supabaseAnonKey = this.props.supabaseAnonKey
+    if (storiesFunctionUrlAttr !== null) nextConfig.storiesFunctionUrl = this.props.storiesFunctionUrl
     if (storiesTableAttr !== null) nextConfig.storiesTable = this.props.storiesTable
     if (schemaAttr !== null) nextConfig.schema = this.props.schema
     if (Object.keys(nextConfig).length > 0) {

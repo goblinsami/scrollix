@@ -93,6 +93,7 @@ interface ScrollixRuntimeApi {
   init: (options: {
     supabaseUrl?: string
     supabaseAnonKey?: string
+    storiesFunctionUrl?: string
     storiesTable?: string
   }) => unknown
 }
@@ -108,6 +109,7 @@ declare global {
       'project-id'?: string
       'supabase-url'?: string
       'supabase-anon-key'?: string
+      'stories-function-url'?: string
       'stories-table'?: string
     }
 
@@ -451,7 +453,7 @@ const resolveRuntimeUrl = (runtimeScriptUrl: string, runtimeVersion: string) => 
   }
 }
 
-export function ScrollixCards(props: ScrollixCardsProps) {
+function ScrollixCards(props: ScrollixCardsProps) {
   const resolvedRuntimeScriptUrl = React.useMemo(
     () => resolveRuntimeUrl(props.runtimeScriptUrl, props.runtimeVersion),
     [props.runtimeScriptUrl, props.runtimeVersion]
@@ -472,6 +474,8 @@ export function ScrollixCards(props: ScrollixCardsProps) {
     [props.supabaseUrl, props.storiesFunctionUrl, props.supabaseAnonKey]
   )
   const hasStoriesFunctionTarget = Boolean(storiesFunctionContext)
+  const hasSupabaseReadCredentials = props.supabaseUrl.trim().length > 0 && props.supabaseAnonKey.trim().length > 0
+  const hasRuntimeStorySource = hasStoriesFunctionTarget || hasSupabaseReadCredentials
   const trimmedSupabaseKey = props.supabaseAnonKey.trim()
   const isSecretSupabaseKey =
     trimmedSupabaseKey.startsWith('sb_secret_') ||
@@ -504,6 +508,7 @@ export function ScrollixCards(props: ScrollixCardsProps) {
       window.ScrollixRuntime?.init({
         supabaseUrl: props.supabaseUrl,
         supabaseAnonKey: props.supabaseAnonKey,
+        storiesFunctionUrl: resolveStoriesFunctionUrl(props.supabaseUrl, props.storiesFunctionUrl),
         storiesTable: props.storiesTable
       })
 
@@ -597,6 +602,16 @@ export function ScrollixCards(props: ScrollixCardsProps) {
     )
   }
 
+  if (hasProjectId && !hasRuntimeStorySource) {
+    return (
+      <div style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }} data-runtime-ready="false">
+        <span>
+          Set `Function URL` (or `Supabase URL` + `Anon Key`) so the runtime can load this `Project ID`.
+        </span>
+      </div>
+    )
+  }
+
   if (!hasProjectId && hasStoriesFunctionTarget) {
     if (saveState.status === 'error') {
       return (
@@ -632,6 +647,7 @@ export function ScrollixCards(props: ScrollixCardsProps) {
         project-id={resolvedProjectId}
         supabase-url={props.supabaseUrl}
         supabase-anon-key={props.supabaseAnonKey}
+        stories-function-url={resolveStoriesFunctionUrl(props.supabaseUrl, props.storiesFunctionUrl)}
         stories-table={props.storiesTable}
         live-updates="true"
       />

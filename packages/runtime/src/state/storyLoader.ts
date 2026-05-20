@@ -25,6 +25,7 @@ const storyCache = new Map<string, CacheEntry>()
 const inflightCache = new Map<string, Promise<HostedStoryRecord | null>>()
 
 const normalizeProjectId = (projectId: string) => projectId.trim()
+const normalizeUrl = (rawUrl: string) => rawUrl.trim().replace(/\/+$/, '')
 
 const now = () => Date.now()
 
@@ -36,7 +37,73 @@ const getCacheTtlMs = () => {
 const getStoriesTable = (overrides?: ScrollixRuntimeInitOptions) =>
   (overrides?.storiesTable ?? getRuntimeConfig().storiesTable).trim() || 'stories'
 
-const fetchStoryById = async (
+const resolveStoriesFunctionUrl = (overrides?: ScrollixRuntimeInitOptions) =>
+  normalizeUrl(overrides?.storiesFunctionUrl ?? getRuntimeConfig().storiesFunctionUrl)
+
+const resolveSupabaseCredentials = (overrides?: ScrollixRuntimeInitOptions) => {
+  const runtime = getRuntimeConfig()
+  const supabaseUrl = (overrides?.supabaseUrl ?? runtime.supabaseUrl).trim().replace(/\/+$/, '').replace(/\/rest\/v1$/i, '')
+  const supabaseAnonKey = (overrides?.supabaseAnonKey ?? runtime.supabaseAnonKey).trim()
+
+  return {
+    supabaseUrl,
+    supabaseAnonKey
+  }
+}
+
+const hasSupabaseCredentials = (overrides?: ScrollixRuntimeInitOptions) => {
+  const { supabaseUrl, supabaseAnonKey } = resolveSupabaseCredentials(overrides)
+  return Boolean(supabaseUrl && supabaseAnonKey)
+}
+
+const parseErrorMessage = async (response: Response) => {
+  const fallback = `${response.status} ${response.statusText}`
+  try {
+    const payload = (await response.json()) as { error?: string; message?: string; details?: string }
+    return payload.error || payload.message || payload.details || fallback
+  } catch {
+    return fallback
+  }
+}
+
+const fetchStoryByFunction = async (
+  projectId: string,
+  options?: ScrollixRuntimeInitOptions
+): Promise<HostedStoryRecord | null> => {
+  const functionUrl = resolveStoriesFunctionUrl(options)
+  if (!functionUrl) return null
+
+  const requestUrl = new URL(functionUrl)
+  requestUrl.searchParams.set('projectId', projectId)
+  requestUrl.searchParams.set('storiesTable', getStoriesTable(options))
+
+  const { supabaseAnonKey } = resolveSupabaseCredentials(options)
+  const headers: Record<string, string> = {
+    Accept: 'application/json'
+  }
+  if (supabaseAnonKey) {
+    headers.apikey = supabaseAnonKey
+  }
+
+  const response = await fetch(requestUrl.toString(), {
+    method: 'GET',
+    headers
+  })
+
+  if (response.status === 404) return null
+
+  if (!response.ok) {
+    const message = await parseErrorMessage(response)
+    throw new Error(`[scrollix-runtime] Failed to load story "${projectId}" via function: ${message}`)
+  }
+
+  const payload = (await response.json().catch(() => null)) as { story?: Partial<HostedStoryRecord> } | null
+  if (!payload || !payload.story || typeof payload.story !== 'object') return null
+
+  return normalizeHostedStory(payload.story)
+}
+
+const fetchStoryBySupabase = async (
   projectId: string,
   options?: ScrollixRuntimeInitOptions
 ): Promise<HostedStoryRecord | null> => {
@@ -55,6 +122,31 @@ const fetchStoryById = async (
 
   if (!data) return null
   return normalizeHostedStory(data as Partial<HostedStoryRecord>)
+}
+
+const fetchStoryById = async (
+  projectId: string,
+  options?: ScrollixRuntimeInitOptions
+): Promise<HostedStoryRecord | null> => {
+  const functionUrl = resolveStoriesFunctionUrl(options)
+
+  if (functionUrl) {
+    try {
+      return await fetchStoryByFunction(projectId, options)
+    } catch (error) {
+      if (!hasSupabaseCredentials(options)) {
+        throw error
+      }
+    }
+  }
+
+  if (!hasSupabaseCredentials(options)) {
+    throw new Error(
+      '[scrollix-runtime] Missing story source. Provide storiesFunctionUrl or Supabase publishable credentials.'
+    )
+  }
+
+  return fetchStoryBySupabase(projectId, options)
 }
 
 const getCacheEntry = (projectId: string) => {
@@ -128,6 +220,41 @@ export function createReadyState(story: HostedStoryRecord): StoryLoadState {
   }
 }
 
+const subscribeViaPolling = (
+  projectId: string,
+  onStoryUpdate: (story: HostedStoryRecord | null) => void,
+  options?: ScrollixRuntimeInitOptions
+) => {
+  let cancelled = false
+  let lastHash = ''
+  const intervalMs = Math.max(1000, Math.min(5000, Math.floor(getCacheTtlMs() / 2) || 2000))
+
+  const tick = async () => {
+    if (cancelled) return
+
+    try {
+      const nextStory = await loadStory(projectId, { ...options, force: true })
+      const nextHash = nextStory ? JSON.stringify(nextStory) : 'null'
+      if (nextHash !== lastHash) {
+        lastHash = nextHash
+        onStoryUpdate(nextStory)
+      }
+    } catch {
+      // Swallow polling errors to avoid breaking runtime presentation.
+    }
+  }
+
+  void tick()
+  const timer = window.setInterval(() => {
+    void tick()
+  }, intervalMs)
+
+  return () => {
+    cancelled = true
+    window.clearInterval(timer)
+  }
+}
+
 export function subscribeToStory(
   projectId: string,
   onStoryUpdate: (story: HostedStoryRecord | null) => void,
@@ -135,6 +262,14 @@ export function subscribeToStory(
 ) {
   const normalizedProjectId = normalizeProjectId(projectId)
   if (!normalizedProjectId) return () => undefined
+
+  if (!hasSupabaseCredentials(options)) {
+    const functionUrl = resolveStoriesFunctionUrl(options)
+    if (functionUrl) {
+      return subscribeViaPolling(normalizedProjectId, onStoryUpdate, options)
+    }
+    return () => undefined
+  }
 
   const client = getRuntimeSupabaseClient(options)
   const storiesTable = getStoriesTable(options)
