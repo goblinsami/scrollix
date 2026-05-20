@@ -504,8 +504,8 @@ const runtimePlaceholderStyle: React.CSSProperties = {
   textAlign: 'center'
 }
 
-const DEFAULT_SUPABASE_URL = 'https://xvlpcwygcetcccmorihr.supabase.co'
-const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_hIRMf4_9xufvRpAKvieZ0Q_969t0Ysr'
+const DEFAULT_SUPABASE_URL = ''
+const DEFAULT_SUPABASE_ANON_KEY = ''
 const DEFAULT_RUNTIME_SCRIPT_URL = 'https://magical-klepon-3c1475.netlify.app/scrollix-runtime.js'
 const DEFAULT_RUNTIME_VERSION = 'force-6'
 const DEFAULT_PROJECT_ID = '319814c8-08e5-489e-a747-a2ea6cd080a8'
