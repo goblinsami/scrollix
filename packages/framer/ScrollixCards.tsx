@@ -1,6 +1,7 @@
 ﻿import * as React from 'react'
 import { addPropertyControls, ControlType } from 'framer'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { useScrollixRuntime } from './useScrollixRuntime'
 
 type TextSize = 's' | 'm' | 'l'
 type ContentAlign = 'left' | 'center' | 'right'
@@ -101,37 +102,18 @@ declare global {
   }
 
   namespace JSX {
+    interface ScrollixCardsIntrinsicProps
+      extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> {
+      'project-id'?: string
+      'supabase-url'?: string
+      'supabase-anon-key'?: string
+      'stories-table'?: string
+    }
+
     interface IntrinsicElements {
-      'scrollix-cards': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>
+      'scrollix-cards': ScrollixCardsIntrinsicProps
     }
   }
-}
-
-const runtimeScriptPromiseByUrl = new Map<string, Promise<void>>()
-
-const ensureRuntimeScript = async (runtimeScriptUrl: string) => {
-  const trimmedUrl = runtimeScriptUrl.trim()
-  if (!trimmedUrl) return
-  if (window.ScrollixRuntime) return
-
-  const cachedPromise = runtimeScriptPromiseByUrl.get(trimmedUrl)
-  if (cachedPromise) {
-    await cachedPromise
-    return
-  }
-
-  const loader = new Promise<void>((resolve, reject) => {
-    const script = document.createElement('script')
-    script.type = 'module'
-    script.src = trimmedUrl
-    script.async = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error(`[ScrollixCards] Failed to load runtime script: ${trimmedUrl}`))
-    document.head.appendChild(script)
-  })
-
-  runtimeScriptPromiseByUrl.set(trimmedUrl, loader)
-  await loader
 }
 
 const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
@@ -243,8 +225,26 @@ const persistHostedStory = async ({
   return String(insertResult.id)
 }
 
+const runtimePlaceholderStyle: React.CSSProperties = {
+  width: '100%',
+  height: '100%',
+  display: 'grid',
+  placeItems: 'center',
+  padding: '12px',
+  background: '#060914',
+  color: '#e7eeff',
+  fontSize: '12px',
+  lineHeight: 1.4,
+  textAlign: 'center'
+}
+
 export function ScrollixCards(props: ScrollixCardsProps) {
-  const [runtimeReady, setRuntimeReady] = React.useState(false)
+  const { ready: runtimeReady, loading: runtimeLoading, error: runtimeLoadError } = useScrollixRuntime(
+    props.runtimeScriptUrl
+  )
+
+  const [runtimeInitialized, setRuntimeInitialized] = React.useState(false)
+  const [runtimeInitError, setRuntimeInitError] = React.useState<string | null>(null)
   const [resolvedProjectId, setResolvedProjectId] = React.useState(props.projectId.trim())
   const [saveState, setSaveState] = React.useState<SaveState>({ status: 'idle', errorMessage: '' })
   const lastSavedSignatureRef = React.useRef('')
@@ -257,40 +257,34 @@ export function ScrollixCards(props: ScrollixCardsProps) {
   const payloadSignature = React.useMemo(() => JSON.stringify(payload), [payload])
 
   React.useEffect(() => {
-    let cancelled = false
+    if (!runtimeReady) {
+      setRuntimeInitialized(false)
+      return
+    }
 
-    const bootRuntime = async () => {
-      try {
-        await ensureRuntimeScript(props.runtimeScriptUrl)
-        if (cancelled) return
+    try {
+      window.ScrollixRuntime?.init({
+        supabaseUrl: props.supabaseUrl,
+        supabaseAnonKey: props.supabaseAnonKey,
+        storiesTable: props.storiesTable
+      })
 
-        window.ScrollixRuntime?.init({
-          supabaseUrl: props.supabaseUrl,
-          supabaseAnonKey: props.supabaseAnonKey,
-          storiesTable: props.storiesTable
-        })
-
-        if (!cancelled) setRuntimeReady(true)
-      } catch (error) {
-        if (!cancelled) {
-          setRuntimeReady(false)
-          setSaveState({
-            status: 'error',
-            errorMessage: error instanceof Error ? error.message : 'Runtime bootstrap failed.'
-          })
-        }
+      const isRegistered = Boolean(window.customElements.get('scrollix-cards'))
+      if (!isRegistered) {
+        throw new Error('[Scrollix] runtime module loaded but scrollix-cards was not registered.')
       }
-    }
 
-    void bootRuntime()
-
-    return () => {
-      cancelled = true
+      console.log('[Scrollix] runtime ready')
+      setRuntimeInitError(null)
+      setRuntimeInitialized(true)
+    } catch (error) {
+      setRuntimeInitialized(false)
+      setRuntimeInitError(error instanceof Error ? error.message : 'Runtime bootstrap failed.')
     }
-  }, [props.runtimeScriptUrl, props.supabaseUrl, props.supabaseAnonKey, props.storiesTable])
+  }, [runtimeReady, props.supabaseUrl, props.supabaseAnonKey, props.storiesTable])
 
   React.useEffect(() => {
-    if (!runtimeReady) return
+    if (!runtimeInitialized) return
 
     const client = getSupabaseClient(props.supabaseUrl, props.supabaseAnonKey)
     if (!client) return
@@ -326,7 +320,7 @@ export function ScrollixCards(props: ScrollixCardsProps) {
       window.clearTimeout(timer)
     }
   }, [
-    runtimeReady,
+    runtimeInitialized,
     props.supabaseUrl,
     props.supabaseAnonKey,
     props.storiesTable,
@@ -336,10 +330,27 @@ export function ScrollixCards(props: ScrollixCardsProps) {
     payloadSignature
   ])
 
+  if (runtimeLoadError || runtimeInitError) {
+    const errorMessage = runtimeLoadError ?? runtimeInitError ?? 'Runtime failed to initialize.'
+    return (
+      <div style={runtimePlaceholderStyle} data-runtime-ready="false" data-runtime-error={errorMessage}>
+        <span>{errorMessage}</span>
+      </div>
+    )
+  }
+
+  if (runtimeLoading || !runtimeInitialized) {
+    return (
+      <div style={runtimePlaceholderStyle} data-runtime-ready="false" data-runtime-loading="true">
+        <span>Loading Scrollix runtime...</span>
+      </div>
+    )
+  }
+
   return (
     <div
       style={{ width: '100%', height: '100%' }}
-      data-runtime-ready={runtimeReady ? 'true' : 'false'}
+      data-runtime-ready={runtimeInitialized ? 'true' : 'false'}
       data-save-state={saveState.status}
       data-save-error={saveState.errorMessage}
     >

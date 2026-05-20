@@ -27,3 +27,8 @@ npm --prefix packages/runtime run build
 ```
 
 The runtime fetches the story from Supabase and renders the existing Vue stack-cards runtime inside Shadow DOM.
+
+Important:
+
+- The runtime bundle is ESM and must be loaded with `type="module"`.
+- `window.ScrollixRuntime.init(...)` safely registers `scrollix-cards` once.
