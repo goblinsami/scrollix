@@ -1,0 +1,4 @@
+project_id = "gsap-sandbox"
+
+[functions.scrollix-story]
+verify_jwt = false

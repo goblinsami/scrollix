@@ -18,6 +18,7 @@ interface ScrollixCardsProps {
   projectId: string
   supabaseUrl: string
   supabaseAnonKey: string
+  storiesFunctionUrl: string
   storiesTable: string
   runtimeScriptUrl: string
   runtimeVersion: string
@@ -315,30 +316,38 @@ const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
   }
 })
 
-interface SupabaseRestContext {
-  restBaseUrl: string
-  anonKey: string
+interface StoriesFunctionContext {
+  functionUrl: string
+  publishableKey: string
 }
 
 const normalizeSupabaseBaseUrl = (rawUrl: string) => rawUrl.trim().replace(/\/+$/, '').replace(/\/rest\/v1$/i, '')
 
-const getSupabaseRestContext = (supabaseUrl: string, supabaseAnonKey: string): SupabaseRestContext | null => {
-  const trimmedUrl = supabaseUrl.trim()
-  const trimmedKey = supabaseAnonKey.trim()
-  if (!trimmedUrl || !trimmedKey) return null
+const resolveStoriesFunctionUrl = (supabaseUrl: string, storiesFunctionUrl: string) => {
+  const trimmedFunctionUrl = storiesFunctionUrl.trim()
+  if (trimmedFunctionUrl) return trimmedFunctionUrl
+
+  const trimmedSupabaseUrl = supabaseUrl.trim()
+  if (!trimmedSupabaseUrl) return ''
+
+  return `${normalizeSupabaseBaseUrl(trimmedSupabaseUrl)}/functions/v1/scrollix-story`
+}
+
+const getStoriesFunctionContext = (
+  supabaseUrl: string,
+  storiesFunctionUrl: string,
+  supabaseAnonKey: string
+): StoriesFunctionContext | null => {
+  const functionUrl = resolveStoriesFunctionUrl(supabaseUrl, storiesFunctionUrl)
+  if (!functionUrl) return null
 
   return {
-    restBaseUrl: normalizeSupabaseBaseUrl(trimmedUrl),
-    anonKey: trimmedKey
+    functionUrl,
+    publishableKey: supabaseAnonKey.trim()
   }
 }
 
-const resolveStoriesEndpoint = (restBaseUrl: string, storiesTable: string) => {
-  const table = storiesTable.trim() || 'stories'
-  return `${restBaseUrl}/rest/v1/${encodeURIComponent(table)}`
-}
-
-const parseSupabaseError = async (response: Response) => {
+const parseFunctionError = async (response: Response) => {
   const fallback = `${response.status} ${response.statusText}`
 
   try {
@@ -358,136 +367,50 @@ const parseSupabaseError = async (response: Response) => {
   }
 }
 
-const parseSupabaseRows = async (response: Response): Promise<Array<Record<string, unknown>>> => {
-  if (response.status === 204) return []
-
-  const text = await response.text()
-  if (!text) return []
-
-  try {
-    const parsed = JSON.parse(text) as unknown
-    if (Array.isArray(parsed)) return parsed as Array<Record<string, unknown>>
-    if (parsed && typeof parsed === 'object') return [parsed as Record<string, unknown>]
-    return []
-  } catch (_error) {
-    return []
-  }
-}
-
-const supabaseRestMutation = async ({
+const saveHostedStoryViaFunction = async ({
   context,
-  endpoint,
-  method,
-  body,
-  prefer
+  projectId,
+  storiesTable,
+  payload
 }: {
-  context: SupabaseRestContext
-  endpoint: string
-  method: 'POST' | 'PATCH'
-  body: Record<string, unknown>
-  prefer: string
+  context: StoriesFunctionContext
+  projectId: string
+  storiesTable: string
+  payload: HostedSavePayload
 }) => {
-  const response = await fetch(endpoint, {
-    method,
-    headers: {
-      apikey: context.anonKey,
-      Authorization: `Bearer ${context.anonKey}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      Prefer: prefer
-    },
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json'
+  }
+  if (context.publishableKey) {
+    headers.apikey = context.publishableKey
+  }
+
+  const normalizedProjectId = projectId.trim()
+  const body: Record<string, unknown> = {
+    type: payload.type,
+    config: payload.config
+  }
+  if (normalizedProjectId) body.projectId = normalizedProjectId
+  if (storiesTable.trim()) body.storiesTable = storiesTable.trim()
+
+  const response = await fetch(context.functionUrl, {
+    method: 'POST',
+    headers,
     body: JSON.stringify(body)
   })
 
   if (!response.ok) {
-    const message = await parseSupabaseError(response)
-    throw new Error(`[Scrollix] Supabase save failed: ${message}`)
+    const message = await parseFunctionError(response)
+    throw new Error(`[Scrollix] Hosted save failed: ${message}`)
   }
 
-  return parseSupabaseRows(response)
-}
-
-const persistHostedStory = async ({
-  context,
-  storiesTable,
-  projectId,
-  payload
-}: {
-  context: SupabaseRestContext
-  storiesTable: string
-  projectId: string
-  payload: HostedSavePayload
-}) => {
-  const normalizedProjectId = projectId.trim()
-  const storiesEndpoint = resolveStoriesEndpoint(context.restBaseUrl, storiesTable)
-
-  if (normalizedProjectId) {
-    const updateUrl = new URL(storiesEndpoint)
-    updateUrl.searchParams.set('id', `eq.${normalizedProjectId}`)
-    updateUrl.searchParams.set('select', 'id')
-
-    const updateRows = await supabaseRestMutation({
-      context,
-      endpoint: updateUrl.toString(),
-      method: 'PATCH',
-      body: {
-        type: payload.type,
-        config: payload.config,
-        content_json: payload.config,
-        updated_at: new Date().toISOString()
-      },
-      prefer: 'return=representation'
-    })
-
-    if (updateRows.length > 0 && typeof updateRows[0].id === 'string') {
-      return updateRows[0].id
-    }
-
-    const upsertUrl = new URL(storiesEndpoint)
-    upsertUrl.searchParams.set('on_conflict', 'id')
-    upsertUrl.searchParams.set('select', 'id')
-
-    const upsertRows = await supabaseRestMutation({
-      context,
-      endpoint: upsertUrl.toString(),
-      method: 'POST',
-      body: {
-        id: normalizedProjectId,
-        type: payload.type,
-        config: payload.config,
-        content_json: payload.config,
-        updated_at: new Date().toISOString()
-      },
-      prefer: 'resolution=merge-duplicates,return=representation'
-    })
-
-    if (upsertRows.length === 0 || typeof upsertRows[0].id !== 'string') {
-      throw new Error('Failed to upsert hosted story.')
-    }
-
-    return upsertRows[0].id
+  const result = (await response.json().catch(() => ({}))) as { projectId?: unknown }
+  if (typeof result.projectId !== 'string' || result.projectId.trim().length === 0) {
+    throw new Error('[Scrollix] Hosted save failed: missing projectId in function response.')
   }
 
-  const insertUrl = new URL(storiesEndpoint)
-  insertUrl.searchParams.set('select', 'id')
-
-  const insertRows = await supabaseRestMutation({
-    context,
-    endpoint: insertUrl.toString(),
-    method: 'POST',
-    body: {
-      type: payload.type,
-      config: payload.config,
-      content_json: payload.config
-    },
-    prefer: 'return=representation'
-  })
-
-  if (insertRows.length === 0 || typeof insertRows[0].id !== 'string') {
-    throw new Error('Failed to create hosted story.')
-  }
-
-  return insertRows[0].id
+  return result.projectId
 }
 
 const runtimePlaceholderStyle: React.CSSProperties = {
@@ -506,6 +429,7 @@ const runtimePlaceholderStyle: React.CSSProperties = {
 
 const DEFAULT_SUPABASE_URL = ''
 const DEFAULT_SUPABASE_ANON_KEY = ''
+const DEFAULT_STORIES_FUNCTION_URL = ''
 const DEFAULT_RUNTIME_SCRIPT_URL = 'https://magical-klepon-3c1475.netlify.app/scrollix-runtime.js'
 const DEFAULT_RUNTIME_VERSION = 'force-6'
 const DEFAULT_PROJECT_ID = '319814c8-08e5-489e-a747-a2ea6cd080a8'
@@ -543,12 +467,16 @@ export function ScrollixCards(props: ScrollixCardsProps) {
   const [saveState, setSaveState] = React.useState<SaveState>({ status: 'idle', errorMessage: '' })
   const lastSavedSignatureRef = React.useRef('')
   const hasProjectId = resolvedProjectId.trim().length > 0
+  const storiesFunctionContext = React.useMemo(
+    () => getStoriesFunctionContext(props.supabaseUrl, props.storiesFunctionUrl, props.supabaseAnonKey),
+    [props.supabaseUrl, props.storiesFunctionUrl, props.supabaseAnonKey]
+  )
+  const hasStoriesFunctionTarget = Boolean(storiesFunctionContext)
   const trimmedSupabaseKey = props.supabaseAnonKey.trim()
   const isSecretSupabaseKey =
     trimmedSupabaseKey.startsWith('sb_secret_') ||
     trimmedSupabaseKey.includes('service_role') ||
     trimmedSupabaseKey.includes('SERVICE_ROLE')
-  const hasSupabaseCredentials = props.supabaseUrl.trim().length > 0 && props.supabaseAnonKey.trim().length > 0
   const frameStyle = React.useMemo<React.CSSProperties>(
     () => ({
       width: '100%',
@@ -596,8 +524,7 @@ export function ScrollixCards(props: ScrollixCardsProps) {
   React.useEffect(() => {
     if (!runtimeInitialized) return
 
-    const context = getSupabaseRestContext(props.supabaseUrl, props.supabaseAnonKey)
-    if (!context) return
+    if (!storiesFunctionContext) return
 
     const debounceMs = Math.min(1000, Math.max(500, props.autoSaveDelayMs))
 
@@ -607,8 +534,8 @@ export function ScrollixCards(props: ScrollixCardsProps) {
 
       setSaveState((current) => ({ ...current, status: 'saving', errorMessage: '' }))
 
-      void persistHostedStory({
-        context,
+      void saveHostedStoryViaFunction({
+        context: storiesFunctionContext,
         storiesTable: props.storiesTable,
         projectId: resolvedProjectId,
         payload
@@ -631,8 +558,7 @@ export function ScrollixCards(props: ScrollixCardsProps) {
     }
   }, [
     runtimeInitialized,
-    props.supabaseUrl,
-    props.supabaseAnonKey,
+    storiesFunctionContext,
     props.storiesTable,
     props.autoSaveDelayMs,
     resolvedProjectId,
@@ -661,17 +587,17 @@ export function ScrollixCards(props: ScrollixCardsProps) {
     )
   }
 
-  if (!hasProjectId && !hasSupabaseCredentials) {
+  if (!hasProjectId && !hasStoriesFunctionTarget) {
     return (
       <div style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }} data-runtime-ready="false">
         <span>
-          Set `Supabase URL` + `Anon Key` to auto-create a hosted story, or provide an existing `Project ID`.
+          Set `Function URL` (or `Supabase URL`) to auto-create a hosted story, or provide an existing `Project ID`.
         </span>
       </div>
     )
   }
 
-  if (!hasProjectId && hasSupabaseCredentials) {
+  if (!hasProjectId && hasStoriesFunctionTarget) {
     if (saveState.status === 'error') {
       return (
         <div style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }} data-runtime-ready="false">
@@ -717,6 +643,7 @@ ScrollixCards.defaultProps = {
   projectId: DEFAULT_PROJECT_ID,
   supabaseUrl: DEFAULT_SUPABASE_URL,
   supabaseAnonKey: DEFAULT_SUPABASE_ANON_KEY,
+  storiesFunctionUrl: DEFAULT_STORIES_FUNCTION_URL,
   storiesTable: 'stories',
   runtimeScriptUrl: DEFAULT_RUNTIME_SCRIPT_URL,
   runtimeVersion: DEFAULT_RUNTIME_VERSION,
@@ -786,6 +713,12 @@ addPropertyControls(ScrollixCards, {
     title: 'Anon Key',
     defaultValue: DEFAULT_SUPABASE_ANON_KEY,
     placeholder: 'sb_publishable_...'
+  },
+  storiesFunctionUrl: {
+    type: ControlType.String,
+    title: 'Function URL',
+    defaultValue: DEFAULT_STORIES_FUNCTION_URL,
+    placeholder: 'https://<project-ref>.supabase.co/functions/v1/scrollix-story'
   },
   storiesTable: {
     type: ControlType.String,
