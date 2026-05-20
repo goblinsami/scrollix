@@ -24,7 +24,31 @@ interface CacheEntry {
 const storyCache = new Map<string, CacheEntry>()
 const inflightCache = new Map<string, Promise<HostedStoryRecord | null>>()
 
-const normalizeProjectId = (projectId: string) => projectId.trim()
+const extractProjectIdFromInput = (input: string) => {
+  const trimmed = input.trim()
+  if (!trimmed) return ''
+
+  try {
+    const parsed = new URL(trimmed)
+    const queryKeys = ['projectId', 'project_id', 'storyId', 'story_id', 'id']
+    for (const key of queryKeys) {
+      const value = (parsed.searchParams.get(key) || '').trim()
+      if (value) return value
+    }
+
+    const segments = parsed.pathname
+      .split('/')
+      .map((segment) => segment.trim())
+      .filter(Boolean)
+
+    if (segments.length === 0) return ''
+    return segments[segments.length - 1]
+  } catch {
+    return trimmed
+  }
+}
+
+const normalizeProjectId = (projectId: string) => extractProjectIdFromInput(projectId)
 const normalizeUrl = (rawUrl: string) => rawUrl.trim().replace(/\/+$/, '')
 
 const now = () => Date.now()

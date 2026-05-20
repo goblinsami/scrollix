@@ -23,6 +23,9 @@ const DEFAULT_PANEL_DESCRIPTION = 'Portable, hosted stack cards runtime rendered
 
 const DEFAULT_STORY_TYPE: HostedStoryType = HOSTED_STORY_TYPE.StackCards3d
 
+const asFiniteNumber = (value: unknown) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : undefined
+
 const normalizeCard = (card: Partial<HostedStackCard>, index: number): HostedStackCard => {
   const fallback = STACK_CARDS_DEFAULT_CARDS[index % STACK_CARDS_DEFAULT_CARDS.length]
 
@@ -89,14 +92,112 @@ const normalizeConfig = (config: unknown): HostedStackCardsConfig => {
   }
 }
 
+const deriveConfigFromLegacyContentJson = (contentJson: unknown): HostedStackCardsConfig | null => {
+  if (!contentJson || typeof contentJson !== 'object') return null
+
+  const panels = (contentJson as { panels?: unknown }).panels
+  if (!Array.isArray(panels) || panels.length === 0) return null
+
+  const stackPanel = panels.find((panel) => {
+    if (!panel || typeof panel !== 'object') return false
+    const rawPanel = panel as {
+      templateType?: unknown
+      stackCards?: unknown
+    }
+    if (rawPanel.stackCards && typeof rawPanel.stackCards === 'object') return true
+    return rawPanel.templateType === TemplateType.StackCards
+  }) as
+    | ({
+        title?: unknown
+        eyebrow?: unknown
+        description?: unknown
+        titleSize?: unknown
+        descriptionSize?: unknown
+        contentAlign?: unknown
+        titleMaxWidth?: unknown
+        descriptionMaxWidth?: unknown
+        overlayIntensity?: unknown
+        panelColor?: unknown
+        image?: unknown
+        backgroundGradient?: unknown
+        stackCards?: unknown
+      })
+    | undefined
+
+  if (!stackPanel) return null
+
+  const stackCards =
+    stackPanel.stackCards && typeof stackPanel.stackCards === 'object'
+      ? (stackPanel.stackCards as Record<string, unknown>)
+      : {}
+
+  const cards = normalizeCards(stackCards.cards)
+
+  const settings: HostedStackCardsSettings = {
+    title: typeof stackPanel.title === 'string' ? stackPanel.title : undefined,
+    eyebrow: typeof stackPanel.eyebrow === 'string' ? stackPanel.eyebrow : undefined,
+    description: typeof stackPanel.description === 'string' ? stackPanel.description : undefined,
+    titleSize: stackPanel.titleSize as TextSize | undefined,
+    descriptionSize: stackPanel.descriptionSize as TextSize | undefined,
+    contentAlign: stackPanel.contentAlign as ContentAlign | undefined,
+    titleMaxWidth: asFiniteNumber(stackPanel.titleMaxWidth),
+    descriptionMaxWidth: asFiniteNumber(stackPanel.descriptionMaxWidth),
+    overlayIntensity: asFiniteNumber(stackPanel.overlayIntensity),
+    panelColor: typeof stackPanel.panelColor === 'string' ? stackPanel.panelColor : undefined,
+    image: typeof stackPanel.image === 'string' ? stackPanel.image : undefined,
+    backgroundGradient:
+      typeof stackPanel.backgroundGradient === 'string'
+        ? stackPanel.backgroundGradient
+        : undefined,
+    textSide: stackCards.textSide as StackCardsSettings['textSide'],
+    stackDirection: stackCards.stackDirection as StackCardsSettings['stackDirection'],
+    cardsOnly: typeof stackCards.cardsOnly === 'boolean' ? stackCards.cardsOnly : undefined,
+    layoutSidePadding: asFiniteNumber(stackCards.layoutSidePadding),
+    textOffsetX: asFiniteNumber(stackCards.textOffsetX),
+    textOffsetY: asFiniteNumber(stackCards.textOffsetY),
+    cardsOffsetX: asFiniteNumber(stackCards.cardsOffsetX),
+    cardsOffsetY: asFiniteNumber(stackCards.cardsOffsetY),
+    mobileTextCardsGap: asFiniteNumber(stackCards.mobileTextCardsGap),
+    angleY: asFiniteNumber(stackCards.angleY),
+    angleX: asFiniteNumber(stackCards.angleX),
+    cardGap: asFiniteNumber(stackCards.cardGap),
+    frontFadeWindow: asFiniteNumber(stackCards.frontFadeWindow),
+    cardSize: asFiniteNumber(stackCards.cardSize),
+    cardWidth: asFiniteNumber(stackCards.cardWidth),
+    autoPlayEnabled:
+      typeof stackCards.autoPlayEnabled === 'boolean' ? stackCards.autoPlayEnabled : undefined,
+    autoPlaySpeed: asFiniteNumber(stackCards.autoPlaySpeed)
+  }
+
+  return {
+    cards,
+    settings
+  }
+}
+
 export const normalizeHostedStory = (record: Partial<HostedStoryRecord>): HostedStoryRecord => {
   const normalizedType =
     record.type === HOSTED_STORY_TYPE.StackCards3d ? record.type : DEFAULT_STORY_TYPE
 
+  const rawConfig = (record as { config?: unknown }).config
+  const legacyContentJson = (record as { content_json?: unknown }).content_json
+
+  const rawConfigHasCards =
+    rawConfig &&
+    typeof rawConfig === 'object' &&
+    Array.isArray((rawConfig as { cards?: unknown[] }).cards) &&
+    ((rawConfig as { cards?: unknown[] }).cards?.length ?? 0) > 0
+
+  const configFromLegacy = deriveConfigFromLegacyContentJson(legacyContentJson)
+  const normalizedConfig =
+    !rawConfigHasCards && configFromLegacy
+      ? configFromLegacy
+      : normalizeConfig(rawConfig)
+
   return {
     id: typeof record.id === 'string' ? record.id : '',
     type: normalizedType,
-    config: normalizeConfig(record.config),
+    config: normalizedConfig,
     created_at: typeof record.created_at === 'string' ? record.created_at : '',
     updated_at: typeof record.updated_at === 'string' ? record.updated_at : ''
   }

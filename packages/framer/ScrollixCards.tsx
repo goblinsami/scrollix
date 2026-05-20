@@ -460,6 +460,30 @@ const resolveRuntimeUrl = (runtimeScriptUrl: string, runtimeVersion: string) => 
   }
 }
 
+const normalizeProjectIdInput = (input: string) => {
+  const trimmed = input.trim()
+  if (!trimmed) return ''
+
+  try {
+    const parsed = new URL(trimmed)
+    const queryKeys = ['projectId', 'project_id', 'storyId', 'story_id', 'id']
+    for (const key of queryKeys) {
+      const value = (parsed.searchParams.get(key) || '').trim()
+      if (value) return value
+    }
+
+    const segments = parsed.pathname
+      .split('/')
+      .map((segment) => segment.trim())
+      .filter(Boolean)
+
+    if (segments.length === 0) return ''
+    return segments[segments.length - 1]
+  } catch (_error) {
+    return trimmed
+  }
+}
+
 function ScrollixCards(props: ScrollixCardsProps) {
   const resolvedRuntimeScriptUrl = React.useMemo(
     () => resolveRuntimeUrl(props.runtimeScriptUrl, props.runtimeVersion),
@@ -472,7 +496,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
 
   const [runtimeInitialized, setRuntimeInitialized] = React.useState(false)
   const [runtimeInitError, setRuntimeInitError] = React.useState<string | null>(null)
-  const [resolvedProjectId, setResolvedProjectId] = React.useState(props.projectId.trim())
+  const [resolvedProjectId, setResolvedProjectId] = React.useState(normalizeProjectIdInput(props.projectId))
   const [saveState, setSaveState] = React.useState<SaveState>({ status: 'idle', errorMessage: '' })
   const lastSavedSignatureRef = React.useRef('')
   const hasProjectId = resolvedProjectId.trim().length > 0
@@ -499,7 +523,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
   )
 
   React.useEffect(() => {
-    setResolvedProjectId(props.projectId.trim())
+    setResolvedProjectId(normalizeProjectIdInput(props.projectId))
   }, [props.projectId])
 
   const payload = React.useMemo(() => buildPayload(props), [props])
