@@ -17,6 +17,7 @@ Runtime loading behavior:
 - waits until `customElements.get('scrollix-cards')` is registered
 - avoids duplicate script injection via singleton loader
 - renders loading placeholder until runtime is ready
+- expects runtime host to allow cross-origin module loading (CORS) from Framer origin
 
 It does not render stack-card visuals in React.
 

@@ -10,7 +10,9 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "build:runtime": "npm --prefix packages/runtime run build",
-    "build:all": "npm run build && npm run build:runtime",
+    "sync:runtime-assets": "node scripts/copy-runtime-assets.mjs",
+    "build:all": "npm run build && npm run build:runtime && npm run sync:runtime-assets",
+    "build:netlify": "pnpm run build:all",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run"

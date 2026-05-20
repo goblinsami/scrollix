@@ -1,9 +1,27 @@
 [build]
-  command = "pnpm run build"
+  command = "pnpm run build:netlify"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "24"
+
+[[headers]]
+  for = "/scrollix-runtime.js"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, HEAD, OPTIONS"
+    Access-Control-Allow-Headers = "*"
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/scrollix-runtime.css"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, HEAD, OPTIONS"
+    Access-Control-Allow-Headers = "*"
+    Cross-Origin-Resource-Policy = "cross-origin"
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[redirects]]
   from = "/*"

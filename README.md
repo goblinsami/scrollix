@@ -16,6 +16,7 @@ npm run dev
 npm run build
 npm run test -- --run
 npm run build:runtime
+npm run build:all
 ```
 
 ## Runtime Output
@@ -24,6 +25,13 @@ npm run build:runtime
 
 - `dist/scrollix-runtime.js`
 - `dist/scrollix-runtime.css`
+
+`npm run build:all` also copies those runtime artifacts into root `dist/` so Netlify can serve:
+
+- `/scrollix-runtime.js`
+- `/scrollix-runtime.css`
+
+Netlify config adds CORS headers for those files (`Access-Control-Allow-Origin: *`) so Framer can load the ESM module from a different origin.
 
 ## Standalone Usage
 
