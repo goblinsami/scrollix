@@ -11,6 +11,13 @@ Responsibilities:
 - updates story when `projectId` exists
 - renders `<scrollix-cards project-id="...">`
 
+Runtime loading behavior:
+
+- loads runtime script as `type="module"` (ESM)
+- waits until `customElements.get('scrollix-cards')` is registered
+- avoids duplicate script injection via singleton loader
+- renders loading placeholder until runtime is ready
+
 It does not render stack-card visuals in React.
 
 ## Expected runtime flow

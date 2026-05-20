@@ -17,11 +17,32 @@ declare global {
   }
 }
 
+let runtimeBootLogged = false
+
+const logRuntimeBoot = () => {
+  if (runtimeBootLogged) return
+  runtimeBootLogged = true
+  console.log('[Scrollix] runtime booted')
+}
+
 export const registerWebComponents = () => {
   if (typeof window === 'undefined') return runtimeApi
-  if (!window.customElements.get(SCROLLIX_CARDS_TAG)) {
-    window.customElements.define(SCROLLIX_CARDS_TAG, ScrollixCardsElement)
+
+  console.log('[Scrollix] registering web components')
+
+  if (window.customElements.get(SCROLLIX_CARDS_TAG)) {
+    return runtimeApi
   }
+
+  try {
+    window.customElements.define(SCROLLIX_CARDS_TAG, ScrollixCardsElement)
+    console.log('[Scrollix] scrollix-cards registered')
+  } catch (error) {
+    if (!window.customElements.get(SCROLLIX_CARDS_TAG)) {
+      throw error
+    }
+  }
+
   return runtimeApi
 }
 
@@ -41,6 +62,8 @@ const runtimeApi: ScrollixRuntimeApi = {
 export const ensureWindowRuntimeApi = () => {
   if (typeof window === 'undefined') return runtimeApi
 
+  logRuntimeBoot()
+
   if (window.ScrollixRuntime) {
     return window.ScrollixRuntime
   }
@@ -48,4 +71,3 @@ export const ensureWindowRuntimeApi = () => {
   window.ScrollixRuntime = runtimeApi
   return runtimeApi
 }
-
