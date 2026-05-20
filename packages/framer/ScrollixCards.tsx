@@ -4,6 +4,7 @@ import { addPropertyControls, ControlType } from 'framer'
 type TextSize = 's' | 'm' | 'l'
 type ContentAlign = 'left' | 'center' | 'right'
 type TextSide = 'left' | 'right'
+type StackDirection = 'left' | 'right'
 
 interface FramerCard {
   title: string
@@ -39,6 +40,8 @@ interface ScrollixCardsProps {
   autoPlayEnabled: boolean
   autoPlaySpeed: number
   textSide: TextSide
+  stackDirection: StackDirection
+  cardsOnly: boolean
   overlayIntensity: number
   titleSize: TextSize
   descriptionSize: TextSize
@@ -74,6 +77,8 @@ interface HostedSavePayload {
       autoPlayEnabled: boolean
       autoPlaySpeed: number
       textSide: TextSide
+      stackDirection: StackDirection
+      cardsOnly: boolean
       overlayIntensity: number
       titleSize: TextSize
       descriptionSize: TextSize
@@ -308,6 +313,8 @@ const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
       autoPlayEnabled: props.autoPlayEnabled,
       autoPlaySpeed: props.autoPlaySpeed,
       textSide: props.textSide,
+      stackDirection: props.stackDirection,
+      cardsOnly: props.cardsOnly,
       overlayIntensity: props.overlayIntensity,
       titleSize: props.titleSize,
       descriptionSize: props.descriptionSize,
@@ -433,7 +440,7 @@ const DEFAULT_SUPABASE_URL = ''
 const DEFAULT_SUPABASE_ANON_KEY = ''
 const DEFAULT_STORIES_FUNCTION_URL = ''
 const DEFAULT_RUNTIME_SCRIPT_URL = 'https://magical-klepon-3c1475.netlify.app/scrollix-runtime.js'
-const DEFAULT_RUNTIME_VERSION = 'force-6'
+const DEFAULT_RUNTIME_VERSION = 'force-8'
 const DEFAULT_PROJECT_ID = '319814c8-08e5-489e-a747-a2ea6cd080a8'
 
 const resolveRuntimeUrl = (runtimeScriptUrl: string, runtimeVersion: string) => {
@@ -703,6 +710,8 @@ ScrollixCards.defaultProps = {
   autoPlayEnabled: true,
   autoPlaySpeed: 0.65,
   textSide: 'left',
+  stackDirection: 'right',
+  cardsOnly: false,
   overlayIntensity: 40,
   titleSize: 'l',
   descriptionSize: 'm',
@@ -715,6 +724,7 @@ addPropertyControls(ScrollixCards, {
   projectId: {
     type: ControlType.String,
     title: 'Project ID',
+    description: 'Connection: Story source and hosted persistence.',
     defaultValue: DEFAULT_PROJECT_ID,
     placeholder: 'Auto-created on first save'
   },
@@ -744,6 +754,7 @@ addPropertyControls(ScrollixCards, {
   runtimeScriptUrl: {
     type: ControlType.String,
     title: 'Runtime JS',
+    description: 'Runtime: Web Component runtime bundle location.',
     defaultValue: DEFAULT_RUNTIME_SCRIPT_URL
   },
   runtimeVersion: {
@@ -763,6 +774,7 @@ addPropertyControls(ScrollixCards, {
   cards: {
     type: ControlType.Array,
     title: 'Cards',
+    description: 'Cards: Editable cinematic card content.',
     maxCount: 12,
     control: {
       type: ControlType.Object,
@@ -798,6 +810,7 @@ addPropertyControls(ScrollixCards, {
   title: {
     type: ControlType.String,
     title: 'Title',
+    description: 'Panel: Intro copy and visual shell.',
     defaultValue: 'Create cinematic storytelling experiences'
   },
   description: {
@@ -828,13 +841,27 @@ addPropertyControls(ScrollixCards, {
   textSide: {
     type: ControlType.Enum,
     title: 'Text Side',
+    description: 'Stack Layout: Text/cards composition controls.',
     options: ['left', 'right'],
     optionTitles: ['Left', 'Right'],
     defaultValue: 'left'
   },
+  stackDirection: {
+    type: ControlType.Enum,
+    title: 'Stack Dir',
+    options: ['left', 'right'],
+    optionTitles: ['Left', 'Right'],
+    defaultValue: 'right'
+  },
+  cardsOnly: {
+    type: ControlType.Boolean,
+    title: 'Cards Only',
+    defaultValue: false
+  },
   angleY: {
     type: ControlType.Number,
     title: 'Angle Y',
+    description: 'Motion: 3D transform and autoplay behavior.',
     min: -60,
     max: 60,
     step: 1,
@@ -896,6 +923,7 @@ addPropertyControls(ScrollixCards, {
   overlayIntensity: {
     type: ControlType.Number,
     title: 'Overlay %',
+    description: 'Typography and advanced presentation tuning.',
     min: 0,
     max: 90,
     step: 1,
