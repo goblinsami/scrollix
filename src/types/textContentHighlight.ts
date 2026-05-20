@@ -1,7 +1,2 @@
-export type TextContentHighlightScope = 'content' | 'eyebrow' | 'title' | 'description'
+export * from '../../packages/shared/src/types/textContentHighlight'
 
-export interface TextContentEditingChangePayload {
-  targetId: string | null
-  active: boolean
-  scope?: TextContentHighlightScope
-}

@@ -1,1 +1,2 @@
-export const STACK_CARD_TILT_STRENGTH_DEG = 10
+export * from '../../packages/shared/src/constants/stackCardTilt'
+

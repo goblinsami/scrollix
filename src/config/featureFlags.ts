@@ -1,7 +1,2 @@
-export const FEATURE_FLAGS = {
-  allowNodeCreation: false,
-  enableStackCardsMouseTilt: false,
-  enableRuntimeDiagnostics: false,
-  enableStackCardsMobileDebugOverlay: false,
-  enableDebugContainers: false
-} as const
+export * from '../../packages/shared/src/config/featureFlags'
+

@@ -1,5 +1,12 @@
-﻿import { STACK_CARDS_DEFAULTS, STACK_CARDS_DEFAULT_CARDS } from '@/constants/stackCards'
-import { ContentAlign, Direction, TemplateType, TextSize, type StackCardItem, type StackCardsSettings } from '@/types/navigation'
+import { STACK_CARDS_DEFAULTS, STACK_CARDS_DEFAULT_CARDS } from '../runtime-core/constants/stackCards'
+import {
+  ContentAlign,
+  Direction,
+  TemplateType,
+  TextSize,
+  type StackCardItem,
+  type StackCardsSettings
+} from '../runtime-core/types/navigation'
 import {
   HOSTED_STORY_TYPE,
   type HostedRuntimePanel,
@@ -8,7 +15,7 @@ import {
   type HostedStackCardsSettings,
   type HostedStoryRecord,
   type HostedStoryType
-} from '@/types/hostedStories'
+} from '../types/hostedStories'
 
 const DEFAULT_PANEL_TITLE = 'Create cinematic storytelling experiences'
 const DEFAULT_PANEL_EYEBROW = 'Built with Scrollix'
@@ -124,3 +131,4 @@ export const mapHostedStoryToRuntimePanel = (story: HostedStoryRecord): HostedRu
     overlayIntensity: settings.overlayIntensity
   }
 }
+

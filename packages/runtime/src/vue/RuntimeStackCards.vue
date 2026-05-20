@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, reactive, watch } from 'vue'
-import SectionPanel from '../../../../src/core/SectionPanel.vue'
+import SectionPanel from '../runtime-core/components/SectionPanel.vue'
 import { mapHostedStoryToRuntimePanel } from '../schema/hostedStory'
 import {
   createErrorState,

@@ -1,6 +1,5 @@
 ﻿import * as React from 'react'
 import { addPropertyControls, ControlType } from 'framer'
-import { useScrollixRuntime } from './useScrollixRuntime'
 
 type TextSize = 's' | 'm' | 'l'
 type ContentAlign = 'left' | 'center' | 'right'
@@ -115,6 +114,168 @@ declare global {
       'scrollix-cards': ScrollixCardsIntrinsicProps
     }
   }
+}
+
+const SCROLLIX_CARDS_TAG = 'scrollix-cards'
+const RUNTIME_SCRIPT_ATTR = 'data-scrollix-runtime-url'
+const DEFAULT_REGISTRATION_TIMEOUT_MS = 7000
+
+interface RuntimeHookState {
+  ready: boolean
+  loading: boolean
+  error: string | null
+}
+
+const runtimeScriptPromiseByUrl = new Map<string, Promise<void>>()
+
+const getRuntimeScriptElement = (runtimeUrl: string) => {
+  const normalizedRuntimeUrl = new URL(runtimeUrl, window.location.href).href
+  const scripts = Array.from(document.querySelectorAll('script'))
+
+  return scripts.find((script) => {
+    if (!(script instanceof HTMLScriptElement)) return false
+    const taggedUrl = script.getAttribute(RUNTIME_SCRIPT_ATTR)
+    if (taggedUrl === runtimeUrl) return true
+    if (!script.src) return false
+
+    try {
+      return new URL(script.src, window.location.href).href === normalizedRuntimeUrl
+    } catch (_error) {
+      return false
+    }
+  }) as HTMLScriptElement | undefined
+}
+
+const waitForScriptLoad = (script: HTMLScriptElement, runtimeUrl: string) =>
+  new Promise<void>((resolve, reject) => {
+    if (script.getAttribute('data-scrollix-loaded') === 'true') {
+      resolve()
+      return
+    }
+
+    const readyState = (script as HTMLScriptElement & { readyState?: string }).readyState
+    if (readyState === 'loaded' || readyState === 'complete') {
+      script.setAttribute('data-scrollix-loaded', 'true')
+      resolve()
+      return
+    }
+
+    const handleLoad = () => {
+      script.setAttribute('data-scrollix-loaded', 'true')
+      resolve()
+    }
+
+    const handleError = () => {
+      reject(new Error(`[Scrollix] Failed to load runtime module: ${runtimeUrl}`))
+    }
+
+    script.addEventListener('load', handleLoad, { once: true })
+    script.addEventListener('error', handleError, { once: true })
+  })
+
+const waitForRegistration = async (tagName: string, timeoutMs: number) => {
+  if (window.customElements.get(tagName)) return
+
+  await Promise.race([
+    window.customElements.whenDefined(tagName),
+    new Promise((_, reject) => {
+      window.setTimeout(() => {
+        reject(new Error(`[Scrollix] Timed out waiting for ${tagName} registration.`))
+      }, timeoutMs)
+    })
+  ])
+
+  if (!window.customElements.get(tagName)) {
+    throw new Error(`[Scrollix] ${tagName} is still not registered after module load.`)
+  }
+}
+
+const loadRuntimeModule = async (runtimeUrl: string) => {
+  const normalizedUrl = runtimeUrl.trim()
+  if (!normalizedUrl) return
+
+  if (window.customElements.get(SCROLLIX_CARDS_TAG)) return
+
+  const existingPromise = runtimeScriptPromiseByUrl.get(normalizedUrl)
+  if (existingPromise) {
+    await existingPromise
+    await waitForRegistration(SCROLLIX_CARDS_TAG, DEFAULT_REGISTRATION_TIMEOUT_MS)
+    return
+  }
+
+  const pendingLoad = (async () => {
+    const existingScript = getRuntimeScriptElement(normalizedUrl)
+
+    if (existingScript) {
+      await waitForScriptLoad(existingScript, normalizedUrl)
+    } else {
+      const script = document.createElement('script')
+      script.type = 'module'
+      script.async = true
+      script.src = normalizedUrl
+      script.setAttribute(RUNTIME_SCRIPT_ATTR, normalizedUrl)
+
+      const loadPromise = waitForScriptLoad(script, normalizedUrl)
+      document.head.appendChild(script)
+      await loadPromise
+    }
+
+    await waitForRegistration(SCROLLIX_CARDS_TAG, DEFAULT_REGISTRATION_TIMEOUT_MS)
+  })()
+
+  runtimeScriptPromiseByUrl.set(normalizedUrl, pendingLoad)
+
+  try {
+    await pendingLoad
+  } finally {
+    runtimeScriptPromiseByUrl.delete(normalizedUrl)
+  }
+}
+
+const useScrollixRuntime = (runtimeUrl: string): RuntimeHookState => {
+  const [state, setState] = React.useState<RuntimeHookState>({
+    ready: false,
+    loading: false,
+    error: null
+  })
+
+  React.useEffect(() => {
+    let cancelled = false
+
+    const normalizedUrl = runtimeUrl.trim()
+    if (!normalizedUrl) {
+      setState({
+        ready: false,
+        loading: false,
+        error: '[Scrollix] runtimeScriptUrl is required.'
+      })
+      return
+    }
+
+    setState({ ready: false, loading: true, error: null })
+    console.log('[Scrollix] loading runtime')
+
+    void loadRuntimeModule(normalizedUrl)
+      .then(() => {
+        if (cancelled) return
+        console.log('[Scrollix] runtime ready')
+        setState({ ready: true, loading: false, error: null })
+      })
+      .catch((error) => {
+        if (cancelled) return
+        setState({
+          ready: false,
+          loading: false,
+          error: error instanceof Error ? error.message : '[Scrollix] runtime load failed.'
+        })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [runtimeUrl])
+
+  return state
 }
 
 const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
@@ -272,6 +433,7 @@ const persistHostedStory = async ({
       body: {
         type: payload.type,
         config: payload.config,
+        content_json: payload.config,
         updated_at: new Date().toISOString()
       },
       prefer: 'return=representation'
@@ -293,6 +455,7 @@ const persistHostedStory = async ({
         id: normalizedProjectId,
         type: payload.type,
         config: payload.config,
+        content_json: payload.config,
         updated_at: new Date().toISOString()
       },
       prefer: 'resolution=merge-duplicates,return=representation'
@@ -314,7 +477,8 @@ const persistHostedStory = async ({
     method: 'POST',
     body: {
       type: payload.type,
-      config: payload.config
+      config: payload.config,
+      content_json: payload.config
     },
     prefer: 'return=representation'
   })
@@ -340,7 +504,11 @@ const runtimePlaceholderStyle: React.CSSProperties = {
   textAlign: 'center'
 }
 
-const AUTO_RUNTIME_VERSION = `framer-${Date.now()}`
+const DEFAULT_SUPABASE_URL = 'https://xvlpcwygcetcccmorihr.supabase.co'
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_hIRMf4_9xufvRpAKvieZ0Q_969t0Ysr'
+const DEFAULT_RUNTIME_SCRIPT_URL = 'https://magical-klepon-3c1475.netlify.app/scrollix-runtime.js'
+const DEFAULT_RUNTIME_VERSION = 'force-6'
+const DEFAULT_PROJECT_ID = '319814c8-08e5-489e-a747-a2ea6cd080a8'
 
 const resolveRuntimeUrl = (runtimeScriptUrl: string, runtimeVersion: string) => {
   const trimmedUrl = runtimeScriptUrl.trim()
@@ -375,6 +543,11 @@ export function ScrollixCards(props: ScrollixCardsProps) {
   const [saveState, setSaveState] = React.useState<SaveState>({ status: 'idle', errorMessage: '' })
   const lastSavedSignatureRef = React.useRef('')
   const hasProjectId = resolvedProjectId.trim().length > 0
+  const trimmedSupabaseKey = props.supabaseAnonKey.trim()
+  const isSecretSupabaseKey =
+    trimmedSupabaseKey.startsWith('sb_secret_') ||
+    trimmedSupabaseKey.includes('service_role') ||
+    trimmedSupabaseKey.includes('SERVICE_ROLE')
   const hasSupabaseCredentials = props.supabaseUrl.trim().length > 0 && props.supabaseAnonKey.trim().length > 0
   const frameStyle = React.useMemo<React.CSSProperties>(
     () => ({
@@ -480,6 +653,14 @@ export function ScrollixCards(props: ScrollixCardsProps) {
     )
   }
 
+  if (isSecretSupabaseKey) {
+    return (
+      <div style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }} data-runtime-ready="false">
+        <span>[Scrollix] Never use Supabase secret/service_role keys in Framer. Use only publishable/anon key.</span>
+      </div>
+    )
+  }
+
   if (!hasProjectId && !hasSupabaseCredentials) {
     return (
       <div style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }} data-runtime-ready="false">
@@ -526,18 +707,19 @@ export function ScrollixCards(props: ScrollixCardsProps) {
         supabase-url={props.supabaseUrl}
         supabase-anon-key={props.supabaseAnonKey}
         stories-table={props.storiesTable}
+        live-updates="true"
       />
     </div>
   )
 }
 
 ScrollixCards.defaultProps = {
-  projectId: '',
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  projectId: DEFAULT_PROJECT_ID,
+  supabaseUrl: DEFAULT_SUPABASE_URL,
+  supabaseAnonKey: DEFAULT_SUPABASE_ANON_KEY,
   storiesTable: 'stories',
-  runtimeScriptUrl: 'https://cdn.scrollix.app/scrollix-runtime.js',
-  runtimeVersion: AUTO_RUNTIME_VERSION,
+  runtimeScriptUrl: DEFAULT_RUNTIME_SCRIPT_URL,
+  runtimeVersion: DEFAULT_RUNTIME_VERSION,
   autoSaveDelayMs: 800,
   cards: [
     {
@@ -590,17 +772,20 @@ addPropertyControls(ScrollixCards, {
   projectId: {
     type: ControlType.String,
     title: 'Project ID',
+    defaultValue: DEFAULT_PROJECT_ID,
     placeholder: 'Auto-created on first save'
   },
   supabaseUrl: {
     type: ControlType.String,
     title: 'Supabase URL',
-    placeholder: 'https://xxx.supabase.co'
+    defaultValue: DEFAULT_SUPABASE_URL,
+    placeholder: 'https://YOUR-PROJECT.supabase.co'
   },
   supabaseAnonKey: {
     type: ControlType.String,
     title: 'Anon Key',
-    placeholder: 'eyJ...'
+    defaultValue: DEFAULT_SUPABASE_ANON_KEY,
+    placeholder: 'sb_publishable_...'
   },
   storiesTable: {
     type: ControlType.String,
@@ -610,12 +795,12 @@ addPropertyControls(ScrollixCards, {
   runtimeScriptUrl: {
     type: ControlType.String,
     title: 'Runtime JS',
-    defaultValue: 'https://cdn.scrollix.app/scrollix-runtime.js'
+    defaultValue: DEFAULT_RUNTIME_SCRIPT_URL
   },
   runtimeVersion: {
     type: ControlType.String,
     title: 'Runtime Ver',
-    defaultValue: AUTO_RUNTIME_VERSION,
+    defaultValue: DEFAULT_RUNTIME_VERSION,
     placeholder: 'auto cache-bust key'
   },
   autoSaveDelayMs: {
@@ -805,3 +990,5 @@ addPropertyControls(ScrollixCards, {
     defaultValue: 760
   }
 })
+
+export default ScrollixCards

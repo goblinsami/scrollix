@@ -1,4 +1,4 @@
-﻿@use '../../../../src/styles/components/panels';
+@use '../runtime-core/styles/panels';
 
 :host {
   display: block;
@@ -57,3 +57,4 @@
     min-height: 260px;
   }
 }
+

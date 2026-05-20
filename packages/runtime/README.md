@@ -1,4 +1,7 @@
-﻿# Scrollix Runtime Package
+# Scrollix Runtime Package
+
+This package is build-independent from the editor/embed app source and can be shipped as a portable runtime artifact.
+Common style/schema primitives are consumed from `packages/shared`.
 
 Build outputs:
 

@@ -1,5 +1,5 @@
 ﻿import type { RealtimeChannel } from '@supabase/supabase-js'
-import type { HostedStoryRecord } from '@/types/hostedStories'
+import type { HostedStoryRecord } from '../types/hostedStories'
 import { getRuntimeConfig, type ScrollixRuntimeInitOptions } from './runtimeConfig'
 import { getRuntimeSupabaseClient } from './supabaseClient'
 import { normalizeHostedStory } from '../schema/hostedStory'

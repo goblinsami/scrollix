@@ -4,8 +4,10 @@ Scrollix is a Vue + GSAP cinematic storytelling runtime.
 
 This repository now includes hosted runtime building blocks for Framer integration:
 
+- `packages/shared`: shared schema/constants/styles consumed by app + runtime.
 - `packages/runtime`: portable Web Component runtime (`<scrollix-cards>`) backed by Vue.
 - `packages/framer`: thin React adapter with Framer Property Controls + debounced Supabase autosave.
+- Runtime package is source-isolated from editor/embed app code (`src/**`) so builds can evolve independently.
 - `src/services/hostedStories.ts`: hosted story CRUD service.
 - `docs/supabase_hosted_stories.sql`: Supabase table/policy setup for hosted configs.
 
