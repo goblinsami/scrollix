@@ -440,7 +440,7 @@ const DEFAULT_SUPABASE_URL = ''
 const DEFAULT_SUPABASE_ANON_KEY = ''
 const DEFAULT_STORIES_FUNCTION_URL = ''
 const DEFAULT_RUNTIME_SCRIPT_URL = 'https://magical-klepon-3c1475.netlify.app/scrollix-runtime.js'
-const DEFAULT_RUNTIME_VERSION = 'force-8'
+const DEFAULT_RUNTIME_VERSION = 'force-13'
 const DEFAULT_PROJECT_ID = '319814c8-08e5-489e-a747-a2ea6cd080a8'
 
 const resolveRuntimeUrl = (runtimeScriptUrl: string, runtimeVersion: string) => {
@@ -460,9 +460,31 @@ const resolveRuntimeUrl = (runtimeScriptUrl: string, runtimeVersion: string) => 
   }
 }
 
+const UUID_REGEX = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i
+const HEX32_REGEX = /\b[0-9a-f]{32}\b/i
+
+const extractLikelyIdFromText = (input: string) => {
+  const uuidMatch = input.match(UUID_REGEX)
+  if (uuidMatch) return uuidMatch[0]
+
+  const hex32Match = input.match(HEX32_REGEX)
+  if (hex32Match) return hex32Match[0]
+
+  return ''
+}
+
 const normalizeProjectIdInput = (input: string) => {
   const trimmed = input.trim()
   if (!trimmed) return ''
+
+  const directId = extractLikelyIdFromText(trimmed)
+  if (directId) return directId
+
+  const srcAttrMatch = trimmed.match(/src=["']([^"']+)["']/i)
+  if (srcAttrMatch && srcAttrMatch[1]) {
+    const fromSrc = normalizeProjectIdInput(srcAttrMatch[1])
+    if (fromSrc) return fromSrc
+  }
 
   try {
     const parsed = new URL(trimmed)
@@ -477,10 +499,13 @@ const normalizeProjectIdInput = (input: string) => {
       .map((segment) => segment.trim())
       .filter(Boolean)
 
-    if (segments.length === 0) return ''
-    return segments[segments.length - 1]
+    if (segments.length === 0) return directId
+
+    const lastSegment = segments[segments.length - 1]
+    const fromSegment = extractLikelyIdFromText(lastSegment)
+    return fromSegment || lastSegment
   } catch (_error) {
-    return trimmed
+    return directId || trimmed
   }
 }
 
@@ -499,7 +524,12 @@ function ScrollixCards(props: ScrollixCardsProps) {
   const [resolvedProjectId, setResolvedProjectId] = React.useState(normalizeProjectIdInput(props.projectId))
   const [saveState, setSaveState] = React.useState<SaveState>({ status: 'idle', errorMessage: '' })
   const lastSavedSignatureRef = React.useRef('')
+  const resolvedStoriesFunctionUrl = React.useMemo(
+    () => resolveStoriesFunctionUrl(props.supabaseUrl, props.storiesFunctionUrl),
+    [props.supabaseUrl, props.storiesFunctionUrl]
+  )
   const hasProjectId = resolvedProjectId.trim().length > 0
+  const isExternalProjectBinding = props.projectId.trim().length > 0
   const storiesFunctionContext = React.useMemo(
     () => getStoriesFunctionContext(props.supabaseUrl, props.storiesFunctionUrl, props.supabaseAnonKey),
     [props.supabaseUrl, props.storiesFunctionUrl, props.supabaseAnonKey]
@@ -539,7 +569,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
       window.ScrollixRuntime?.init({
         supabaseUrl: props.supabaseUrl,
         supabaseAnonKey: props.supabaseAnonKey,
-        storiesFunctionUrl: resolveStoriesFunctionUrl(props.supabaseUrl, props.storiesFunctionUrl),
+        storiesFunctionUrl: resolvedStoriesFunctionUrl,
         storiesTable: props.storiesTable
       })
 
@@ -555,10 +585,12 @@ function ScrollixCards(props: ScrollixCardsProps) {
       setRuntimeInitialized(false)
       setRuntimeInitError(error instanceof Error ? error.message : 'Runtime bootstrap failed.')
     }
-  }, [runtimeReady, props.supabaseUrl, props.supabaseAnonKey, props.storiesTable])
+  }, [runtimeReady, props.supabaseUrl, props.supabaseAnonKey, resolvedStoriesFunctionUrl, props.storiesTable])
 
   React.useEffect(() => {
     if (!runtimeInitialized) return
+
+    if (isExternalProjectBinding) return
 
     if (!storiesFunctionContext) return
 
@@ -594,6 +626,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
     }
   }, [
     runtimeInitialized,
+    isExternalProjectBinding,
     storiesFunctionContext,
     props.storiesTable,
     props.autoSaveDelayMs,
@@ -678,7 +711,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
         project-id={resolvedProjectId}
         supabase-url={props.supabaseUrl}
         supabase-anon-key={props.supabaseAnonKey}
-        stories-function-url={resolveStoriesFunctionUrl(props.supabaseUrl, props.storiesFunctionUrl)}
+        stories-function-url={resolvedStoriesFunctionUrl}
         stories-table={props.storiesTable}
         live-updates="true"
       />

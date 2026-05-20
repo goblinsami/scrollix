@@ -24,9 +24,31 @@ interface CacheEntry {
 const storyCache = new Map<string, CacheEntry>()
 const inflightCache = new Map<string, Promise<HostedStoryRecord | null>>()
 
+const UUID_REGEX = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i
+const HEX32_REGEX = /\b[0-9a-f]{32}\b/i
+
+const extractLikelyIdFromText = (input: string) => {
+  const uuidMatch = input.match(UUID_REGEX)
+  if (uuidMatch) return uuidMatch[0]
+
+  const hex32Match = input.match(HEX32_REGEX)
+  if (hex32Match) return hex32Match[0]
+
+  return ''
+}
+
 const extractProjectIdFromInput = (input: string) => {
   const trimmed = input.trim()
   if (!trimmed) return ''
+
+  const directId = extractLikelyIdFromText(trimmed)
+  if (directId) return directId
+
+  const srcAttrMatch = trimmed.match(/src=["']([^"']+)["']/i)
+  if (srcAttrMatch && srcAttrMatch[1]) {
+    const fromSrc = extractProjectIdFromInput(srcAttrMatch[1])
+    if (fromSrc) return fromSrc
+  }
 
   try {
     const parsed = new URL(trimmed)
@@ -41,10 +63,13 @@ const extractProjectIdFromInput = (input: string) => {
       .map((segment) => segment.trim())
       .filter(Boolean)
 
-    if (segments.length === 0) return ''
-    return segments[segments.length - 1]
+    if (segments.length === 0) return directId
+
+    const lastSegment = segments[segments.length - 1]
+    const fromSegment = extractLikelyIdFromText(lastSegment)
+    return fromSegment || lastSegment
   } catch {
-    return trimmed
+    return directId || trimmed
   }
 }
 
