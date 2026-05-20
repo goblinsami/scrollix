@@ -34,7 +34,7 @@ export const STACK_CARDS_DEFAULT_CARDS: StackCardItem[] = [
 export const STACK_CARDS_DEFAULTS = {
   textSide: 'left' as const,
   stackDirection: 'right' as const,
-  cardsOnly: false,
+  cardsOnly: true,
   layoutSidePadding: 48,
   textOffsetX: 0,
   textOffsetY: 0,

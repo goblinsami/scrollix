@@ -425,7 +425,7 @@ const saveHostedStoryViaFunction = async ({
 const runtimePlaceholderStyle: React.CSSProperties = {
   width: '100%',
   height: '100%',
-  minHeight: '320px',
+  minHeight: '100svh',
   display: 'grid',
   placeItems: 'center',
   padding: '12px',
@@ -492,7 +492,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
     () => ({
       width: '100%',
       height: '100%',
-      minHeight: 320,
+      minHeight: '100svh',
       ...(props.style ?? {})
     }),
     [props.style]
@@ -711,7 +711,7 @@ ScrollixCards.defaultProps = {
   autoPlaySpeed: 0.65,
   textSide: 'left',
   stackDirection: 'right',
-  cardsOnly: false,
+  cardsOnly: true,
   overlayIntensity: 40,
   titleSize: 'l',
   descriptionSize: 'm',
@@ -856,7 +856,7 @@ addPropertyControls(ScrollixCards, {
   cardsOnly: {
     type: ControlType.Boolean,
     title: 'Cards Only',
-    defaultValue: false
+    defaultValue: true
   },
   angleY: {
     type: ControlType.Number,
