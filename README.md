@@ -32,6 +32,7 @@ npm run build:all
 - `/scrollix-runtime.css`
 
 Netlify config adds CORS headers for those files (`Access-Control-Allow-Origin: *`) so Framer can load the ESM module from a different origin.
+The repo also includes `public/_headers` with the same CORS rules as a fallback.
 
 ## Standalone Usage
 
