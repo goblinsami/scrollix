@@ -1,10 +1,11 @@
 import { supabase } from '@/lib/supabase'
 import type { PostgrestError } from '@supabase/supabase-js'
 import { STORY_LIST_SELECT_FIELDS, STORY_SELECT_FIELDS, SUPABASE_TABLES } from '@/constants/supabase'
-import type { SaveStoryInput, SavedStory, StoryListItem, UpdateStoryInput } from '@/types/stories'
+import type { DeleteStoryInput, SaveStoryInput, SavedStory, StoryListItem, UpdateStoryInput } from '@/types/stories'
 import { debugLog } from '@/utils/logger'
+import { resolveStoryName } from '@/utils/storyName'
 
-export type { SaveStoryInput, SavedStory, StoryListItem, UpdateStoryInput } from '@/types/stories'
+export type { DeleteStoryInput, SaveStoryInput, SavedStory, StoryListItem, UpdateStoryInput } from '@/types/stories'
 
 const isRlsViolation = (error: PostgrestError | null): boolean => {
   if (!error) return false
@@ -12,7 +13,7 @@ const isRlsViolation = (error: PostgrestError | null): boolean => {
 }
 
 export async function saveStory({ userId, title, content }: SaveStoryInput): Promise<SavedStory> {
-  const normalizedTitle = title.trim() || 'Untitled Story'
+  const normalizedTitle = resolveStoryName(title)
 
   debugLog('[stories] saveStory:start', {
     userId,
@@ -63,7 +64,7 @@ export async function updateStory({
   title,
   content
 }: UpdateStoryInput): Promise<SavedStory> {
-  const normalizedTitle = title.trim() || 'Untitled Story'
+  const normalizedTitle = resolveStoryName(title)
 
   debugLog('[stories] updateStory:start', {
     storyId,
@@ -240,6 +241,43 @@ export async function publishStory({
     return data as SavedStory
   } catch (error) {
     console.error('[stories] publishStory:failed', error)
+    throw error
+  }
+}
+
+export async function deleteStory({ storyId, userId }: DeleteStoryInput): Promise<void> {
+  debugLog('[stories] deleteStory:start', { storyId, userId })
+
+  try {
+    const { data, error } = await supabase
+      .from(SUPABASE_TABLES.Stories)
+      .delete()
+      .eq('id', storyId)
+      .eq('user_id', userId)
+      .select('id')
+      .maybeSingle()
+
+    if (error) {
+      console.error('[stories] deleteStory:supabase-error', error)
+      if (isRlsViolation(error)) {
+        console.error(
+          '[stories] RLS policy blocked delete on public.stories. Check DELETE USING(auth.uid() = user_id) policy.'
+        )
+      }
+      throw error
+    }
+
+    if (!data || typeof data.id !== 'string' || data.id.trim().length === 0) {
+      const notDeletedError = new Error(
+        'Story was not deleted. Verify DELETE policy/grant on public.stories and ownership (auth.uid() = user_id).'
+      )
+      console.error('[stories] deleteStory:not-deleted', notDeletedError)
+      throw notDeletedError
+    }
+
+    debugLog('[stories] deleteStory:success', { storyId })
+  } catch (error) {
+    console.error('[stories] deleteStory:failed', error)
     throw error
   }
 }

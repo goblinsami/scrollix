@@ -11,6 +11,7 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 import {
+  deleteStory,
   getPublicStoryById,
   getStories,
   getStoryById,
@@ -25,6 +26,7 @@ const buildQuery = (result: { data: unknown; error: unknown }) => {
   const query: {
     insert: ReturnType<typeof vi.fn>
     update: ReturnType<typeof vi.fn>
+    delete: ReturnType<typeof vi.fn>
     select: ReturnType<typeof vi.fn>
     eq: ReturnType<typeof vi.fn>
     order: ReturnType<typeof vi.fn>
@@ -33,6 +35,7 @@ const buildQuery = (result: { data: unknown; error: unknown }) => {
   } = {
     insert: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
     select: vi.fn(),
     eq: vi.fn(),
     order: vi.fn(),
@@ -42,6 +45,7 @@ const buildQuery = (result: { data: unknown; error: unknown }) => {
 
   query.insert.mockReturnValue(query)
   query.update.mockReturnValue(query)
+  query.delete.mockReturnValue(query)
   query.select.mockReturnValue(query)
   query.eq.mockReturnValue(query)
   query.order.mockResolvedValue(result)
@@ -74,6 +78,7 @@ const baseSavedStory: SavedStory = {
 describe('stories service', () => {
   beforeEach(() => {
     fromMock.mockReset()
+    vi.useRealTimers()
   })
 
   it('saveStory inserts a new story and returns saved data', async () => {
@@ -138,6 +143,46 @@ describe('stories service', () => {
     expect(result.id).toBe('story-1')
   })
 
+  it('saveStory assigns timestamp title when no name is provided', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-05-21T10:30:40.000Z'))
+
+    const query = buildQuery({ data: baseSavedStory, error: null })
+    fromMock.mockReturnValue(query)
+
+    await saveStory({
+      userId: 'user-1',
+      content: baseSavedStory.content_json
+    })
+
+    expect(query.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: expect.stringMatching(/^Story \d{4}-\d{2}-\d{2}/)
+      })
+    )
+  })
+
+  it('updateStory assigns timestamp title when name is blank', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-05-21T10:30:40.000Z'))
+
+    const query = buildQuery({ data: baseSavedStory, error: null })
+    fromMock.mockReturnValue(query)
+
+    await updateStory({
+      storyId: 'story-1',
+      userId: 'user-1',
+      title: '   ',
+      content: baseSavedStory.content_json
+    })
+
+    expect(query.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: expect.stringMatching(/^Story \d{4}-\d{2}-\d{2}/)
+      })
+    )
+  })
+
   it('getStories returns items ordered by updated_at desc', async () => {
     const listData = [
       { id: 'story-2', title: 'B', updated_at: '2026-01-02', published: true },
@@ -193,5 +238,27 @@ describe('stories service', () => {
     expect(query.eq).toHaveBeenNthCalledWith(1, 'id', 'story-1')
     expect(query.eq).toHaveBeenNthCalledWith(2, 'user_id', 'user-1')
     expect(result.published).toBe(true)
+  })
+
+  it('deleteStory filters by id and user_id', async () => {
+    const query = buildQuery({ data: { id: 'story-1' }, error: null })
+    fromMock.mockReturnValue(query)
+
+    await deleteStory({ storyId: 'story-1', userId: 'user-1' })
+
+    expect(query.delete).toHaveBeenCalled()
+    expect(query.eq).toHaveBeenNthCalledWith(1, 'id', 'story-1')
+    expect(query.eq).toHaveBeenNthCalledWith(2, 'user_id', 'user-1')
+    expect(query.select).toHaveBeenCalledWith('id')
+    expect(query.maybeSingle).toHaveBeenCalled()
+  })
+
+  it('deleteStory throws when no row was deleted', async () => {
+    const query = buildQuery({ data: null, error: null })
+    fromMock.mockReturnValue(query)
+
+    await expect(deleteStory({ storyId: 'story-1', userId: 'user-1' })).rejects.toThrow(
+      /Story was not deleted/i
+    )
   })
 })

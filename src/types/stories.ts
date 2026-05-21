@@ -2,12 +2,17 @@ import type { ContentSchema } from './navigation'
 
 export interface SaveStoryInput {
   userId: string
-  title: string
+  title?: string
   content: ContentSchema
 }
 
 export interface UpdateStoryInput extends SaveStoryInput {
   storyId: string
+}
+
+export interface DeleteStoryInput {
+  storyId: string
+  userId: string
 }
 
 export interface SavedStory {

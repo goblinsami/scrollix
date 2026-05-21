@@ -425,7 +425,7 @@ const saveHostedStoryViaFunction = async ({
 const runtimePlaceholderStyle: React.CSSProperties = {
   width: '100%',
   height: '100%',
-  minHeight: '100svh',
+  minHeight: '220px',
   display: 'grid',
   placeItems: 'center',
   padding: '12px',
@@ -441,7 +441,7 @@ const DEFAULT_SUPABASE_ANON_KEY = ''
 const DEFAULT_STORIES_FUNCTION_URL = ''
 const DEFAULT_RUNTIME_SCRIPT_URL = 'https://magical-klepon-3c1475.netlify.app/scrollix-runtime.js'
 const DEFAULT_RUNTIME_VERSION = 'force-13'
-const DEFAULT_PROJECT_ID = '319814c8-08e5-489e-a747-a2ea6cd080a8'
+const DEFAULT_PROJECT_ID = 'd3150cd6-23f1-4381-835a-8ee56b9e1082'
 
 const resolveRuntimeUrl = (runtimeScriptUrl: string, runtimeVersion: string) => {
   const trimmedUrl = runtimeScriptUrl.trim()
@@ -546,7 +546,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
     () => ({
       width: '100%',
       height: '100%',
-      minHeight: '100svh',
+      minHeight: 0,
       ...(props.style ?? {})
     }),
     [props.style]

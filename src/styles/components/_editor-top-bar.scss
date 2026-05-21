@@ -91,6 +91,42 @@
   flex-wrap: wrap;
 }
 
+.story-name-field {
+  min-width: min(32vw, 280px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.34rem;
+  padding: 0.16rem 0.38rem;
+  border: 1px solid color-mix(in srgb, var(--editor-border-soft) 72%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--editor-item-hover-bg) 52%, transparent);
+}
+
+.story-name-field__label {
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--editor-text-muted);
+  font-weight: 740;
+  white-space: nowrap;
+}
+
+.story-name-field__input {
+  width: 100%;
+  min-width: 140px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--editor-text-primary);
+  font-size: 0.71rem;
+  font-weight: 620;
+  line-height: 1.2;
+}
+
+.story-name-field__input::placeholder {
+  color: color-mix(in srgb, var(--editor-text-muted) 84%, transparent);
+}
+
 .auth-chip {
   display: inline-flex;
   align-items: center;
@@ -163,6 +199,7 @@
 .publish-story-button,
 .share-box__button,
 .my-stories__open-button,
+.my-stories__delete-button,
 .mini-dropdown__summary,
 .editor-toggle-button,
 .edit-slide-button,
@@ -194,6 +231,7 @@
 .publish-story-button,
 .share-box__button,
 .my-stories__open-button,
+.my-stories__delete-button,
 .mini-dropdown__summary,
 .editor-toggle-button,
 .edit-slide-button,
@@ -206,6 +244,7 @@
 .publish-story-button:hover,
 .share-box__button:hover,
 .my-stories__open-button:hover,
+.my-stories__delete-button:hover,
 .mini-dropdown__summary:hover,
 .editor-toggle-button:hover,
 .edit-slide-button:hover,
@@ -221,6 +260,7 @@
 .publish-story-button:focus-visible,
 .share-box__button:focus-visible,
 .my-stories__open-button:focus-visible,
+.my-stories__delete-button:focus-visible,
 .mini-dropdown__summary:focus-visible,
 .editor-toggle-button:focus-visible,
 .edit-slide-button:focus-visible,
@@ -310,16 +350,24 @@
 
 .share-box__button,
 .my-stories__open-button,
+.my-stories__delete-button,
 .mini-dropdown__summary,
 .theme-toggle-button {
   background: color-mix(in srgb, var(--editor-item-hover-bg) 56%, transparent);
   border-color: color-mix(in srgb, var(--editor-border-soft) 72%, transparent);
 }
 
+.my-stories__delete-button {
+  border-color: color-mix(in srgb, var(--editor-danger) 56%, var(--editor-border-soft));
+  background: color-mix(in srgb, var(--editor-danger) 18%, var(--editor-surface-2));
+  color: color-mix(in srgb, var(--editor-danger) 84%, var(--editor-text-primary));
+}
+
 .google-login-button:disabled,
 .save-story-button:disabled,
 .publish-story-button:disabled,
-.my-stories__open-button:disabled {
+.my-stories__open-button:disabled,
+.my-stories__delete-button:disabled {
   cursor: default;
   opacity: 0.56;
   transform: none;
@@ -384,6 +432,12 @@
   flex-direction: column;
 }
 
+.my-stories__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.34rem;
+}
+
 .my-stories__story-title {
   font-size: 0.74rem;
   color: var(--editor-text-primary);
@@ -411,6 +465,7 @@ body[data-editor-theme='light'] .user-bar__actions {
 body[data-editor-theme='light'] .google-login-button,
 body[data-editor-theme='light'] .share-box__button,
 body[data-editor-theme='light'] .my-stories__open-button,
+body[data-editor-theme='light'] .my-stories__delete-button,
 body[data-editor-theme='light'] .mini-dropdown__summary,
 body[data-editor-theme='light'] .theme-toggle-button {
   color: color-mix(in srgb, var(--editor-text-secondary) 90%, #0f223a);
@@ -432,6 +487,10 @@ body[data-editor-theme='light'] .theme-toggle-button {
   .status-note {
     display: none;
   }
+
+  .story-name-field {
+    min-width: min(58vw, 280px);
+  }
 }
 
 @media (max-width: 720px) {
@@ -446,6 +505,11 @@ body[data-editor-theme='light'] .theme-toggle-button {
     justify-content: flex-end;
     gap: 0.28rem;
     padding: 0.44rem 0.5rem;
+  }
+
+  .story-name-field {
+    width: 100%;
+    min-width: 0;
   }
 
   .user-bar__burger {

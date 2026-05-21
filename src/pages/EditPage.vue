@@ -11,6 +11,8 @@
       :is-dark-theme="isDarkTheme"
       :show-upgrade-prompts="showUpgradePrompts"
       :story-usage-text="storyUsageText"
+      :story-name="storyName"
+      :story-name-fallback="storyNameFallback"
       :is-saving-story="isSavingStory"
       :is-publishing-story="isPublishingStory"
       :can-save="canSave"
@@ -18,6 +20,8 @@
       :published-story-id="publishedStoryId"
       :is-loading-stories="isLoadingStories"
       :is-opening-story="isOpeningStory"
+      :is-deleting-story="isDeletingStory"
+      :deleting-story-id="deletingStoryId"
       :my-stories="myStories"
       @toggle-mobile-menu="toggleMobileMenu"
       @edit-current-slide="handleEditCurrentSlide"
@@ -27,9 +31,11 @@
       @logout="handleLogout"
       @save-story="handleSaveStory"
       @publish-story="handlePublishStory"
+      @update-story-name="handleStoryNameUpdate"
       @copy-public-link="copyPublicLink"
       @copy-embed-code="copyEmbedCode"
       @open-story="handleOpenStory"
+      @delete-story="handleDeleteStory"
     />
 
     <div class="editor-hover-toggle">
@@ -140,14 +146,19 @@ const {
 
 const {
   publishedStoryId,
+  storyName,
+  storyNameFallback,
   isSavingStory,
   isPublishingStory,
   isLoadingStories,
   isOpeningStory,
+  isDeletingStory,
+  deletingStoryId,
   myStories,
   handleSaveStory,
   handlePublishStory,
   handleOpenStory,
+  handleDeleteStory,
   copyPublicLink,
   copyEmbedCode
 } = useEditorStoryActions({
@@ -222,6 +233,10 @@ const setSnapStageEl = (element: HTMLElement | null) => {
 const handleTextContentEditingChange = (payload: TextContentEditingChangePayload) => {
   activeTextContentTargetId.value = payload.active ? payload.targetId : null
   activeTextContentHighlightScope.value = payload.scope ?? 'content'
+}
+
+const handleStoryNameUpdate = (value: string) => {
+  storyName.value = value
 }
 
 watch(

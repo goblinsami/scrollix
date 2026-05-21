@@ -1,10 +1,11 @@
 import { computed, ref, watch, type Ref } from 'vue'
 import { PUBLIC_APP_URL } from '@/config/app'
-import { getStories, getStoryById, publishStory, saveStory, updateStory } from '@/services/stories'
+import { deleteStory, getStories, getStoryById, publishStory, saveStory, updateStory } from '@/services/stories'
 import type { ContentSchema, Panel } from '@/types/navigation'
 import type { StoryListItem } from '@/types/stories'
 import { copyTextToClipboard } from '@/utils/clipboard'
 import { debugLog } from '@/utils/logger'
+import { buildStoryTimestampName, resolveStoryName } from '@/utils/storyName'
 
 interface UseEditorStoryActionsOptions {
   routeStoryId: Ref<string>
@@ -34,11 +35,15 @@ const clonePanels = (panels: Panel[]): Panel[] => panels.map((panel) => ({ ...pa
 export function useEditorStoryActions(options: UseEditorStoryActionsOptions) {
   const currentStoryId = ref<string | null>(null)
   const publishedStoryId = ref<string | null>(null)
+  const storyName = ref('')
+  const storyNameFallback = ref(buildStoryTimestampName())
 
   const isSavingStory = ref(false)
   const isPublishingStory = ref(false)
   const isLoadingStories = ref(false)
   const isOpeningStory = ref(false)
+  const isDeletingStory = ref(false)
+  const deletingStoryId = ref<string | null>(null)
   const myStories = ref<StoryListItem[]>([])
   const shareFeedback = ref('')
   let storiesLoadRequestId = 0
@@ -55,11 +60,7 @@ export function useEditorStoryActions(options: UseEditorStoryActionsOptions) {
     panels: clonePanels(options.panelsState.value)
   })
 
-  const buildStoryTitle = () => {
-    const firstPanelTitle = options.panelsState.value.find((panel) => panel.title.trim())?.title.trim()
-    if (firstPanelTitle) return firstPanelTitle
-    return `Story ${options.routeStoryId.value}`
-  }
+  const buildStoryTitle = () => resolveStoryName(storyName.value)
 
   const publicStoryUrl = computed(() => {
     if (!publishedStoryId.value) return ''
@@ -151,6 +152,8 @@ export function useEditorStoryActions(options: UseEditorStoryActionsOptions) {
         id: savedStory.id,
         title: savedStory.title
       })
+      storyName.value = savedStory.title
+      storyNameFallback.value = buildStoryTimestampName(savedStory.updated_at)
       currentStoryId.value = savedStory.id
       await refreshMyStories()
     } catch (error) {
@@ -198,6 +201,8 @@ export function useEditorStoryActions(options: UseEditorStoryActionsOptions) {
       })
 
       publishedStoryId.value = publishedStory.id
+      storyName.value = publishedStory.title
+      storyNameFallback.value = buildStoryTimestampName(publishedStory.updated_at)
       debugLog('[stories] publish:completed', { id: publishedStory.id })
       await refreshMyStories()
     } catch (error) {
@@ -222,6 +227,8 @@ export function useEditorStoryActions(options: UseEditorStoryActionsOptions) {
         ...story.content_json,
         panels: clonePanels(story.content_json.panels)
       }
+      storyName.value = story.title ?? ''
+      storyNameFallback.value = buildStoryTimestampName(story.updated_at)
       currentStoryId.value = story.id
       publishedStoryId.value = story.published ? story.id : null
       debugLog('[stories] opened story', { id: story.id, title: story.title })
@@ -232,11 +239,52 @@ export function useEditorStoryActions(options: UseEditorStoryActionsOptions) {
     }
   }
 
+  const handleDeleteStory = async (storyId: string) => {
+    if (!options.user.value) {
+      console.warn('[stories] Delete cancelled: user is not authenticated.')
+      return
+    }
+    if (!storyId.trim()) return
+    if (isDeletingStory.value) return
+
+    const shouldDelete = window.confirm('Delete this story? This action cannot be undone.')
+    if (!shouldDelete) return
+
+    isDeletingStory.value = true
+    deletingStoryId.value = storyId
+    try {
+      await deleteStory({
+        storyId,
+        userId: options.user.value.id
+      })
+
+      if (currentStoryId.value === storyId) {
+        currentStoryId.value = null
+        publishedStoryId.value = null
+        storyName.value = ''
+        storyNameFallback.value = buildStoryTimestampName()
+      }
+
+      myStories.value = myStories.value.filter((story) => story.id !== storyId)
+      if (options.storyCountRef) options.storyCountRef.value = myStories.value.length
+      await refreshMyStories()
+    } catch (error) {
+      console.error('[stories] failed deleting story', error)
+      const message = error instanceof Error ? error.message : 'Failed deleting story.'
+      window.alert(`[stories] ${message}`)
+    } finally {
+      isDeletingStory.value = false
+      deletingStoryId.value = null
+    }
+  }
+
   watch(
     () => options.routeStoryId.value,
     () => {
       currentStoryId.value = null
       publishedStoryId.value = null
+      storyName.value = ''
+      storyNameFallback.value = buildStoryTimestampName()
     }
   )
 
@@ -248,6 +296,10 @@ export function useEditorStoryActions(options: UseEditorStoryActionsOptions) {
         if (options.storyCountRef) options.storyCountRef.value = 0
         currentStoryId.value = null
         publishedStoryId.value = null
+        isDeletingStory.value = false
+        deletingStoryId.value = null
+        storyName.value = ''
+        storyNameFallback.value = buildStoryTimestampName()
         return
       }
       await refreshMyStories()
@@ -258,10 +310,14 @@ export function useEditorStoryActions(options: UseEditorStoryActionsOptions) {
   return {
     currentStoryId,
     publishedStoryId,
+    storyName,
+    storyNameFallback,
     isSavingStory,
     isPublishingStory,
     isLoadingStories,
     isOpeningStory,
+    isDeletingStory,
+    deletingStoryId,
     myStories,
     shareFeedback,
     publicStoryUrl,
@@ -269,6 +325,7 @@ export function useEditorStoryActions(options: UseEditorStoryActionsOptions) {
     handleSaveStory,
     handlePublishStory,
     handleOpenStory,
+    handleDeleteStory,
     copyPublicLink,
     copyEmbedCode
   }

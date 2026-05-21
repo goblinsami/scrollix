@@ -46,6 +46,19 @@
       </div>
 
       <div class="user-bar__actions">
+        <div v-if="isAuthenticated" class="story-name-field">
+          <label class="story-name-field__label" for="story-name-input">Story</label>
+          <input
+            id="story-name-input"
+            class="story-name-field__input"
+            type="text"
+            :value="storyName"
+            :placeholder="`${storyNamePlaceholder} ${storyNameFallback}`"
+            maxlength="160"
+            @input="handleStoryNameInput"
+          />
+        </div>
+
         <button
           v-if="!isAuthenticated"
           class="google-login-button"
@@ -94,19 +107,30 @@
             <ul v-else class="my-stories__list">
               <li v-for="story in myStories" :key="story.id" class="my-stories__item">
                 <div class="my-stories__meta">
-                  <strong class="my-stories__story-title">{{ story.title }}</strong>
+                  <strong class="my-stories__story-title">{{ formatStoryName(story) }}</strong>
                   <span class="my-stories__date" :title="formatStoryUpdatedAtFull(story.updated_at)">
                     {{ formatStoryUpdatedAt(story.updated_at) }} <b v-if="story.published">• Published</b>
                   </span>
                 </div>
-                <button
-                  class="my-stories__open-button"
-                  type="button"
-                  :disabled="isOpeningStory"
-                  @click="$emit('openStory', story.id)"
-                >
-                  Open
-                </button>
+                <div class="my-stories__actions">
+                  <button
+                    class="my-stories__open-button"
+                    type="button"
+                    :disabled="isOpeningStory || isDeletingStory"
+                    @click="$emit('openStory', story.id)"
+                  >
+                    Open
+                  </button>
+                  <button
+                    class="my-stories__delete-button"
+                    type="button"
+                    :disabled="isOpeningStory || isDeletingStory"
+                    @click="$emit('deleteStory', story.id)"
+                  >
+                    <span v-if="isDeletingStory && deletingStoryId === story.id">Deleting...</span>
+                    <span v-else>Delete</span>
+                  </button>
+                </div>
               </li>
             </ul>
           </div>
@@ -121,6 +145,8 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import EditorToggleButton from '@/components/EditorToggleButton.vue'
 import type { StoryListItem } from '@/types/stories'
 import { formatStoryUpdatedAt, formatStoryUpdatedAtFull } from '@/utils/storyTimestamp'
+import { STORY_NAME_LABELS } from '@/constants/storyName'
+import { resolveStoryName } from '@/utils/storyName'
 import GoogleLogoIcon from './icons/GoogleLogoIcon.vue'
 
 defineProps<{
@@ -134,6 +160,8 @@ defineProps<{
   isDarkTheme: boolean
   showUpgradePrompts: boolean
   storyUsageText: string
+  storyName: string
+  storyNameFallback: string
   isSavingStory: boolean
   isPublishingStory: boolean
   canSave: boolean
@@ -141,10 +169,12 @@ defineProps<{
   publishedStoryId: string | null
   isLoadingStories: boolean
   isOpeningStory: boolean
+  isDeletingStory: boolean
+  deletingStoryId: string | null
   myStories: StoryListItem[]
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   toggleMobileMenu: []
   editCurrentSlide: []
   toggleEditor: []
@@ -153,12 +183,22 @@ defineEmits<{
   logout: []
   saveStory: []
   publishStory: []
+  updateStoryName: [value: string]
   copyPublicLink: []
   copyEmbedCode: []
   openStory: [storyId: string]
+  deleteStory: [storyId: string]
 }>()
 
 const myStoriesDropdownRef = ref<HTMLElement | null>(null)
+const storyNamePlaceholder = STORY_NAME_LABELS.placeholder
+const formatStoryName = (story: StoryListItem) => resolveStoryName(story.title, story.updated_at)
+
+const handleStoryNameInput = (event: Event) => {
+  const target = event.target
+  if (!(target instanceof HTMLInputElement)) return
+  emit('updateStoryName', target.value)
+}
 
 const handleDocumentPointerDown = (event: MouseEvent | TouchEvent) => {
   const dropdown = myStoriesDropdownRef.value
