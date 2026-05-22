@@ -8,7 +8,7 @@ const rootDir = path.resolve(__dirname, '..')
 const runtimeDistDir = path.resolve(rootDir, 'packages/runtime/dist')
 const appDistDir = path.resolve(rootDir, 'dist')
 
-const runtimeFiles = ['scrollix-runtime.js', 'scrollix-runtime.css']
+const runtimeFiles = ['scrollix-runtime.js', 'scrollix-runtime.css', 'scrollix-runtime-build.json']
 
 if (!fs.existsSync(runtimeDistDir)) {
   throw new Error(`Runtime dist not found at ${runtimeDistDir}. Run "npm run build:runtime" first.`)

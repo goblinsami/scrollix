@@ -9,10 +9,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "build:runtime": "npm --prefix packages/runtime run build",
+    "build:metadata:app": "node scripts/write-build-metadata.mjs --app",
+    "build:metadata:runtime": "node scripts/write-build-metadata.mjs --runtime",
+    "build:metadata:all": "node scripts/write-build-metadata.mjs --all",
+    "build:runtime": "npm --prefix packages/runtime run build && npm run build:metadata:runtime",
     "sync:runtime-assets": "node scripts/copy-runtime-assets.mjs",
-    "build:all": "npm run build && npm run build:runtime && npm run sync:runtime-assets",
+    "build:all": "npm run build && npm run build:metadata:app && npm run build:runtime && npm run sync:runtime-assets",
     "build:netlify": "pnpm run build:all",
+    "deploy:netlify": "node scripts/netlify-deploy.mjs",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run"

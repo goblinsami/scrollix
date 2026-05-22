@@ -19,6 +19,7 @@ npm run build
 npm run test -- --run
 npm run build:runtime
 npm run build:all
+npm run deploy:netlify -- --deploy-runtime --site-runtime <NETLIFY_SITE_ID_RUNTIME>
 ```
 
 ## Runtime Output
@@ -32,9 +33,36 @@ npm run build:all
 
 - `/scrollix-runtime.js`
 - `/scrollix-runtime.css`
+- `/scrollix-runtime-build.json`
+
+Build metadata files:
+
+- `dist/scrollix-build.json` (app build fingerprint)
+- `packages/runtime/dist/scrollix-runtime-build.json` (runtime build fingerprint)
 
 Netlify config adds CORS headers for those files (`Access-Control-Allow-Origin: *`) so Framer can load the ESM module from a different origin.
 The repo also includes `public/_headers` with the same CORS rules as a fallback.
+
+## Netlify Deploy Helper
+
+Use the unified deploy helper:
+
+```bash
+# App only (default target)
+npm run deploy:netlify -- --site-app <NETLIFY_SITE_ID_APP>
+
+# Runtime only
+npm run deploy:netlify -- --deploy-runtime --site-runtime <NETLIFY_SITE_ID_RUNTIME>
+
+# Both
+npm run deploy:netlify -- --deploy-all --site-app <APP_SITE_ID> --site-runtime <RUNTIME_SITE_ID>
+```
+
+Supported env vars:
+
+- `NETLIFY_AUTH_TOKEN`
+- `NETLIFY_SITE_ID_APP`
+- `NETLIFY_SITE_ID_RUNTIME`
 
 ## Standalone Usage
 
