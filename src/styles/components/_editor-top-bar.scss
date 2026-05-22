@@ -348,6 +348,15 @@
   font-weight: 700;
 }
 
+.share-box {
+  display: inline-flex;
+  align-items: center;
+}
+
+.share-box--split {
+  gap: 0;
+}
+
 .share-box__button,
 .my-stories__open-button,
 .my-stories__delete-button,
@@ -355,6 +364,17 @@
 .theme-toggle-button {
   background: color-mix(in srgb, var(--editor-item-hover-bg) 56%, transparent);
   border-color: color-mix(in srgb, var(--editor-border-soft) 72%, transparent);
+}
+
+.share-box__button--split-main {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.share-box__button--split-secondary {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: -1px;
 }
 
 .my-stories__delete-button {

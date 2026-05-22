@@ -441,7 +441,7 @@ const DEFAULT_SUPABASE_ANON_KEY = ''
 const DEFAULT_STORIES_FUNCTION_URL = 'https://xvlpcwygcetcccmorihr.supabase.co/functions/v1/scrollix-story'
 const DEFAULT_RUNTIME_SCRIPT_URL = 'https://magical-klepon-3c1475.netlify.app/scrollix-runtime.js'
 const DEFAULT_RUNTIME_VERSION = 'force-13'
-const DEFAULT_PROJECT_ID = 'd3150cd6-23f1-4381-835a-8ee56b9e1082'
+const DEFAULT_PROJECT_ID = '21ebaa36-93e1-4356-85c8-78e0c84d4154'
 
 const resolveRuntimeUrl = (runtimeScriptUrl: string, runtimeVersion: string) => {
   const trimmedUrl = runtimeScriptUrl.trim()
@@ -509,6 +509,12 @@ const normalizeProjectIdInput = (input: string) => {
   }
 }
 
+/**
+ * @framerSupportedLayoutWidth any-prefer-fixed
+ * @framerSupportedLayoutHeight any-prefer-fixed
+ * @framerIntrinsicWidth 1200
+ * @framerIntrinsicHeight 720
+ */
 function ScrollixCards(props: ScrollixCardsProps) {
   const resolvedRuntimeScriptUrl = React.useMemo(
     () => resolveRuntimeUrl(props.runtimeScriptUrl, props.runtimeVersion),
@@ -544,12 +550,24 @@ function ScrollixCards(props: ScrollixCardsProps) {
     trimmedSupabaseKey.includes('SERVICE_ROLE')
   const frameStyle = React.useMemo<React.CSSProperties>(
     () => ({
+      position: 'relative',
       width: '100%',
       height: '100%',
       minHeight: 0,
+      overflow: 'hidden',
       ...(props.style ?? {})
     }),
     [props.style]
+  )
+  const runtimeElementStyle = React.useMemo<React.CSSProperties>(
+    () => ({
+      display: 'block',
+      width: '100%',
+      height: '100%',
+      minHeight: '100%',
+      minWidth: 0
+    }),
+    []
   )
 
   React.useEffect(() => {
@@ -708,6 +726,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
       data-save-error={saveState.errorMessage}
     >
       <scrollix-cards
+        style={runtimeElementStyle}
         project-id={resolvedProjectId}
         supabase-url={props.supabaseUrl}
         supabase-anon-key={props.supabaseAnonKey}

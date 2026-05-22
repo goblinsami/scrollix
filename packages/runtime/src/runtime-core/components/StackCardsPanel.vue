@@ -204,6 +204,7 @@ const debugMobileRotateY = ref(0)
 const cardsViewportRef = ref<HTMLElement | null>(null)
 const cardsViewportWidth = ref(0)
 let cardsViewportResizeObserver: ResizeObserver | null = null
+let cardsViewportMeasureTimer: number | null = null
 const stackTitleStyle = computed(() => ({
   ...titleStyle.value,
   width: `min(${titleMaxWidthResolved.value}px, 100%)`,
@@ -460,12 +461,17 @@ onMounted(() => {
     cardsViewportResizeObserver = new ResizeObserver(updateCardsViewportWidth)
     cardsViewportResizeObserver.observe(viewport)
   }
+  cardsViewportMeasureTimer = window.setInterval(updateCardsViewportWidth, 220)
   window.addEventListener('resize', updateCardsViewportWidth, { passive: true })
 })
 onBeforeUnmount(() => {
   stopAutoPlay()
   cardsViewportResizeObserver?.disconnect()
   cardsViewportResizeObserver = null
+  if (cardsViewportMeasureTimer !== null) {
+    window.clearInterval(cardsViewportMeasureTimer)
+    cardsViewportMeasureTimer = null
+  }
   window.removeEventListener('resize', updateCardsViewportWidth)
 })
 

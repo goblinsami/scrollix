@@ -91,9 +91,14 @@
             <span v-if="isPublishingStory">Publishing...</span>
             <span v-else>Publish</span>
           </button>
-          <button v-if="publishedStoryId" class="share-box__button" type="button" @click="$emit('copyPublicLink')">
-            Copy Link
-          </button>
+          <div v-if="publishedStoryId" class="share-box share-box--split">
+            <button class="share-box__button share-box__button--split-main" type="button" @click="$emit('copyPublicLink')">
+              Copy Link
+            </button>
+            <button class="share-box__button share-box__button--split-secondary" type="button" @click="$emit('openPublicLink')">
+              Open Embed
+            </button>
+          </div>
           <button v-if="publishedStoryId" class="share-box__button" type="button" @click="$emit('copyEmbedCode')">
             Copy iFrame
           </button>
@@ -185,6 +190,7 @@ const emit = defineEmits<{
   publishStory: []
   updateStoryName: [value: string]
   copyPublicLink: []
+  openPublicLink: []
   copyEmbedCode: []
   openStory: [storyId: string]
   deleteStory: [storyId: string]

@@ -88,6 +88,16 @@ export function useEditorStoryActions(options: UseEditorStoryActionsOptions) {
     await copyText(publicStoryUrl.value, 'public link')
   }
 
+  const openPublicLink = () => {
+    const url = publicStoryUrl.value
+    if (!url) return
+
+    const popup = window.open(url, '_blank', 'noopener,noreferrer')
+    if (!popup) {
+      window.location.assign(url)
+    }
+  }
+
   const copyEmbedCode = async () => {
     await copyText(iframeEmbedCode.value, 'iframe embed code')
   }
@@ -327,6 +337,7 @@ export function useEditorStoryActions(options: UseEditorStoryActionsOptions) {
     handleOpenStory,
     handleDeleteStory,
     copyPublicLink,
+    openPublicLink,
     copyEmbedCode
   }
 }

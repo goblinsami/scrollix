@@ -34,6 +34,12 @@ export class ScrollixCardsElement extends HTMLElement {
   })
 
   connectedCallback() {
+    this.style.display = 'block'
+    this.style.width = '100%'
+    this.style.height = '100%'
+    this.style.minHeight = '100%'
+    this.style.minWidth = '0'
+
     const shadowRoot = this.shadowRoot ?? this.attachShadow({ mode: 'open' })
 
     if (!this.mountNode) {

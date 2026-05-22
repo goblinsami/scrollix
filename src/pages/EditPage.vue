@@ -33,6 +33,7 @@
       @publish-story="handlePublishStory"
       @update-story-name="handleStoryNameUpdate"
       @copy-public-link="copyPublicLink"
+      @open-public-link="openPublicLink"
       @copy-embed-code="copyEmbedCode"
       @open-story="handleOpenStory"
       @delete-story="handleDeleteStory"
@@ -160,6 +161,7 @@ const {
   handleOpenStory,
   handleDeleteStory,
   copyPublicLink,
+  openPublicLink,
   copyEmbedCode
 } = useEditorStoryActions({
   routeStoryId,
