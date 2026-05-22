@@ -73,6 +73,7 @@
         </p>
       </article>
       <div
+        ref="cardsViewportRef"
         class="cards-viewport"
         :style="cardViewportStyle"
         @wheel.prevent="onWheel"
@@ -158,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useSlidePanelPresentation } from '../composables/useSlidePanelPresentation'
 import { useStackCardHoverTilt } from '../composables/useStackCardHoverTilt'
 import { STACK_CARDS_DEFAULTS } from '../constants/stackCards'
@@ -169,6 +170,9 @@ import { FEATURE_FLAGS } from '../config/featureFlags'
 
 const STEP = 0.03
 const BACK_FADE_WINDOW = 0.65
+const MOBILE_STACK_MIN_WIDTH = 430
+const MOBILE_STACK_MAX_WIDTH = 760
+const TABLET_STACK_MAX_WIDTH = 960
 
 const props = defineProps<SlidePanelProps>()
 const showDebugContainers = FEATURE_FLAGS.enableDebugContainers
@@ -194,9 +198,12 @@ const {
 } = useSlidePanelPresentation(props)
 
 const progress = ref(0)
-const debugMobileCardsOffsetX = ref(-57)
+const debugMobileCardsOffsetX = ref(0)
 const debugMobileRotateX = ref(0)
 const debugMobileRotateY = ref(0)
+const cardsViewportRef = ref<HTMLElement | null>(null)
+const cardsViewportWidth = ref(0)
+let cardsViewportResizeObserver: ResizeObserver | null = null
 const stackTitleStyle = computed(() => ({
   ...titleStyle.value,
   width: `min(${titleMaxWidthResolved.value}px, 100%)`,
@@ -265,12 +272,44 @@ const mobileTextCardsGap = computed(
 const wrap01 = (value: number) => ((value % 1) + 1) % 1
 
 const phase = computed(() => progress.value * totalCards.value)
+const responsiveCardWidthScale = computed(() => {
+  const width = cardsViewportWidth.value
+  if (width <= 0) return cardWidth.value
+  if (width <= MOBILE_STACK_MIN_WIDTH) return Math.min(cardWidth.value, 0.88)
+  if (width <= MOBILE_STACK_MAX_WIDTH) return Math.min(cardWidth.value, 0.96)
+  return cardWidth.value
+})
+const mobileStackCompression = computed(() => {
+  const width = cardsViewportWidth.value
+  if (width <= 0) return 1
+  if (width <= MOBILE_STACK_MIN_WIDTH) return Math.max(0.56, width / MOBILE_STACK_MIN_WIDTH)
+  if (width <= MOBILE_STACK_MAX_WIDTH) return Math.max(0.74, width / MOBILE_STACK_MAX_WIDTH)
+  if (width <= TABLET_STACK_MAX_WIDTH) return Math.max(0.88, width / TABLET_STACK_MAX_WIDTH)
+  return 1
+})
+const mobileXStepFactor = computed(() => {
+  const width = cardsViewportWidth.value
+  if (width <= 0) return 1
+  if (width <= MOBILE_STACK_MIN_WIDTH) return 0.42
+  if (width <= MOBILE_STACK_MAX_WIDTH) return 0.6
+  if (width <= TABLET_STACK_MAX_WIDTH) return 0.82
+  return 1
+})
+const mobilePerspectiveOriginX = computed(() => {
+  if (cardsViewportWidth.value > 0 && cardsViewportWidth.value <= TABLET_STACK_MAX_WIDTH) return '50%'
+  return stackDirection.value === 'left' ? '38%' : '62%'
+})
+const updateCardsViewportWidth = () => {
+  const viewport = cardsViewportRef.value
+  if (!viewport) return
+  cardsViewportWidth.value = viewport.getBoundingClientRect().width
+}
 
 const cardViewportStyle = computed(() => ({
-  '--card-width-scale': String(cardWidth.value),
+  '--card-width-scale': String(responsiveCardWidthScale.value),
   '--stack-hover-rotate-y': '0deg',
   '--stack-direction-sign': stackDirection.value === 'left' ? '-1' : '1',
-  '--stack-perspective-origin-x': stackDirection.value === 'left' ? '38%' : '62%',
+  '--stack-perspective-origin-x': mobilePerspectiveOriginX.value,
   '--stack-cards-offset-x': `${cardsOffsetX.value}px`,
   '--stack-cards-offset-y': `${cardsOffsetY.value}px`,
   '--stack-debug-mobile-cards-offset-x': `${debugMobileCardsOffsetX.value}px`,
@@ -414,14 +453,31 @@ const startAutoPlay = () => {
 }
 
 watch([autoPlayEnabled, autoPlaySpeed, wheelSensitivity, totalCards], startAutoPlay, { immediate: true })
-onBeforeUnmount(stopAutoPlay)
+onMounted(() => {
+  updateCardsViewportWidth()
+  const viewport = cardsViewportRef.value
+  if (viewport && typeof ResizeObserver !== 'undefined') {
+    cardsViewportResizeObserver = new ResizeObserver(updateCardsViewportWidth)
+    cardsViewportResizeObserver.observe(viewport)
+  }
+  window.addEventListener('resize', updateCardsViewportWidth, { passive: true })
+})
+onBeforeUnmount(() => {
+  stopAutoPlay()
+  cardsViewportResizeObserver?.disconnect()
+  cardsViewportResizeObserver = null
+  window.removeEventListener('resize', updateCardsViewportWidth)
+})
 
 const getCardStyle = (index: number, color?: string) => {
   const rel = (index - phase.value + totalCards.value) % totalCards.value
-  const xStep = 86 * cardGap.value
-  const zStep = 380 * cardGap.value
+  const compression = mobileStackCompression.value
+  const xStep = 86 * cardGap.value * compression * mobileXStepFactor.value
+  const zStep = 380 * cardGap.value * (0.86 + compression * 0.14)
   const stackDirectionSign = stackDirection.value === 'left' ? -1 : 1
-  const translateX = rel * xStep * stackDirectionSign
+  const centerShiftRatio = cardsViewportWidth.value <= TABLET_STACK_MAX_WIDTH ? 0.34 : 0
+  const centerShift = -stackDirectionSign * (totalCards.value - 1) * xStep * centerShiftRatio
+  const translateX = rel * xStep * stackDirectionSign + centerShift
   const translateZ = 320 - rel * zStep
   const scale = Math.max(0.78, 1.02 - rel * 0.11) * cardSize.value
   let opacity = 1
