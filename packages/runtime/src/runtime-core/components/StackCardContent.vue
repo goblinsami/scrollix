@@ -40,7 +40,7 @@
           'text-content-highlight-target': isTitleHighlightActive,
           'debug-container debug-container--title': showDebugContainers
         }"
-        :style="titleStyle"
+        :style="cardTitleStyle"
       >
         <span v-if="useMarkdown" v-html="titleHtml" />
         <template v-else>{{ title }}</template>
@@ -52,7 +52,7 @@
           'text-content-highlight-target': isDescriptionHighlightActive,
           'debug-container debug-container--description': showDebugContainers
         }"
-        :style="descriptionStyle"
+        :style="cardDescriptionStyle"
       >
         <span v-if="useMarkdown" v-html="descriptionHtml" />
         <template v-else>{{ description }}</template>
@@ -102,4 +102,16 @@ const {
   panelStyle,
   overlayStyle
 } = useSlidePanelPresentation(props)
+
+const cardTitleStyle = computed(() => {
+  return Object.fromEntries(
+    Object.entries(titleStyle.value).filter(([key]) => key !== 'fontSize')
+  )
+})
+
+const cardDescriptionStyle = computed(() => {
+  return Object.fromEntries(
+    Object.entries(descriptionStyle.value).filter(([key]) => key !== 'fontSize')
+  )
+})
 </script>

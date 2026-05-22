@@ -96,15 +96,15 @@ export const getDescriptionClampSize = (size: SlideTextSize | undefined) => {
   // Keep mobile text readable and avoid oversized description text on small screens.
   const minRem = round3(Math.min(1.28, Math.max(0.98, maxRem * 0.66)))
   const baseRem = round3(maxRem * 0.6)
-  return `clamp(${minRem}rem, calc(${baseRem}rem + 0.78vw), ${maxRem}rem)`
+  return `clamp(${minRem}rem, calc(${baseRem}rem + 0.78cqi), ${maxRem}rem)`
 }
 
 export const getTitleClampSize = (size: SlideTextSize | undefined) => {
   const scale = getTextScale(size)
-  const minRem = round3(TITLE_FONT_SIZE_M.minRem * scale)
-  const vw = round3(TITLE_FONT_SIZE_M.vw * scale)
+  const minRem = round3(1.9 * scale)
+  const baseRem = round3(1.05 * scale)
   const maxRem = round3(TITLE_FONT_SIZE_M.maxRem * scale)
-  return `clamp(${minRem}rem, ${vw}vw, ${maxRem}rem)`
+  return `clamp(${minRem}rem, calc(${baseRem}rem + 4.8cqi), ${maxRem}rem)`
 }
 
 export const getLogoDimensions = (size: SlideTextSize | undefined) => {
