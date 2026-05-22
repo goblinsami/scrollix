@@ -56,6 +56,7 @@ const deployMessage = valueOf('--message')
 const siteApp = valueOf('--site-app') || process.env.NETLIFY_SITE_ID_APP || ''
 const siteRuntime = valueOf('--site-runtime') || process.env.NETLIFY_SITE_ID_RUNTIME || ''
 const authToken = valueOf('--auth-token') || process.env.NETLIFY_AUTH_TOKEN || ''
+const npmExecPath = process.env.npm_execpath || ''
 
 const run = (command, args, options = {}) =>
   new Promise((resolve, reject) => {
@@ -76,21 +77,27 @@ const run = (command, args, options = {}) =>
     })
   })
 
-const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
-const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx'
+const runNpm = (args, options = {}) => {
+  if (npmExecPath) {
+    return run(process.execPath, [npmExecPath, ...args], options)
+  }
+
+  const fallbackNpmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+  return run(fallbackNpmCmd, args, options)
+}
 
 const buildTargets = async () => {
   if (skipBuild) return
 
   if (deployApp) {
     console.log('[Scrollix] building app target...')
-    await run(npmCmd, ['run', 'build'], { cwd: rootDir })
-    await run(npmCmd, ['run', 'build:metadata:app'], { cwd: rootDir })
+    await runNpm(['run', 'build'], { cwd: rootDir })
+    await runNpm(['run', 'build:metadata:app'], { cwd: rootDir })
   }
 
   if (deployRuntime) {
     console.log('[Scrollix] building runtime target...')
-    await run(npmCmd, ['run', 'build:runtime'], { cwd: rootDir })
+    await runNpm(['run', 'build:runtime'], { cwd: rootDir })
   }
 }
 
@@ -101,16 +108,19 @@ const deployTarget = async ({ label, siteId, dirPath }) => {
     )
   }
 
-  const args = ['netlify', 'deploy', '--dir', dirPath, '--site', siteId]
+  const args = ['exec', '--', 'netlify', 'deploy', '--dir', dirPath, '--site', siteId]
   if (isProd) args.push('--prod')
   if (deployMessage) args.push('--message', `[${label}] ${deployMessage}`)
   if (authToken) args.push('--auth', authToken)
 
   console.log(`[Scrollix] deploying ${label} -> ${siteId}`)
-  await run(npxCmd, args, { cwd: rootDir })
+  await runNpm(args, { cwd: rootDir })
 }
 
 const main = async () => {
+  if (npmExecPath) {
+    console.log(`[Scrollix] npm_execpath detected: ${npmExecPath}`)
+  }
   console.log(
     `[Scrollix] deploy plan: app=${deployApp ? 'yes' : 'no'} runtime=${
       deployRuntime ? 'yes' : 'no'
