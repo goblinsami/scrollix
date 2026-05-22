@@ -106,6 +106,7 @@ interface ScrollixRuntimeApi {
 declare global {
   interface Window {
     ScrollixRuntime?: ScrollixRuntimeApi
+    __SCROLLIX_RUNTIME_AUTO_VERSION__?: string
   }
 
   namespace JSX {
@@ -240,6 +241,22 @@ const loadRuntimeModule = async (runtimeUrl: string) => {
   }
 }
 
+const stripRuntimeVersionParam = (runtimeUrl: string) => {
+  try {
+    const url = new URL(runtimeUrl, window.location.href)
+    url.searchParams.delete('v')
+    return url.toString()
+  } catch (_error) {
+    return runtimeUrl
+      .replace(/([?&])v=[^&]*(&|$)/, (_match, lead: string, tail: string) => {
+        if (lead === '?' && tail) return '?'
+        if (lead === '&' && tail) return '&'
+        return ''
+      })
+      .replace(/[?&]$/, '')
+  }
+}
+
 const useScrollixRuntime = (runtimeUrl: string): RuntimeHookState => {
   const [state, setState] = React.useState<RuntimeHookState>({
     ready: false,
@@ -263,7 +280,20 @@ const useScrollixRuntime = (runtimeUrl: string): RuntimeHookState => {
     setState({ ready: false, loading: true, error: null })
     console.log('[Scrollix] loading runtime')
 
-    void loadRuntimeModule(normalizedUrl)
+    const fallbackUrl = stripRuntimeVersionParam(normalizedUrl)
+    const canRetryWithoutVersion = fallbackUrl !== normalizedUrl
+
+    const loadWithFallback = async () => {
+      try {
+        await loadRuntimeModule(normalizedUrl)
+      } catch (primaryError) {
+        if (!canRetryWithoutVersion) throw primaryError
+        console.warn('[Scrollix] runtime load failed with versioned URL; retrying without version param')
+        await loadRuntimeModule(fallbackUrl)
+      }
+    }
+
+    void loadWithFallback()
       .then(() => {
         if (cancelled) return
         console.log('[Scrollix] runtime ready')
@@ -440,23 +470,50 @@ const DEFAULT_SUPABASE_URL = ''
 const DEFAULT_SUPABASE_ANON_KEY = ''
 const DEFAULT_STORIES_FUNCTION_URL = 'https://xvlpcwygcetcccmorihr.supabase.co/functions/v1/scrollix-story'
 const DEFAULT_RUNTIME_SCRIPT_URL = 'https://magical-klepon-3c1475.netlify.app/scrollix-runtime.js'
-const DEFAULT_RUNTIME_VERSION = 'force-13'
+const DEFAULT_RUNTIME_VERSION = 'auto'
 const DEFAULT_PROJECT_ID = '21ebaa36-93e1-4356-85c8-78e0c84d4154'
 
-const resolveRuntimeUrl = (runtimeScriptUrl: string, runtimeVersion: string) => {
+const RUNTIME_VERSION_AUTO = 'auto'
+const FRAMER_PREVIEW_HOST_TOKENS = ['framercanvas.com']
+const FRAMER_PREVIEW_PATH_TOKENS = ['canvas-sandbox.html', 'preview-module.html']
+
+const isFramerPreviewRuntime = () => {
+  if (typeof window === 'undefined') return false
+
+  const host = window.location.hostname.toLowerCase()
+  const path = window.location.pathname.toLowerCase()
+  return (
+    FRAMER_PREVIEW_HOST_TOKENS.some((token) => host.includes(token)) ||
+    FRAMER_PREVIEW_PATH_TOKENS.some((token) => path.includes(token))
+  )
+}
+
+const getAutoRuntimeVersion = () => {
+  if (!isFramerPreviewRuntime()) return ''
+  if (!window.__SCROLLIX_RUNTIME_AUTO_VERSION__) {
+    window.__SCROLLIX_RUNTIME_AUTO_VERSION__ = `auto-${Date.now().toString(36)}`
+  }
+  return window.__SCROLLIX_RUNTIME_AUTO_VERSION__
+}
+
+const resolveRuntimeUrl = (runtimeScriptUrl: string, runtimeVersion: string, autoRuntimeVersion: string) => {
   const trimmedUrl = runtimeScriptUrl.trim()
   if (!trimmedUrl) return ''
 
   const trimmedVersion = runtimeVersion.trim()
-  if (!trimmedVersion) return trimmedUrl
+  const resolvedVersion =
+    !trimmedVersion || trimmedVersion.toLowerCase() === RUNTIME_VERSION_AUTO
+      ? autoRuntimeVersion
+      : trimmedVersion
+  if (!resolvedVersion) return trimmedUrl
 
   try {
     const url = new URL(trimmedUrl, window.location.href)
-    url.searchParams.set('v', trimmedVersion)
+    url.searchParams.set('v', resolvedVersion)
     return url.toString()
   } catch (_error) {
     const separator = trimmedUrl.includes('?') ? '&' : '?'
-    return `${trimmedUrl}${separator}v=${encodeURIComponent(trimmedVersion)}`
+    return `${trimmedUrl}${separator}v=${encodeURIComponent(resolvedVersion)}`
   }
 }
 
@@ -516,9 +573,10 @@ const normalizeProjectIdInput = (input: string) => {
  * @framerIntrinsicHeight 720
  */
 function ScrollixCards(props: ScrollixCardsProps) {
+  const autoRuntimeVersion = React.useMemo(() => getAutoRuntimeVersion(), [])
   const resolvedRuntimeScriptUrl = React.useMemo(
-    () => resolveRuntimeUrl(props.runtimeScriptUrl, props.runtimeVersion),
-    [props.runtimeScriptUrl, props.runtimeVersion]
+    () => resolveRuntimeUrl(props.runtimeScriptUrl, props.runtimeVersion, autoRuntimeVersion),
+    [props.runtimeScriptUrl, props.runtimeVersion, autoRuntimeVersion]
   )
 
   const { ready: runtimeReady, loading: runtimeLoading, error: runtimeLoadError } = useScrollixRuntime(
@@ -837,7 +895,7 @@ addPropertyControls(ScrollixCards, {
     type: ControlType.String,
     title: 'Runtime Ver',
     defaultValue: DEFAULT_RUNTIME_VERSION,
-    placeholder: 'auto cache-bust key'
+    placeholder: 'auto (recommended)'
   },
   autoSaveDelayMs: {
     type: ControlType.Number,
