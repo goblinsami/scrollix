@@ -12,6 +12,7 @@ interface FramerCard {
   image?: string
   eyebrow: string
   panelColor: string
+  linkedComponent?: React.ReactNode
 }
 
 interface ScrollixCardsProps {
@@ -120,6 +121,12 @@ interface RuntimeHookState {
   ready: boolean
   loading: boolean
   error: string | null
+}
+
+interface ActiveCardChangeDetail {
+  index?: unknown
+  cardId?: unknown
+  total?: unknown
 }
 
 const runtimeScriptPromiseByUrl = new Map<string, Promise<void>>()
@@ -454,6 +461,24 @@ const runtimePlaceholderStyle: React.CSSProperties = {
   textAlign: 'center'
 }
 
+const linkedComponentLayerStyle: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  display: 'grid',
+  placeItems: 'center',
+  pointerEvents: 'none',
+  zIndex: 9
+}
+
+const linkedComponentSlotStyle: React.CSSProperties = {
+  pointerEvents: 'auto',
+  width: 'min(88%, 520px)',
+  maxWidth: '100%',
+  maxHeight: '100%',
+  display: 'grid',
+  placeItems: 'center'
+}
+
 const DEFAULT_SUPABASE_URL = ''
 const DEFAULT_SUPABASE_ANON_KEY = ''
 const DEFAULT_STORIES_FUNCTION_URL = 'https://xvlpcwygcetcccmorihr.supabase.co/functions/v1/scrollix-story'
@@ -568,6 +593,16 @@ const normalizeProjectIdInput = (input: string) => {
   }
 }
 
+const resolveActiveCardIndexFromEvent = (
+  detail: ActiveCardChangeDetail | null | undefined,
+  cardCount: number
+) => {
+  if (!detail || cardCount <= 0) return 0
+  const candidate = typeof detail.index === 'number' ? detail.index : Number.NaN
+  if (!Number.isFinite(candidate)) return 0
+  return Math.max(0, Math.min(cardCount - 1, Math.trunc(candidate)))
+}
+
 /**
  * @framerSupportedLayoutWidth any-prefer-fixed
  * @framerSupportedLayoutHeight any-prefer-fixed
@@ -589,7 +624,9 @@ function ScrollixCards(props: ScrollixCardsProps) {
   const [runtimeInitError, setRuntimeInitError] = React.useState<string | null>(null)
   const [resolvedProjectId, setResolvedProjectId] = React.useState(normalizeProjectIdInput(props.projectId))
   const [saveState, setSaveState] = React.useState<SaveState>({ status: 'idle', errorMessage: '' })
+  const [activeCardIndex, setActiveCardIndex] = React.useState(0)
   const lastSavedSignatureRef = React.useRef('')
+  const runtimeElementRef = React.useRef<HTMLElement | null>(null)
   const resolvedStoriesFunctionUrl = React.useMemo(
     () => resolveStoriesFunctionUrl(DEFAULT_SUPABASE_URL, props.storiesFunctionUrl),
     [props.storiesFunctionUrl]
@@ -628,10 +665,37 @@ function ScrollixCards(props: ScrollixCardsProps) {
     }),
     []
   )
+  const activeLinkedComponent = React.useMemo(() => {
+    if (props.cards.length === 0) return null
+    const clampedIndex = Math.max(0, Math.min(props.cards.length - 1, activeCardIndex))
+    return props.cards[clampedIndex]?.linkedComponent ?? null
+  }, [props.cards, activeCardIndex])
 
   React.useEffect(() => {
     setResolvedProjectId(normalizeProjectIdInput(props.projectId))
   }, [props.projectId])
+
+  React.useEffect(() => {
+    setActiveCardIndex((current) =>
+      props.cards.length > 0 ? Math.max(0, Math.min(props.cards.length - 1, current)) : 0
+    )
+  }, [props.cards.length])
+
+  React.useEffect(() => {
+    const runtimeElement = runtimeElementRef.current
+    if (!runtimeElement) return
+
+    const onActiveCardChange = (event: Event) => {
+      const customEvent = event as CustomEvent<ActiveCardChangeDetail>
+      const nextIndex = resolveActiveCardIndexFromEvent(customEvent.detail, props.cards.length)
+      setActiveCardIndex(nextIndex)
+    }
+
+    runtimeElement.addEventListener('scrollix:active-card-change', onActiveCardChange as EventListener)
+    return () => {
+      runtimeElement.removeEventListener('scrollix:active-card-change', onActiveCardChange as EventListener)
+    }
+  }, [runtimeInitialized, props.cards.length])
 
   const payload = React.useMemo(() => buildPayload(props), [props])
   const payloadSignature = React.useMemo(() => JSON.stringify(payload), [payload])
@@ -784,6 +848,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
       data-save-error={saveState.errorMessage}
     >
       <scrollix-cards
+        ref={runtimeElementRef}
         style={runtimeElementStyle}
         project-id={resolvedProjectId}
         supabase-url={DEFAULT_SUPABASE_URL}
@@ -792,6 +857,11 @@ function ScrollixCards(props: ScrollixCardsProps) {
         stories-table={DEFAULT_STORIES_TABLE}
         live-updates="true"
       />
+      {activeLinkedComponent ? (
+        <div style={linkedComponentLayerStyle} data-linked-component-card-index={String(activeCardIndex)}>
+          <div style={linkedComponentSlotStyle}>{activeLinkedComponent}</div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -894,6 +964,10 @@ addPropertyControls(ScrollixCards, {
           type: ControlType.Color,
           title: 'Panel Color',
           defaultValue: '#171c3d'
+        },
+        linkedComponent: {
+          type: ControlType.ComponentInstance,
+          title: 'Framer Comp'
         }
       }
     }

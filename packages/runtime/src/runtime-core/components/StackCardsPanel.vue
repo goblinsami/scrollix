@@ -1,5 +1,11 @@
 <template>
-  <section class="panel panel--hero panel--stack-cards" :class="panelClass" :style="panelStyle" :data-animate="animateKey">
+  <section
+    ref="panelRootRef"
+    class="panel panel--hero panel--stack-cards"
+    :class="panelClass"
+    :style="panelStyle"
+    :data-animate="animateKey"
+  >
     <img v-if="image" class="panel__image" :src="image" alt="" />
     <div v-if="overlayVisible" class="panel__overlay" :style="overlayStyle" />
     <div
@@ -198,6 +204,7 @@ const {
 } = useSlidePanelPresentation(props)
 
 const progress = ref(0)
+const panelRootRef = ref<HTMLElement | null>(null)
 const debugMobileCardsOffsetX = ref(0)
 const debugMobileRotateX = ref(0)
 const debugMobileRotateY = ref(0)
@@ -279,6 +286,14 @@ const mobileTextCardsGap = computed(
 const wrap01 = (value: number) => ((value % 1) + 1) % 1
 
 const phase = computed(() => progress.value * totalCards.value)
+const activeCardIndex = computed(() => {
+  const total = totalCards.value
+  if (total <= 1) return 0
+
+  const phaseValue = Number.isFinite(phase.value) ? phase.value : 0
+  const wrappedPhase = ((phaseValue % total) + total) % total
+  return Math.ceil(wrappedPhase) % total
+})
 const responsiveCardWidthScale = computed(() => {
   const width = cardsViewportWidth.value
   if (width <= 0) return cardWidth.value
@@ -310,6 +325,26 @@ const updateCardsViewportWidth = () => {
   const viewport = cardsViewportRef.value
   if (!viewport) return
   cardsViewportWidth.value = viewport.getBoundingClientRect().width
+}
+
+const emitActiveCardChange = () => {
+  const panelRoot = panelRootRef.value
+  if (!panelRoot) return
+
+  const index = Math.max(0, Math.min(totalCards.value - 1, activeCardIndex.value))
+  const card = cards.value[index]
+
+  panelRoot.dispatchEvent(
+    new CustomEvent('scrollix:active-card-change', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        index,
+        cardId: card?.id ?? null,
+        total: totalCards.value
+      }
+    })
+  )
 }
 
 const cardViewportStyle = computed(() => ({
@@ -461,8 +496,10 @@ const startAutoPlay = () => {
 }
 
 watch([autoPlayEnabled, autoPlaySpeed, wheelSensitivity, totalCards], startAutoPlay, { immediate: true })
+watch([activeCardIndex, cards], emitActiveCardChange, { immediate: true, deep: false })
 onMounted(() => {
   updateCardsViewportWidth()
+  emitActiveCardChange()
   const viewport = cardsViewportRef.value
   if (viewport && typeof ResizeObserver !== 'undefined') {
     cardsViewportResizeObserver = new ResizeObserver(updateCardsViewportWidth)
