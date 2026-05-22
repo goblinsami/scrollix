@@ -7,6 +7,7 @@ export const STACK_CARDS_CONTROL_LIMITS = {
   frontFadeWindow: { min: 0, max: 5, step: 0.1 },
   cardSize: { min: 0.7, max: 10, step: 0.1 },
   cardWidth: { min: 0.7, max: 2.2, step: 0.1 },
+  cardSurfaceOpacity: { min: 0, max: 100, step: 1 },
   wheelSensitivity: { min: 0.4, max: 4, step: 0.1 }
 } as const
 export const STACK_CARDS_AUTOPLAY_LIMITS = { min: 0.4, max: 8, step: 0.1 } as const
@@ -22,6 +23,7 @@ export const STACK_CARDS_CONTROLS = [
   { key: 'frontFadeWindow', label: 'Front fade', ...STACK_CARDS_CONTROL_LIMITS.frontFadeWindow },
   { key: 'cardSize', label: 'Tamano card', ...STACK_CARDS_CONTROL_LIMITS.cardSize },
   { key: 'cardWidth', label: 'Anchura card', ...STACK_CARDS_CONTROL_LIMITS.cardWidth },
+  { key: 'cardSurfaceOpacity', label: 'Fondo card %', ...STACK_CARDS_CONTROL_LIMITS.cardSurfaceOpacity },
   { key: 'wheelSensitivity', label: 'Sensibilidad', ...STACK_CARDS_CONTROL_LIMITS.wheelSensitivity }
 ] as const
 
@@ -35,6 +37,7 @@ export const STACK_CARDS_DEFAULTS = {
   textSide: 'left' as const,
   stackDirection: 'right' as const,
   cardsOnly: true,
+  cardSurfaceOpacity: 100,
   layoutSidePadding: 48,
   textOffsetX: 0,
   textOffsetY: 0,

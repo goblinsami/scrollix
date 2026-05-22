@@ -238,6 +238,12 @@ const cardGap = computed(() => props.stackCards?.cardGap ?? STACK_CARDS_DEFAULTS
 const frontFadeWindow = computed(() => props.stackCards?.frontFadeWindow ?? STACK_CARDS_DEFAULTS.frontFadeWindow)
 const cardSize = computed(() => props.stackCards?.cardSize ?? STACK_CARDS_DEFAULTS.cardSize)
 const cardWidth = computed(() => props.stackCards?.cardWidth ?? STACK_CARDS_DEFAULTS.cardWidth)
+const cardSurfaceOpacity = computed(() => {
+  const rawValue = props.stackCards?.cardSurfaceOpacity
+  const fallback = STACK_CARDS_DEFAULTS.cardSurfaceOpacity
+  const normalizedValue = typeof rawValue === 'number' && Number.isFinite(rawValue) ? rawValue : fallback
+  return Math.max(0, Math.min(100, normalizedValue))
+})
 const wheelSensitivity = computed(() => props.stackCards?.wheelSensitivity ?? STACK_CARDS_DEFAULTS.wheelSensitivity)
 const mobileTouchSensitivity = computed(
   () => props.stackCards?.mobileTouchSensitivity ?? STACK_CARDS_DEFAULTS.mobileTouchSensitivity
@@ -308,6 +314,7 @@ const updateCardsViewportWidth = () => {
 
 const cardViewportStyle = computed(() => ({
   '--card-width-scale': String(responsiveCardWidthScale.value),
+  '--stack-card-surface-opacity': String(cardSurfaceOpacity.value / 100),
   '--stack-hover-rotate-y': '0deg',
   '--stack-direction-sign': stackDirection.value === 'left' ? '-1' : '1',
   '--stack-perspective-origin-x': mobilePerspectiveOriginX.value,

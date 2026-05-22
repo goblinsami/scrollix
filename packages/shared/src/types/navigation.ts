@@ -91,6 +91,7 @@ export interface StackCardsSettings {
   textSide?: 'left' | 'right'
   stackDirection?: 'left' | 'right'
   cardsOnly?: boolean
+  cardSurfaceOpacity?: number
   layoutSidePadding?: number
   textOffsetX?: number
   textOffsetY?: number

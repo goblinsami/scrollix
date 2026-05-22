@@ -108,6 +108,13 @@ export function validateHostedStoryConfig(raw: unknown): ValidationResult {
       pushNumberRangeError(errors, 'config.settings.cardWidth', payload.cardWidth, STACK_CARDS_CONTROL_LIMITS.cardWidth.min, STACK_CARDS_CONTROL_LIMITS.cardWidth.max)
       pushNumberRangeError(
         errors,
+        'config.settings.cardSurfaceOpacity',
+        payload.cardSurfaceOpacity,
+        STACK_CARDS_CONTROL_LIMITS.cardSurfaceOpacity.min,
+        STACK_CARDS_CONTROL_LIMITS.cardSurfaceOpacity.max
+      )
+      pushNumberRangeError(
+        errors,
         'config.settings.autoPlaySpeed',
         payload.autoPlaySpeed,
         STACK_CARDS_AUTOPLAY_LIMITS.min,

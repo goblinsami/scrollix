@@ -487,6 +487,7 @@ body.snap-mode {
 }
 
 .story-card {
+  --stack-card-surface-opacity: 1;
   position: absolute;
   width: calc(clamp(240px, min(36cqi, 50cqh), 500px) * var(--card-width-scale, 1));
   min-height: clamp(240px, 44cqh, 500px);
@@ -496,9 +497,7 @@ body.snap-mode {
   padding: clamp(1rem, 2.3cqi, 2rem);
   border-radius: clamp(18px, 2.6cqi, 30px);
   border: 0;
-  background:
-    radial-gradient(circle at 75% 15%, color-mix(in srgb, var(--card-accent), #0f172a 55%), transparent 52%),
-    linear-gradient(165deg, #0f172a, #0b1f45);
+  background: transparent;
   color: #ffffff;
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--card-accent), white 42%),
@@ -512,6 +511,20 @@ body.snap-mode {
   transition: transform 180ms linear, opacity 180ms linear;
   outline: 1px solid transparent;
   overflow: hidden;
+  isolation: isolate;
+}
+
+.story-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 75% 15%, color-mix(in srgb, var(--card-accent), #0f172a 55%), transparent 52%),
+    linear-gradient(165deg, #0f172a, #0b1f45);
+  opacity: var(--stack-card-surface-opacity, 1);
+  z-index: 0;
 }
 
 .step {

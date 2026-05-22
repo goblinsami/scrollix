@@ -33,6 +33,7 @@ import {
 import { MAX_TRANSITION_SPEED, MIN_TRANSITION_SPEED } from '../constants/transitionSpeed'
 import { MAX_AUTOPLAY_SPEED, MIN_AUTOPLAY_SPEED } from '../constants/autoPlaySpeed'
 import {
+  STACK_CARDS_CONTROL_LIMITS,
   STACK_CARDS_AUTOPLAY_LIMITS,
   STACK_CARDS_LAYOUT_OFFSET_LIMITS,
   STACK_CARDS_MOBILE_TEXT_CARDS_GAP_LIMITS,
@@ -342,6 +343,7 @@ export function validateContentSchema(raw: unknown): ValidationResult {
           'frontFadeWindow',
           'cardSize',
           'cardWidth',
+          'cardSurfaceOpacity',
           'wheelSensitivity',
           'mobileTouchSensitivity',
           'autoPlaySpeed'
@@ -417,6 +419,16 @@ export function validateContentSchema(raw: unknown): ValidationResult {
           ) {
             errors.push(
               `${label}: stackCards.autoPlaySpeed fuera de rango (${STACK_CARDS_AUTOPLAY_LIMITS.min}-${STACK_CARDS_AUTOPLAY_LIMITS.max}).`
+            )
+          }
+        }
+        if (typeof settings.cardSurfaceOpacity === 'number') {
+          if (
+            settings.cardSurfaceOpacity < STACK_CARDS_CONTROL_LIMITS.cardSurfaceOpacity.min ||
+            settings.cardSurfaceOpacity > STACK_CARDS_CONTROL_LIMITS.cardSurfaceOpacity.max
+          ) {
+            errors.push(
+              `${label}: stackCards.cardSurfaceOpacity fuera de rango (${STACK_CARDS_CONTROL_LIMITS.cardSurfaceOpacity.min}-${STACK_CARDS_CONTROL_LIMITS.cardSurfaceOpacity.max}).`
             )
           }
         }

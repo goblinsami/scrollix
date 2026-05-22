@@ -17,17 +17,9 @@ interface FramerCard {
 interface ScrollixCardsProps {
   style?: React.CSSProperties
   projectId: string
-  supabaseUrl: string
-  supabaseAnonKey: string
   storiesFunctionUrl: string
-  storiesTable: string
-  runtimeScriptUrl: string
-  runtimeVersion: string
   autoSaveDelayMs: number
   cards: FramerCard[]
-  title: string
-  description: string
-  eyebrow: string
   panelColor: string
   image?: string
   backgroundGradient: string
@@ -37,17 +29,11 @@ interface ScrollixCardsProps {
   frontFadeWindow: number
   cardSize: number
   cardWidth: number
+  cardSurfaceOpacity: number
   autoPlayEnabled: boolean
   autoPlaySpeed: number
-  textSide: TextSide
   stackDirection: StackDirection
-  cardsOnly: boolean
   overlayIntensity: number
-  titleSize: TextSize
-  descriptionSize: TextSize
-  contentAlign: ContentAlign
-  titleMaxWidth: number
-  descriptionMaxWidth: number
 }
 
 interface HostedSavePayload {
@@ -74,6 +60,7 @@ interface HostedSavePayload {
       frontFadeWindow: number
       cardSize: number
       cardWidth: number
+      cardSurfaceOpacity: number
       autoPlayEnabled: boolean
       autoPlaySpeed: number
       textSide: TextSide
@@ -328,9 +315,9 @@ const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
       panelColor: card.panelColor
     })),
     settings: {
-      title: props.title,
-      description: props.description,
-      eyebrow: props.eyebrow,
+      title: STACK_CARDS_TEMPLATE_SETTINGS.title,
+      description: STACK_CARDS_TEMPLATE_SETTINGS.description,
+      eyebrow: STACK_CARDS_TEMPLATE_SETTINGS.eyebrow,
       panelColor: props.panelColor,
       image: props.image,
       backgroundGradient: props.backgroundGradient,
@@ -340,17 +327,18 @@ const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
       frontFadeWindow: props.frontFadeWindow,
       cardSize: props.cardSize,
       cardWidth: props.cardWidth,
+      cardSurfaceOpacity: props.cardSurfaceOpacity,
       autoPlayEnabled: props.autoPlayEnabled,
       autoPlaySpeed: props.autoPlaySpeed,
-      textSide: props.textSide,
+      textSide: STACK_CARDS_TEMPLATE_SETTINGS.textSide,
       stackDirection: props.stackDirection,
-      cardsOnly: props.cardsOnly,
+      cardsOnly: STACK_CARDS_TEMPLATE_SETTINGS.cardsOnly,
       overlayIntensity: props.overlayIntensity,
-      titleSize: props.titleSize,
-      descriptionSize: props.descriptionSize,
-      contentAlign: props.contentAlign,
-      titleMaxWidth: props.titleMaxWidth,
-      descriptionMaxWidth: props.descriptionMaxWidth
+      titleSize: STACK_CARDS_TEMPLATE_SETTINGS.titleSize,
+      descriptionSize: STACK_CARDS_TEMPLATE_SETTINGS.descriptionSize,
+      contentAlign: STACK_CARDS_TEMPLATE_SETTINGS.contentAlign,
+      titleMaxWidth: STACK_CARDS_TEMPLATE_SETTINGS.titleMaxWidth,
+      descriptionMaxWidth: STACK_CARDS_TEMPLATE_SETTINGS.descriptionMaxWidth
     }
   }
 })
@@ -471,7 +459,21 @@ const DEFAULT_SUPABASE_ANON_KEY = ''
 const DEFAULT_STORIES_FUNCTION_URL = 'https://xvlpcwygcetcccmorihr.supabase.co/functions/v1/scrollix-story'
 const DEFAULT_RUNTIME_SCRIPT_URL = 'https://magical-klepon-3c1475.netlify.app/scrollix-runtime.js'
 const DEFAULT_RUNTIME_VERSION = 'auto'
+const DEFAULT_STORIES_TABLE = 'stories'
 const DEFAULT_PROJECT_ID = '21ebaa36-93e1-4356-85c8-78e0c84d4154'
+
+const STACK_CARDS_TEMPLATE_SETTINGS = {
+  title: '',
+  description: '',
+  eyebrow: '',
+  textSide: 'left' as TextSide,
+  cardsOnly: true,
+  titleSize: 'l' as TextSize,
+  descriptionSize: 'm' as TextSize,
+  contentAlign: 'left' as ContentAlign,
+  titleMaxWidth: 620,
+  descriptionMaxWidth: 760
+}
 
 const RUNTIME_VERSION_AUTO = 'auto'
 const FRAMER_PREVIEW_HOST_TOKENS = ['framercanvas.com']
@@ -575,8 +577,8 @@ const normalizeProjectIdInput = (input: string) => {
 function ScrollixCards(props: ScrollixCardsProps) {
   const autoRuntimeVersion = React.useMemo(() => getAutoRuntimeVersion(), [])
   const resolvedRuntimeScriptUrl = React.useMemo(
-    () => resolveRuntimeUrl(props.runtimeScriptUrl, props.runtimeVersion, autoRuntimeVersion),
-    [props.runtimeScriptUrl, props.runtimeVersion, autoRuntimeVersion]
+    () => resolveRuntimeUrl(DEFAULT_RUNTIME_SCRIPT_URL, DEFAULT_RUNTIME_VERSION, autoRuntimeVersion),
+    [autoRuntimeVersion]
   )
 
   const { ready: runtimeReady, loading: runtimeLoading, error: runtimeLoadError } = useScrollixRuntime(
@@ -589,19 +591,18 @@ function ScrollixCards(props: ScrollixCardsProps) {
   const [saveState, setSaveState] = React.useState<SaveState>({ status: 'idle', errorMessage: '' })
   const lastSavedSignatureRef = React.useRef('')
   const resolvedStoriesFunctionUrl = React.useMemo(
-    () => resolveStoriesFunctionUrl(props.supabaseUrl, props.storiesFunctionUrl),
-    [props.supabaseUrl, props.storiesFunctionUrl]
+    () => resolveStoriesFunctionUrl(DEFAULT_SUPABASE_URL, props.storiesFunctionUrl),
+    [props.storiesFunctionUrl]
   )
   const hasProjectId = resolvedProjectId.trim().length > 0
   const isExternalProjectBinding = props.projectId.trim().length > 0
   const storiesFunctionContext = React.useMemo(
-    () => getStoriesFunctionContext(props.supabaseUrl, props.storiesFunctionUrl, props.supabaseAnonKey),
-    [props.supabaseUrl, props.storiesFunctionUrl, props.supabaseAnonKey]
+    () => getStoriesFunctionContext(DEFAULT_SUPABASE_URL, props.storiesFunctionUrl, DEFAULT_SUPABASE_ANON_KEY),
+    [props.storiesFunctionUrl]
   )
   const hasStoriesFunctionTarget = Boolean(storiesFunctionContext)
-  const hasSupabaseReadCredentials = props.supabaseUrl.trim().length > 0 && props.supabaseAnonKey.trim().length > 0
-  const hasRuntimeStorySource = hasStoriesFunctionTarget || hasSupabaseReadCredentials
-  const trimmedSupabaseKey = props.supabaseAnonKey.trim()
+  const hasRuntimeStorySource = hasStoriesFunctionTarget
+  const trimmedSupabaseKey = DEFAULT_SUPABASE_ANON_KEY.trim()
   const isSecretSupabaseKey =
     trimmedSupabaseKey.startsWith('sb_secret_') ||
     trimmedSupabaseKey.includes('service_role') ||
@@ -643,10 +644,10 @@ function ScrollixCards(props: ScrollixCardsProps) {
 
     try {
       window.ScrollixRuntime?.init({
-        supabaseUrl: props.supabaseUrl,
-        supabaseAnonKey: props.supabaseAnonKey,
+        supabaseUrl: DEFAULT_SUPABASE_URL,
+        supabaseAnonKey: DEFAULT_SUPABASE_ANON_KEY,
         storiesFunctionUrl: resolvedStoriesFunctionUrl,
-        storiesTable: props.storiesTable
+        storiesTable: DEFAULT_STORIES_TABLE
       })
 
       const isRegistered = Boolean(window.customElements.get('scrollix-cards'))
@@ -661,7 +662,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
       setRuntimeInitialized(false)
       setRuntimeInitError(error instanceof Error ? error.message : 'Runtime bootstrap failed.')
     }
-  }, [runtimeReady, props.supabaseUrl, props.supabaseAnonKey, resolvedStoriesFunctionUrl, props.storiesTable])
+  }, [runtimeReady, resolvedStoriesFunctionUrl])
 
   React.useEffect(() => {
     if (!runtimeInitialized) return
@@ -680,7 +681,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
 
       void saveHostedStoryViaFunction({
         context: storiesFunctionContext,
-        storiesTable: props.storiesTable,
+        storiesTable: DEFAULT_STORIES_TABLE,
         projectId: resolvedProjectId,
         payload
       })
@@ -704,7 +705,6 @@ function ScrollixCards(props: ScrollixCardsProps) {
     runtimeInitialized,
     isExternalProjectBinding,
     storiesFunctionContext,
-    props.storiesTable,
     props.autoSaveDelayMs,
     resolvedProjectId,
     payload,
@@ -736,7 +736,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
     return (
       <div style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }} data-runtime-ready="false">
         <span>
-          Set `Function URL` (or `Supabase URL`) to auto-create a hosted story, or provide an existing `Project ID`.
+          Set `Function URL` to auto-create a hosted story, or provide an existing `Project ID`.
         </span>
       </div>
     )
@@ -746,7 +746,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
     return (
       <div style={{ ...runtimePlaceholderStyle, ...(props.style ?? {}) }} data-runtime-ready="false">
         <span>
-          Set `Function URL` (or `Supabase URL` + `Anon Key`) so the runtime can load this `Project ID`.
+          Set `Function URL` so the runtime can load this `Project ID`.
         </span>
       </div>
     )
@@ -786,10 +786,10 @@ function ScrollixCards(props: ScrollixCardsProps) {
       <scrollix-cards
         style={runtimeElementStyle}
         project-id={resolvedProjectId}
-        supabase-url={props.supabaseUrl}
-        supabase-anon-key={props.supabaseAnonKey}
+        supabase-url={DEFAULT_SUPABASE_URL}
+        supabase-anon-key={DEFAULT_SUPABASE_ANON_KEY}
         stories-function-url={resolvedStoriesFunctionUrl}
-        stories-table={props.storiesTable}
+        stories-table={DEFAULT_STORIES_TABLE}
         live-updates="true"
       />
     </div>
@@ -798,12 +798,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
 
 ScrollixCards.defaultProps = {
   projectId: DEFAULT_PROJECT_ID,
-  supabaseUrl: DEFAULT_SUPABASE_URL,
-  supabaseAnonKey: DEFAULT_SUPABASE_ANON_KEY,
   storiesFunctionUrl: DEFAULT_STORIES_FUNCTION_URL,
-  storiesTable: 'stories',
-  runtimeScriptUrl: DEFAULT_RUNTIME_SCRIPT_URL,
-  runtimeVersion: DEFAULT_RUNTIME_VERSION,
   autoSaveDelayMs: 800,
   cards: [
     {
@@ -828,9 +823,6 @@ ScrollixCards.defaultProps = {
       image: ''
     }
   ],
-  title: 'Create cinematic storytelling experiences',
-  description: 'Powered by Scrollix runtime and Supabase-hosted JSON.',
-  eyebrow: 'Scrollix Runtime',
   panelColor: '#060914',
   image: '',
   backgroundGradient:
@@ -841,17 +833,11 @@ ScrollixCards.defaultProps = {
   frontFadeWindow: 0.45,
   cardSize: 1,
   cardWidth: 1,
+  cardSurfaceOpacity: 100,
   autoPlayEnabled: true,
   autoPlaySpeed: 0.65,
-  textSide: 'left',
   stackDirection: 'right',
-  cardsOnly: true,
-  overlayIntensity: 40,
-  titleSize: 'l',
-  descriptionSize: 'm',
-  contentAlign: 'left',
-  titleMaxWidth: 620,
-  descriptionMaxWidth: 760
+  overlayIntensity: 40
 } as ScrollixCardsProps
 
 addPropertyControls(ScrollixCards, {
@@ -862,40 +848,11 @@ addPropertyControls(ScrollixCards, {
     defaultValue: DEFAULT_PROJECT_ID,
     placeholder: 'Auto-created on first save'
   },
-  supabaseUrl: {
-    type: ControlType.String,
-    title: 'Supabase URL',
-    defaultValue: DEFAULT_SUPABASE_URL,
-    placeholder: 'https://YOUR-PROJECT.supabase.co'
-  },
-  supabaseAnonKey: {
-    type: ControlType.String,
-    title: 'Anon Key',
-    defaultValue: DEFAULT_SUPABASE_ANON_KEY,
-    placeholder: 'sb_publishable_...'
-  },
   storiesFunctionUrl: {
     type: ControlType.String,
     title: 'Function URL',
     defaultValue: DEFAULT_STORIES_FUNCTION_URL,
     placeholder: 'https://<project-ref>.supabase.co/functions/v1/scrollix-story'
-  },
-  storiesTable: {
-    type: ControlType.String,
-    title: 'Table',
-    defaultValue: 'stories'
-  },
-  runtimeScriptUrl: {
-    type: ControlType.String,
-    title: 'Runtime JS',
-    description: 'Runtime: Web Component runtime bundle location.',
-    defaultValue: DEFAULT_RUNTIME_SCRIPT_URL
-  },
-  runtimeVersion: {
-    type: ControlType.String,
-    title: 'Runtime Ver',
-    defaultValue: DEFAULT_RUNTIME_VERSION,
-    placeholder: 'auto (recommended)'
   },
   autoSaveDelayMs: {
     type: ControlType.Number,
@@ -941,23 +898,6 @@ addPropertyControls(ScrollixCards, {
       }
     }
   },
-  title: {
-    type: ControlType.String,
-    title: 'Title',
-    description: 'Panel: Intro copy and visual shell.',
-    defaultValue: 'Create cinematic storytelling experiences'
-  },
-  description: {
-    type: ControlType.String,
-    title: 'Description',
-    displayTextArea: true,
-    defaultValue: 'Powered by Scrollix runtime and Supabase-hosted JSON.'
-  },
-  eyebrow: {
-    type: ControlType.String,
-    title: 'Eyebrow',
-    defaultValue: 'Scrollix Runtime'
-  },
   panelColor: {
     type: ControlType.Color,
     title: 'Panel Color',
@@ -972,25 +912,13 @@ addPropertyControls(ScrollixCards, {
     title: 'Gradient',
     displayTextArea: true
   },
-  textSide: {
-    type: ControlType.Enum,
-    title: 'Text Side',
-    description: 'Stack Layout: Text/cards composition controls.',
-    options: ['left', 'right'],
-    optionTitles: ['Left', 'Right'],
-    defaultValue: 'left'
-  },
   stackDirection: {
     type: ControlType.Enum,
+    description: 'Stack Layout: Motion direction controls.',
     title: 'Stack Dir',
     options: ['left', 'right'],
     optionTitles: ['Left', 'Right'],
     defaultValue: 'right'
-  },
-  cardsOnly: {
-    type: ControlType.Boolean,
-    title: 'Cards Only',
-    defaultValue: true
   },
   angleY: {
     type: ControlType.Number,
@@ -1041,6 +969,14 @@ addPropertyControls(ScrollixCards, {
     step: 0.1,
     defaultValue: 1
   },
+  cardSurfaceOpacity: {
+    type: ControlType.Number,
+    title: 'Card BG %',
+    min: 0,
+    max: 100,
+    step: 1,
+    defaultValue: 100
+  },
   autoPlayEnabled: {
     type: ControlType.Boolean,
     title: 'Autoplay',
@@ -1057,48 +993,11 @@ addPropertyControls(ScrollixCards, {
   overlayIntensity: {
     type: ControlType.Number,
     title: 'Overlay %',
-    description: 'Typography and advanced presentation tuning.',
+    description: 'Advanced card/panel presentation tuning.',
     min: 0,
     max: 90,
     step: 1,
     defaultValue: 40
-  },
-  titleSize: {
-    type: ControlType.Enum,
-    title: 'Title Size',
-    options: ['s', 'm', 'l'],
-    optionTitles: ['S', 'M', 'L'],
-    defaultValue: 'l'
-  },
-  descriptionSize: {
-    type: ControlType.Enum,
-    title: 'Desc Size',
-    options: ['s', 'm', 'l'],
-    optionTitles: ['S', 'M', 'L'],
-    defaultValue: 'm'
-  },
-  contentAlign: {
-    type: ControlType.Enum,
-    title: 'Align',
-    options: ['left', 'center', 'right'],
-    optionTitles: ['Left', 'Center', 'Right'],
-    defaultValue: 'left'
-  },
-  titleMaxWidth: {
-    type: ControlType.Number,
-    title: 'Title Max',
-    min: 200,
-    max: 1200,
-    step: 10,
-    defaultValue: 620
-  },
-  descriptionMaxWidth: {
-    type: ControlType.Number,
-    title: 'Desc Max',
-    min: 200,
-    max: 1400,
-    step: 10,
-    defaultValue: 760
   }
 })
 

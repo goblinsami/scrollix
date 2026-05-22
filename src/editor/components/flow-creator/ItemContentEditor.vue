@@ -439,6 +439,7 @@ const props = withDefaults(defineProps<{
       frontFadeWindow?: number
       cardSize?: number
       cardWidth?: number
+      cardSurfaceOpacity?: number
       wheelSensitivity?: number
       mobileTouchSensitivity?: number
       mobileTouchHorizontalEnabled?: boolean
