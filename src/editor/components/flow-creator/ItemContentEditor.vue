@@ -214,6 +214,13 @@
       >
       <CollapsibleSection :title="'Settings'" :panel-id="`${idPrefix}-stack-cards-settings-panel-body`" :open="isStackCardsSettingsOpen" body-class="text-style-panel__body text-content-panel__body" @toggle="isStackCardsSettingsOpen = !isStackCardsSettingsOpen">
         <label>
+          Variant
+          <select v-model="localValue.stackCards.variant" @change="emitUpdate">
+            <option value="perspective">Perspective</option>
+            <option value="horizontal">Horizontal Reel</option>
+          </select>
+        </label>
+        <label>
           Text Side
           <select v-model="localValue.stackCards.textSide" @change="emitUpdate">
             <option value="left">Left</option>
@@ -424,6 +431,7 @@ const props = withDefaults(defineProps<{
   modelValue: ItemContent & {
     templateType?: string
     stackCards?: {
+      variant?: 'perspective' | 'horizontal'
       textSide?: 'left' | 'right'
       stackDirection?: 'left' | 'right'
       cardsOnly?: boolean

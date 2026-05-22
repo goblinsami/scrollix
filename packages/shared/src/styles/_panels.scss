@@ -463,6 +463,61 @@ body.snap-mode {
   aspect-ratio: 1 / 1.08;
 }
 
+.panel--stack-cards .stack-cards-layout--variant-horizontal .cards-viewport {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  perspective: none;
+  transform-style: flat;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(0.8rem, 1.5cqi, 1.35rem);
+  padding-inline: clamp(0.8rem, 2.5cqi, 2rem);
+  padding-block: clamp(0.6rem, 1.8cqh, 1.2rem);
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: clamp(0.8rem, 2.5cqi, 2rem);
+  touch-action: pan-x;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.panel--stack-cards .stack-cards-layout--variant-horizontal .cards-viewport::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.panel--stack-cards .stack-cards-layout--variant-horizontal .story-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(clamp(240px, min(30cqi, 52cqh), 420px) * var(--card-width-scale, 1));
+  min-height: clamp(240px, 42cqh, 430px);
+  aspect-ratio: 1 / 1;
+  transform: none !important;
+  z-index: auto !important;
+  will-change: auto;
+  scroll-snap-align: center;
+}
+
+.panel--stack-cards
+  .stack-cards-layout--variant-horizontal.stack-cards-layout--cards-only
+  .cards-viewport {
+  width: 100%;
+  max-width: min(100%, 1360px);
+  min-height: min(86cqh, 820px);
+  height: min(86cqh, 820px);
+  justify-content: flex-start;
+}
+
+.panel--stack-cards
+  .stack-cards-layout--variant-horizontal.stack-cards-layout--cards-only
+  .story-card {
+  width: calc(clamp(260px, min(34cqi, 58cqh), 520px) * var(--card-width-scale, 1));
+  min-height: clamp(260px, 48cqh, 560px);
+}
+
 .panel--stack-cards .content h1 {
   width: min(var(--title-max-width), 100%);
 }
@@ -747,6 +802,42 @@ body.snap-mode {
     width: calc(min(340px, 68cqi) * var(--card-width-scale, 1));
   }
 
+  .panel--stack-cards .stack-cards-layout--variant-horizontal {
+    gap: clamp(0.65rem, 2.4cqh, 1.3rem);
+  }
+
+  .panel--stack-cards
+    .stack-cards-layout--variant-horizontal:not(.stack-cards-layout--cards-only)
+    .cards-viewport,
+  .panel--stack-cards
+    .stack-cards-layout--variant-horizontal.stack-cards-layout--cards-only
+    .cards-viewport {
+    min-height: min(74cqh, 620px);
+    height: min(74cqh, 620px);
+    max-width: 100%;
+    transform: translate3d(var(--stack-cards-offset-x, 0px), var(--stack-cards-offset-y, 0px), 0);
+    margin-top: var(--stack-mobile-text-cards-gap, 0px);
+    margin-bottom: 0;
+    padding-inline: clamp(0.75rem, 3.2cqi, 1.35rem);
+    gap: clamp(0.75rem, 2.2cqi, 1.2rem);
+    overflow-x: auto;
+    overflow-y: hidden;
+    touch-action: pan-x;
+  }
+
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .story-card {
+    width: calc(min(70cqi, 360px) * var(--card-width-scale, 1));
+    min-height: clamp(220px, 40cqh, 390px);
+    aspect-ratio: 1 / 1;
+  }
+
+  .panel--stack-cards
+    .stack-cards-layout--variant-horizontal.stack-cards-layout--cards-only
+    .story-card {
+    width: calc(min(76cqi, 420px) * var(--card-width-scale, 1));
+    min-height: clamp(240px, 48cqh, 460px);
+  }
+
   .stack-cards-mobile-debug {
     position: fixed;
     left: 10px;
@@ -789,6 +880,27 @@ body.snap-mode {
     padding: clamp(0.85rem, 2.1cqi, 1.45rem);
     border-radius: clamp(14px, 2.8cqi, 24px);
   }
+
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .cards-viewport {
+    min-height: min(66cqh, 520px);
+    height: min(66cqh, 520px);
+    max-width: 100%;
+    perspective: none;
+    padding-inline: clamp(0.6rem, 2.8cqi, 1rem);
+  }
+
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .story-card {
+    width: calc(min(74cqi, 320px) * var(--card-width-scale, 1));
+    min-height: clamp(205px, 40cqh, 350px);
+    padding: clamp(0.82rem, 2cqi, 1.3rem);
+  }
+
+  .panel--stack-cards
+    .stack-cards-layout--variant-horizontal.stack-cards-layout--cards-only
+    .story-card {
+    width: calc(min(80cqi, 350px) * var(--card-width-scale, 1));
+    min-height: clamp(220px, 44cqh, 390px);
+  }
 }
 
 @container stack-cards (max-width: 760px) {
@@ -816,6 +928,28 @@ body.snap-mode {
   .story-card p {
     font-size: clamp(0.76rem, 2.05cqmin, 1rem);
   }
+
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .cards-viewport {
+    min-height: min(62cqh, 470px);
+    height: min(62cqh, 470px);
+    padding-inline: clamp(0.45rem, 2.2cqi, 0.85rem);
+    gap: clamp(0.55rem, 2cqi, 0.9rem);
+  }
+
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .story-card {
+    width: calc(min(78cqi, 290px) * var(--card-width-scale, 1));
+    min-height: clamp(195px, 36cqh, 320px);
+    padding: clamp(0.72rem, 1.9cqi, 1.1rem);
+  }
+
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .story-card h1,
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .story-card h3 {
+    font-size: clamp(0.95rem, 4cqmin, 1.65rem);
+  }
+
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .story-card p {
+    font-size: clamp(0.7rem, 1.8cqmin, 0.92rem);
+  }
 }
 
 @container stack-cards (min-width: 520px) and (max-width: 760px) {
@@ -829,6 +963,12 @@ body.snap-mode {
     min-height: clamp(270px, 42cqh, 460px);
     aspect-ratio: 1 / 1.05;
   }
+
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .story-card {
+    width: calc(min(70cqi, 320px) * var(--card-width-scale, 1));
+    min-height: clamp(210px, 36cqh, 340px);
+    aspect-ratio: 1 / 1;
+  }
 }
 
 @container stack-cards (min-width: 520px) and (min-height: 620px) {
@@ -841,5 +981,16 @@ body.snap-mode {
   .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .story-card h1,
   .panel--stack-cards .stack-cards-layout:not(.stack-cards-layout--cards-only) .story-card h3 {
     font-size: clamp(1.3rem, 5.4cqmin, 3rem);
+  }
+
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .story-card {
+    width: calc(min(72cqi, 420px) * var(--card-width-scale, 1));
+    min-height: clamp(230px, 40cqh, 420px);
+    aspect-ratio: 1 / 1;
+  }
+
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .story-card h1,
+  .panel--stack-cards .stack-cards-layout--variant-horizontal .story-card h3 {
+    font-size: clamp(1.1rem, 4.7cqmin, 2.5rem);
   }
 }

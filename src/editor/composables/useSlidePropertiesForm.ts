@@ -1,5 +1,11 @@
 import { reactive, ref, watch, type Ref } from 'vue'
-import { ContentAlign, Direction, TemplateType, type Panel, type StackCardItem } from '../../types/navigation'
+import {
+  ContentAlign,
+  Direction,
+  TemplateType,
+  type Panel,
+  type StackCardItem
+} from '../../types/navigation'
 import {
   DEFAULT_CONTENT_ALIGN,
   DEFAULT_CONTENT_MAX_WIDTH,
@@ -179,6 +185,7 @@ const copyPanelToDraft = (panel: Panel, draft: Panel) => {
   draft.stackCards =
     panel.stackCards
       ? {
+        variant: panel.stackCards.variant ?? STACK_CARDS_DEFAULTS.variant,
         textSide: panel.stackCards.textSide ?? STACK_CARDS_DEFAULTS.textSide,
         stackDirection: panel.stackCards.stackDirection ?? STACK_CARDS_DEFAULTS.stackDirection,
         cardsOnly: panel.stackCards.cardsOnly ?? STACK_CARDS_DEFAULTS.cardsOnly,
@@ -208,6 +215,7 @@ const copyPanelToDraft = (panel: Panel, draft: Panel) => {
         cards: cloneStackCards(panel.stackCards.cards)
       }
       : {
+        variant: STACK_CARDS_DEFAULTS.variant,
         textSide: STACK_CARDS_DEFAULTS.textSide,
         stackDirection: STACK_CARDS_DEFAULTS.stackDirection,
         cardsOnly: STACK_CARDS_DEFAULTS.cardsOnly,
@@ -276,6 +284,7 @@ export function useSlidePropertiesForm(options: UseSlidePropertiesFormOptions) {
     ctaLink: '',
     cta: undefined,
     stackCards: {
+      variant: STACK_CARDS_DEFAULTS.variant,
       textSide: STACK_CARDS_DEFAULTS.textSide,
       stackDirection: STACK_CARDS_DEFAULTS.stackDirection,
       cardsOnly: STACK_CARDS_DEFAULTS.cardsOnly,

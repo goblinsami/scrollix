@@ -34,6 +34,7 @@ export const STACK_CARDS_DEFAULT_CARDS: StackCardItem[] = [
 ]
 
 export const STACK_CARDS_DEFAULTS = {
+  variant: 'perspective' as const,
   textSide: 'left' as const,
   stackDirection: 'right' as const,
   cardsOnly: true,

@@ -2,6 +2,7 @@ import {
   ContentAlignValues,
   ContentWidthModeValues,
   Direction,
+  StackCardsVariant,
   TemplateType,
   TemplateTypeValues,
   TextSizeValues,
@@ -356,6 +357,15 @@ export function validateContentSchema(raw: unknown): ValidationResult {
         })
         if (settings.textSide !== undefined && settings.textSide !== 'left' && settings.textSide !== 'right') {
           errors.push(`${label}: stackCards.textSide debe ser "left" o "right".`)
+        }
+        if (
+          settings.variant !== undefined &&
+          settings.variant !== StackCardsVariant.Perspective &&
+          settings.variant !== StackCardsVariant.Horizontal
+        ) {
+          errors.push(
+            `${label}: stackCards.variant debe ser "${StackCardsVariant.Perspective}" o "${StackCardsVariant.Horizontal}".`
+          )
         }
         if (
           settings.stackDirection !== undefined &&

@@ -12,6 +12,7 @@ import {
   MIN_OVERLAY_INTENSITY,
   MIN_TITLE_MAX_WIDTH
 } from '@/constants/slideStyle'
+import { StackCardsVariant } from '@/types/navigation'
 import { HOSTED_STORY_TYPE, type HostedStoryConfig, type HostedStoryType } from '@/types/hostedStories'
 
 const VALID_STORY_TYPES: HostedStoryType[] = [HOSTED_STORY_TYPE.StackCards3d]
@@ -165,6 +166,15 @@ export function validateHostedStoryConfig(raw: unknown): ValidationResult {
 
       if (payload.textSide !== undefined && payload.textSide !== 'left' && payload.textSide !== 'right') {
         errors.push('config.settings.textSide must be "left" or "right".')
+      }
+      if (
+        payload.variant !== undefined &&
+        payload.variant !== StackCardsVariant.Perspective &&
+        payload.variant !== StackCardsVariant.Horizontal
+      ) {
+        errors.push(
+          `config.settings.variant must be "${StackCardsVariant.Perspective}" or "${StackCardsVariant.Horizontal}".`
+        )
       }
       if (payload.contentAlign !== undefined && !['left', 'center', 'right'].includes(String(payload.contentAlign))) {
         errors.push('config.settings.contentAlign must be left, center, or right.')

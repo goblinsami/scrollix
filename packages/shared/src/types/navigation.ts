@@ -87,7 +87,15 @@ export interface StackCardItem extends ItemContent {
   id: string
 }
 
+export const StackCardsVariant = {
+  Perspective: 'perspective',
+  Horizontal: 'horizontal'
+} as const
+
+export type StackCardsVariant = (typeof StackCardsVariant)[keyof typeof StackCardsVariant]
+
 export interface StackCardsSettings {
+  variant?: StackCardsVariant
   textSide?: 'left' | 'right'
   stackDirection?: 'left' | 'right'
   cardsOnly?: boolean

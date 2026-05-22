@@ -56,6 +56,7 @@ const normalizeCards = (cards: unknown): StackCardItem[] => {
 
 const normalizeSettings = (settings: HostedStackCardsSettings | undefined, cards: StackCardItem[]): StackCardsSettings => ({
   cards,
+  variant: settings?.variant ?? STACK_CARDS_DEFAULTS.variant,
   textSide: settings?.textSide ?? STACK_CARDS_DEFAULTS.textSide,
   stackDirection: settings?.stackDirection ?? STACK_CARDS_DEFAULTS.stackDirection,
   cardsOnly: settings?.cardsOnly ?? STACK_CARDS_DEFAULTS.cardsOnly,
@@ -150,6 +151,7 @@ const deriveConfigFromLegacyContentJson = (contentJson: unknown): HostedStackCar
       typeof stackPanel.backgroundGradient === 'string'
         ? stackPanel.backgroundGradient
         : undefined,
+    variant: stackCards.variant as StackCardsSettings['variant'],
     textSide: stackCards.textSide as StackCardsSettings['textSide'],
     stackDirection: stackCards.stackDirection as StackCardsSettings['stackDirection'],
     cardsOnly: typeof stackCards.cardsOnly === 'boolean' ? stackCards.cardsOnly : undefined,

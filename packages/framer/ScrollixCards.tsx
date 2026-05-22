@@ -5,6 +5,7 @@ type TextSize = 's' | 'm' | 'l'
 type ContentAlign = 'left' | 'center' | 'right'
 type TextSide = 'left' | 'right'
 type StackDirection = 'left' | 'right'
+type StackVariant = 'perspective' | 'horizontal'
 
 interface FramerCard {
   title: string
@@ -33,6 +34,7 @@ interface ScrollixCardsProps {
   cardSurfaceOpacity: number
   autoPlayEnabled: boolean
   autoPlaySpeed: number
+  stackVariant: StackVariant
   stackDirection: StackDirection
   overlayIntensity: number
 }
@@ -64,6 +66,7 @@ interface HostedSavePayload {
       cardSurfaceOpacity: number
       autoPlayEnabled: boolean
       autoPlaySpeed: number
+      variant: StackVariant
       textSide: TextSide
       stackDirection: StackDirection
       cardsOnly: boolean
@@ -337,6 +340,7 @@ const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
       cardSurfaceOpacity: props.cardSurfaceOpacity,
       autoPlayEnabled: props.autoPlayEnabled,
       autoPlaySpeed: props.autoPlaySpeed,
+      variant: props.stackVariant,
       textSide: STACK_CARDS_TEMPLATE_SETTINGS.textSide,
       stackDirection: props.stackDirection,
       cardsOnly: STACK_CARDS_TEMPLATE_SETTINGS.cardsOnly,
@@ -906,6 +910,7 @@ ScrollixCards.defaultProps = {
   cardSurfaceOpacity: 100,
   autoPlayEnabled: true,
   autoPlaySpeed: 0.65,
+  stackVariant: 'perspective',
   stackDirection: 'right',
   overlayIntensity: 40
 } as ScrollixCardsProps
@@ -993,6 +998,13 @@ addPropertyControls(ScrollixCards, {
     options: ['left', 'right'],
     optionTitles: ['Left', 'Right'],
     defaultValue: 'right'
+  },
+  stackVariant: {
+    type: ControlType.Enum,
+    title: 'Variant',
+    options: ['perspective', 'horizontal'],
+    optionTitles: ['Perspective', 'Horizontal'],
+    defaultValue: 'perspective'
   },
   angleY: {
     type: ControlType.Number,

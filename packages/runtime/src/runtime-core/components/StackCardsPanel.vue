@@ -12,9 +12,11 @@
       class="stack-cards-layout"
       :class="[
         `stack-cards-layout--text-${textSide}`,
+        `stack-cards-layout--variant-${stackVariant}`,
         { 'stack-cards-layout--cards-only': cardsOnly }
       ]"
       :style="stackLayoutStyle"
+      @wheel="onLayoutWheel"
     >
       <article
         v-if="!cardsOnly"
@@ -81,50 +83,51 @@
       <div
         ref="cardsViewportRef"
         class="cards-viewport"
+        :class="{ 'cards-viewport--variant-horizontal': isHorizontalVariant }"
         :style="cardViewportStyle"
-        @wheel.prevent="onWheel"
+        @wheel="onWheel"
         @pointerdown="onUserInteraction"
         @touchstart="onTouchStartCards"
         @touchmove="onTouchMoveCards"
         @touchend="onTouchEndCards"
         @touchcancel="onTouchEndCards"
-        @scroll.passive="onUserInteraction"
+        @scroll.passive="onViewportScroll"
         @mousemove="onMouseMove"
         @mouseleave="onMouseLeave"
       >
         <StackCardContent
-          v-for="(card, index) in cards"
-          :key="card.id || `stack-card-${index}`"
-          :card-style="getCardStyle(index, card.panelColor)"
-          :title="card.title"
-          :eyebrow="card.eyebrow"
-          :description="card.description"
-          :use-markdown="card.useMarkdown"
-          :title-size="card.titleSize"
-          :eyebrow-size="card.eyebrowSize"
-          :description-size="card.descriptionSize"
-          :content-align="card.contentAlign"
-          :content-width-mode="card.contentWidthMode"
-          :eyebrow-title-gap="card.eyebrowTitleGap"
-          :title-description-gap="card.titleDescriptionGap"
-          :title-line-height="card.titleLineHeight"
-          :description-line-height="card.descriptionLineHeight"
-          :eyebrow-letter-spacing="card.eyebrowLetterSpacing"
-          :content-max-width="card.contentMaxWidth"
-          :content-side-padding="card.contentSidePadding"
-          :title-max-width="card.titleMaxWidth"
-          :description-max-width="card.descriptionMaxWidth"
-          :panel-color="card.panelColor"
-          :image="card.image"
-          :logo="card.logo"
-          :logo-size="card.logoSize"
-          :logo-tint-enabled="card.logoTintEnabled"
-          :logo-tint-color="card.logoTintColor"
-          :background-gradient="card.backgroundGradient"
-          :overlay-enabled="card.overlayEnabled"
-          :overlay-intensity="card.overlayIntensity"
-          :is-text-content-editing-active="isCardTextContentEditingActive(card.id)"
-          :text-content-highlight-scope="cardTextContentHighlightScope(card.id)"
+          v-for="(entry, index) in renderCards"
+          :key="entry.key"
+          :card-style="getCardStyle(index, entry.card.panelColor)"
+          :title="entry.card.title"
+          :eyebrow="entry.card.eyebrow"
+          :description="entry.card.description"
+          :use-markdown="entry.card.useMarkdown"
+          :title-size="entry.card.titleSize"
+          :eyebrow-size="entry.card.eyebrowSize"
+          :description-size="entry.card.descriptionSize"
+          :content-align="entry.card.contentAlign"
+          :content-width-mode="entry.card.contentWidthMode"
+          :eyebrow-title-gap="entry.card.eyebrowTitleGap"
+          :title-description-gap="entry.card.titleDescriptionGap"
+          :title-line-height="entry.card.titleLineHeight"
+          :description-line-height="entry.card.descriptionLineHeight"
+          :eyebrow-letter-spacing="entry.card.eyebrowLetterSpacing"
+          :content-max-width="entry.card.contentMaxWidth"
+          :content-side-padding="entry.card.contentSidePadding"
+          :title-max-width="entry.card.titleMaxWidth"
+          :description-max-width="entry.card.descriptionMaxWidth"
+          :panel-color="entry.card.panelColor"
+          :image="entry.card.image"
+          :logo="entry.card.logo"
+          :logo-size="entry.card.logoSize"
+          :logo-tint-enabled="entry.card.logoTintEnabled"
+          :logo-tint-color="entry.card.logoTintColor"
+          :background-gradient="entry.card.backgroundGradient"
+          :overlay-enabled="entry.card.overlayEnabled"
+          :overlay-intensity="entry.card.overlayIntensity"
+          :is-text-content-editing-active="isCardTextContentEditingActive(entry.card.id)"
+          :text-content-highlight-scope="cardTextContentHighlightScope(entry.card.id)"
           :direction="Direction.Down"
         />
       </div>
@@ -170,7 +173,7 @@ import { useSlidePanelPresentation } from '../composables/useSlidePanelPresentat
 import { useStackCardHoverTilt } from '../composables/useStackCardHoverTilt'
 import { STACK_CARDS_DEFAULTS } from '../constants/stackCards'
 import type { SlidePanelProps } from '../types/slidePanel'
-import { Direction } from '../types/navigation'
+import { Direction, StackCardsVariant } from '../types/navigation'
 import StackCardContent from './StackCardContent.vue'
 import { FEATURE_FLAGS } from '../config/featureFlags'
 
@@ -210,14 +213,35 @@ const debugMobileRotateX = ref(0)
 const debugMobileRotateY = ref(0)
 const cardsViewportRef = ref<HTMLElement | null>(null)
 const cardsViewportWidth = ref(0)
+const horizontalActiveCardIndex = ref(0)
+const horizontalSequenceWidth = ref(0)
 let cardsViewportResizeObserver: ResizeObserver | null = null
 let cardsViewportMeasureTimer: number | null = null
+let horizontalSyncReleaseRafId: number | null = null
+let isSyncingHorizontalScroll = false
 const stackTitleStyle = computed(() => ({
   ...titleStyle.value,
   width: `min(${titleMaxWidthResolved.value}px, 100%)`,
   maxWidth: `min(${titleMaxWidthResolved.value}px, 100%)`
 }))
 const cards = computed(() => props.stackCards?.cards ?? [])
+const renderCards = computed(() => {
+  const source = cards.value
+  if (!isHorizontalVariant.value || source.length <= 1) {
+    return source.map((card, index) => ({
+      key: `${card.id || `stack-card-${index}`}-loop-0-${index}`,
+      card
+    }))
+  }
+
+  const loops = [0, 1, 2]
+  return loops.flatMap((loopIndex) =>
+    source.map((card, index) => ({
+      key: `${card.id || `stack-card-${index}`}-loop-${loopIndex}-${index}`,
+      card
+    }))
+  )
+})
 const isMainTextContentEditingActive = computed(
   () => Boolean(props.panelId) && props.activeTextContentTargetId === props.panelId
 )
@@ -235,6 +259,8 @@ const isCardTextContentEditingActive = (cardId: string | undefined) =>
 const cardTextContentHighlightScope = (cardId: string | undefined) =>
   isCardTextContentEditingActive(cardId) ? props.activeTextContentHighlightScope : 'content'
 const totalCards = computed(() => Math.max(1, cards.value.length))
+const stackVariant = computed(() => props.stackCards?.variant ?? STACK_CARDS_DEFAULTS.variant)
+const isHorizontalVariant = computed(() => stackVariant.value === StackCardsVariant.Horizontal)
 const textSide = computed(() => props.stackCards?.textSide ?? STACK_CARDS_DEFAULTS.textSide)
 const stackDirection = computed(
   () => props.stackCards?.stackDirection ?? STACK_CARDS_DEFAULTS.stackDirection
@@ -290,6 +316,10 @@ const activeCardIndex = computed(() => {
   const total = totalCards.value
   if (total <= 1) return 0
 
+  if (isHorizontalVariant.value) {
+    return Math.max(0, Math.min(total - 1, horizontalActiveCardIndex.value))
+  }
+
   const phaseValue = Number.isFinite(phase.value) ? phase.value : 0
   const wrappedPhase = ((phaseValue % total) + total) % total
   return Math.ceil(wrappedPhase) % total
@@ -318,13 +348,139 @@ const mobileXStepFactor = computed(() => {
   return 1
 })
 const mobilePerspectiveOriginX = computed(() => {
+  if (isHorizontalVariant.value) return '50%'
   if (cardsViewportWidth.value > 0 && cardsViewportWidth.value <= TABLET_STACK_MAX_WIDTH) return '50%'
   return stackDirection.value === 'left' ? '38%' : '62%'
 })
+
+const getHorizontalScrollRange = () => {
+  const viewport = cardsViewportRef.value
+  if (!viewport) return 0
+  return Math.max(0, viewport.scrollWidth - viewport.clientWidth)
+}
+
+const measureHorizontalSequenceWidth = () => {
+  if (!isHorizontalVariant.value) return
+  const viewport = cardsViewportRef.value
+  if (!viewport) return
+  const baseCount = cards.value.length
+  const cardNodes = Array.from(viewport.querySelectorAll<HTMLElement>('.story-card'))
+  if (baseCount <= 0 || cardNodes.length <= baseCount) {
+    horizontalSequenceWidth.value = 0
+    return
+  }
+
+  const firstLeft = cardNodes[0]?.offsetLeft ?? 0
+  const nextCycleLeft = cardNodes[baseCount]?.offsetLeft ?? 0
+  const measuredWidth = Math.max(0, nextCycleLeft - firstLeft)
+  horizontalSequenceWidth.value = measuredWidth
+}
+
+const releaseHorizontalSyncGuard = () => {
+  if (horizontalSyncReleaseRafId !== null) {
+    cancelAnimationFrame(horizontalSyncReleaseRafId)
+  }
+  horizontalSyncReleaseRafId = requestAnimationFrame(() => {
+    isSyncingHorizontalScroll = false
+    horizontalSyncReleaseRafId = null
+  })
+}
+
+const setHorizontalScrollLeft = (nextScrollLeft: number) => {
+  const viewport = cardsViewportRef.value
+  if (!viewport) return
+
+  const range = getHorizontalScrollRange()
+  const clamped = Math.max(0, Math.min(range, nextScrollLeft))
+  if (Math.abs(viewport.scrollLeft - clamped) < 0.5) return
+
+  isSyncingHorizontalScroll = true
+  viewport.scrollLeft = clamped
+  releaseHorizontalSyncGuard()
+}
+
+const normalizeHorizontalLoopPosition = () => {
+  if (!isHorizontalVariant.value) return
+  const viewport = cardsViewportRef.value
+  if (!viewport) return
+  const sequenceWidth = horizontalSequenceWidth.value
+  if (sequenceWidth <= 0) return
+
+  let normalizedScrollLeft = viewport.scrollLeft
+  while (normalizedScrollLeft < sequenceWidth * 0.5) normalizedScrollLeft += sequenceWidth
+  while (normalizedScrollLeft > sequenceWidth * 1.5) normalizedScrollLeft -= sequenceWidth
+
+  if (Math.abs(normalizedScrollLeft - viewport.scrollLeft) < 0.5) return
+
+  isSyncingHorizontalScroll = true
+  viewport.scrollLeft = normalizedScrollLeft
+  releaseHorizontalSyncGuard()
+}
+
+const syncProgressFromHorizontalScroll = () => {
+  if (!isHorizontalVariant.value) return
+  const viewport = cardsViewportRef.value
+  if (!viewport) return
+  const sequenceWidth = horizontalSequenceWidth.value
+  if (sequenceWidth <= 0) {
+    progress.value = 0
+    return
+  }
+
+  const localOffset = viewport.scrollLeft - sequenceWidth
+  const wrappedOffset = ((localOffset % sequenceWidth) + sequenceWidth) % sequenceWidth
+  progress.value = Math.max(0, Math.min(1, wrappedOffset / sequenceWidth))
+}
+
+const syncHorizontalScrollFromProgress = () => {
+  if (!isHorizontalVariant.value) return
+  const sequenceWidth = horizontalSequenceWidth.value
+  if (sequenceWidth <= 0) return
+  setHorizontalScrollLeft(sequenceWidth + wrap01(progress.value) * sequenceWidth)
+}
+
+const updateHorizontalActiveCardIndex = () => {
+  const viewport = cardsViewportRef.value
+  if (!viewport) {
+    horizontalActiveCardIndex.value = 0
+    return
+  }
+  const cardNodes = Array.from(viewport.querySelectorAll<HTMLElement>('.story-card'))
+  if (cardNodes.length === 0) {
+    horizontalActiveCardIndex.value = 0
+    return
+  }
+
+  const viewportRect = viewport.getBoundingClientRect()
+  const viewportCenterX = viewportRect.left + viewportRect.width / 2
+  let nearestIndex = 0
+  let minDistance = Number.POSITIVE_INFINITY
+
+  cardNodes.forEach((cardNode, index) => {
+    const cardRect = cardNode.getBoundingClientRect()
+    const cardCenterX = cardRect.left + cardRect.width / 2
+    const distance = Math.abs(cardCenterX - viewportCenterX)
+    if (distance < minDistance) {
+      minDistance = distance
+      nearestIndex = index
+    }
+  })
+
+  const baseCount = Math.max(1, cards.value.length)
+  horizontalActiveCardIndex.value = Math.max(
+    0,
+    Math.min(baseCount - 1, nearestIndex % baseCount)
+  )
+}
+
 const updateCardsViewportWidth = () => {
   const viewport = cardsViewportRef.value
   if (!viewport) return
   cardsViewportWidth.value = viewport.getBoundingClientRect().width
+  if (isHorizontalVariant.value) {
+    measureHorizontalSequenceWidth()
+    updateHorizontalActiveCardIndex()
+  }
 }
 
 const emitActiveCardChange = () => {
@@ -373,10 +529,62 @@ const { onMouseMove, onMouseLeave } = useStackCardHoverTilt({
   enabled: FEATURE_FLAGS.enableStackCardsMouseTilt
 })
 
+const normalizeWheelDelta = (event: WheelEvent) => {
+  const viewportWidth = cardsViewportRef.value?.clientWidth ?? 0
+  const dominantDelta =
+    Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY
+  let normalized = dominantDelta
+  if (event.deltaMode === 1) normalized *= 24
+  else if (event.deltaMode === 2 && viewportWidth > 0) normalized *= viewportWidth
+  if (Math.abs(normalized) < 1) {
+    const direction = Math.sign(dominantDelta || event.deltaY || 1) || 1
+    normalized = direction * 28
+  }
+  return normalized
+}
+
+const applyHorizontalWheel = (event: WheelEvent) => {
+  const delta = normalizeWheelDelta(event)
+  setHorizontalScrollLeft(
+    (cardsViewportRef.value?.scrollLeft ?? 0) + delta * wheelSensitivity.value
+  )
+  normalizeHorizontalLoopPosition()
+  syncProgressFromHorizontalScroll()
+  updateHorizontalActiveCardIndex()
+}
+
 const onWheel = (event: WheelEvent) => {
+  if (isHorizontalVariant.value) {
+    event.preventDefault()
+    event.stopPropagation()
+    onUserInteraction()
+    applyHorizontalWheel(event)
+    return
+  }
   onUserInteraction()
+  event.preventDefault()
   const direction = Math.sign(event.deltaY || 1)
   progress.value = wrap01(progress.value + direction * STEP * wheelSensitivity.value)
+}
+
+const onLayoutWheel = (event: WheelEvent) => {
+  if (!isHorizontalVariant.value) return
+  event.preventDefault()
+  onUserInteraction()
+  applyHorizontalWheel(event)
+}
+
+const onViewportScroll = () => {
+  if (isHorizontalVariant.value) {
+    if (!isSyncingHorizontalScroll) {
+      onUserInteraction()
+    }
+    normalizeHorizontalLoopPosition()
+    syncProgressFromHorizontalScroll()
+    updateHorizontalActiveCardIndex()
+    return
+  }
+  onUserInteraction()
 }
 
 const onUserInteraction = () => {
@@ -397,6 +605,7 @@ const touchTracking = ref<{
 
 const onTouchStartCards = (event: TouchEvent) => {
   onUserInteraction()
+  if (isHorizontalVariant.value) return
   const touch = event.touches[0]
   if (!touch) return
   touchTracking.value = {
@@ -405,8 +614,7 @@ const onTouchStartCards = (event: TouchEvent) => {
     lastX: touch.clientX,
     lastY: touch.clientY,
     axis: 'pending',
-    isHorizontal: false
-    ,
+    isHorizontal: false,
     pendingDelta: 0,
     rafId: null
   }
@@ -428,6 +636,7 @@ const flushTouchDelta = () => {
 }
 
 const onTouchMoveCards = (event: TouchEvent) => {
+  if (isHorizontalVariant.value) return
   const state = touchTracking.value
   const touch = event.touches[0]
   if (!state || !touch) return
@@ -459,6 +668,7 @@ const onTouchMoveCards = (event: TouchEvent) => {
 }
 
 const onTouchEndCards = () => {
+  if (isHorizontalVariant.value) return
   const state = touchTracking.value
   if (state && state.rafId !== null) {
     cancelAnimationFrame(state.rafId)
@@ -482,12 +692,28 @@ const startAutoPlay = () => {
   stopAutoPlay()
   if (!autoPlayEnabled.value || autoPlayStoppedByInteraction.value || totalCards.value <= 1) return
   const secondsPerStep = Math.max(0.1, autoPlaySpeed.value)
-  const velocityPerSecond = (STEP * wheelSensitivity.value) / secondsPerStep
   const tick = (ts: number) => {
     if (!autoPlayEnabled.value) return
     if (autoPlayLastTs > 0) {
       const deltaSeconds = (ts - autoPlayLastTs) / 1000
-      progress.value = wrap01(progress.value + velocityPerSecond * deltaSeconds)
+      if (isHorizontalVariant.value) {
+        const sequenceWidth = horizontalSequenceWidth.value
+        const baseCount = Math.max(1, cards.value.length)
+        if (sequenceWidth > 0) {
+          const travelPerStep = sequenceWidth / baseCount
+          const velocityPxPerSecond =
+            (travelPerStep * wheelSensitivity.value) / secondsPerStep
+          setHorizontalScrollLeft(
+            (cardsViewportRef.value?.scrollLeft ?? 0) + velocityPxPerSecond * deltaSeconds
+          )
+          normalizeHorizontalLoopPosition()
+          syncProgressFromHorizontalScroll()
+          updateHorizontalActiveCardIndex()
+        }
+      } else {
+        const velocityPerSecond = (STEP * wheelSensitivity.value) / secondsPerStep
+        progress.value = wrap01(progress.value + velocityPerSecond * deltaSeconds)
+      }
     }
     autoPlayLastTs = ts
     autoPlayRafId = requestAnimationFrame(tick)
@@ -496,9 +722,28 @@ const startAutoPlay = () => {
 }
 
 watch([autoPlayEnabled, autoPlaySpeed, wheelSensitivity, totalCards], startAutoPlay, { immediate: true })
+watch(
+  () => [cards.value.length, isHorizontalVariant.value, cardsViewportWidth.value] as const,
+  () => {
+    if (!isHorizontalVariant.value) return
+    measureHorizontalSequenceWidth()
+    syncHorizontalScrollFromProgress()
+    normalizeHorizontalLoopPosition()
+    syncProgressFromHorizontalScroll()
+    updateHorizontalActiveCardIndex()
+  },
+  { immediate: true }
+)
 watch([activeCardIndex, cards], emitActiveCardChange, { immediate: true, deep: false })
 onMounted(() => {
   updateCardsViewportWidth()
+  if (isHorizontalVariant.value) {
+    measureHorizontalSequenceWidth()
+    syncHorizontalScrollFromProgress()
+    normalizeHorizontalLoopPosition()
+    syncProgressFromHorizontalScroll()
+    updateHorizontalActiveCardIndex()
+  }
   emitActiveCardChange()
   const viewport = cardsViewportRef.value
   if (viewport && typeof ResizeObserver !== 'undefined') {
@@ -510,6 +755,10 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   stopAutoPlay()
+  if (horizontalSyncReleaseRafId !== null) {
+    cancelAnimationFrame(horizontalSyncReleaseRafId)
+    horizontalSyncReleaseRafId = null
+  }
   cardsViewportResizeObserver?.disconnect()
   cardsViewportResizeObserver = null
   if (cardsViewportMeasureTimer !== null) {
@@ -520,6 +769,15 @@ onBeforeUnmount(() => {
 })
 
 const getCardStyle = (index: number, color?: string) => {
+  if (isHorizontalVariant.value) {
+    return {
+      '--card-accent': color || '#7c5cff',
+      opacity: '1',
+      zIndex: '1',
+      transform: 'none'
+    }
+  }
+
   const rel = (index - phase.value + totalCards.value) % totalCards.value
   const compression = mobileStackCompression.value
   const xStep = 86 * cardGap.value * compression * mobileXStepFactor.value
