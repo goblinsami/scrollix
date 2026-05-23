@@ -33,7 +33,7 @@ const normalizeCard = (card: Partial<HostedStackCard>, index: number): HostedSta
     ...fallback,
     ...card,
     id: typeof card.id === 'string' && card.id.trim() ? card.id : `stack-card-${index + 1}`,
-    title: typeof card.title === 'string' && card.title.trim() ? card.title : fallback.title,
+    title: typeof card.title === 'string' ? card.title : fallback.title,
     eyebrow: typeof card.eyebrow === 'string' ? card.eyebrow : fallback.eyebrow,
     description: typeof card.description === 'string' ? card.description : fallback.description,
     panelColor: typeof card.panelColor === 'string' ? card.panelColor : fallback.panelColor,

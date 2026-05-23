@@ -6,6 +6,7 @@ type ContentAlign = 'left' | 'center' | 'right'
 type TextSide = 'left' | 'right'
 type StackDirection = 'left' | 'right'
 type StackVariant = 'perspective' | 'horizontal'
+type LinkedComponentSlot = 'none' | 'slot1' | 'slot2' | 'slot3' | 'slot4' | 'slot5' | 'slot6'
 
 interface FramerCard {
   title: string
@@ -13,6 +14,7 @@ interface FramerCard {
   image?: string
   eyebrow: string
   panelColor: string
+  linkedComponentSlot?: LinkedComponentSlot
   linkedComponent?: React.ReactNode
 }
 
@@ -20,6 +22,7 @@ interface ScrollixCardsProps {
   style?: React.CSSProperties
   projectId: string
   storiesFunctionUrl: string
+  allowProjectIdAutosave: boolean
   autoSaveDelayMs: number
   cards: FramerCard[]
   panelColor: string
@@ -37,6 +40,12 @@ interface ScrollixCardsProps {
   stackVariant: StackVariant
   stackDirection: StackDirection
   overlayIntensity: number
+  componentSlot1?: React.ReactNode
+  componentSlot2?: React.ReactNode
+  componentSlot3?: React.ReactNode
+  componentSlot4?: React.ReactNode
+  componentSlot5?: React.ReactNode
+  componentSlot6?: React.ReactNode
 }
 
 interface HostedSavePayload {
@@ -607,6 +616,28 @@ const resolveActiveCardIndexFromEvent = (
   return Math.max(0, Math.min(cardCount - 1, Math.trunc(candidate)))
 }
 
+const resolveLinkedComponentForCard = (card: FramerCard, props: ScrollixCardsProps) => {
+  if (card.linkedComponent) return card.linkedComponent
+
+  const slot = card.linkedComponentSlot ?? 'none'
+  switch (slot) {
+    case 'slot1':
+      return props.componentSlot1 ?? null
+    case 'slot2':
+      return props.componentSlot2 ?? null
+    case 'slot3':
+      return props.componentSlot3 ?? null
+    case 'slot4':
+      return props.componentSlot4 ?? null
+    case 'slot5':
+      return props.componentSlot5 ?? null
+    case 'slot6':
+      return props.componentSlot6 ?? null
+    default:
+      return null
+  }
+}
+
 /**
  * @framerSupportedLayoutWidth any-prefer-fixed
  * @framerSupportedLayoutHeight any-prefer-fixed
@@ -672,8 +703,19 @@ function ScrollixCards(props: ScrollixCardsProps) {
   const activeLinkedComponent = React.useMemo(() => {
     if (props.cards.length === 0) return null
     const clampedIndex = Math.max(0, Math.min(props.cards.length - 1, activeCardIndex))
-    return props.cards[clampedIndex]?.linkedComponent ?? null
-  }, [props.cards, activeCardIndex])
+    const activeCard = props.cards[clampedIndex]
+    if (!activeCard) return null
+    return resolveLinkedComponentForCard(activeCard, props)
+  }, [
+    props.cards,
+    props.componentSlot1,
+    props.componentSlot2,
+    props.componentSlot3,
+    props.componentSlot4,
+    props.componentSlot5,
+    props.componentSlot6,
+    activeCardIndex
+  ])
 
   React.useEffect(() => {
     setResolvedProjectId(normalizeProjectIdInput(props.projectId))
@@ -735,7 +777,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
   React.useEffect(() => {
     if (!runtimeInitialized) return
 
-    if (isExternalProjectBinding) return
+    if (isExternalProjectBinding && !props.allowProjectIdAutosave) return
 
     if (!storiesFunctionContext) return
 
@@ -772,6 +814,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
   }, [
     runtimeInitialized,
     isExternalProjectBinding,
+    props.allowProjectIdAutosave,
     storiesFunctionContext,
     props.autoSaveDelayMs,
     resolvedProjectId,
@@ -873,6 +916,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
 ScrollixCards.defaultProps = {
   projectId: DEFAULT_PROJECT_ID,
   storiesFunctionUrl: DEFAULT_STORIES_FUNCTION_URL,
+  allowProjectIdAutosave: true,
   autoSaveDelayMs: 800,
   cards: [
     {
@@ -929,6 +973,13 @@ addPropertyControls(ScrollixCards, {
     defaultValue: DEFAULT_STORIES_FUNCTION_URL,
     placeholder: 'https://<project-ref>.supabase.co/functions/v1/scrollix-story'
   },
+  allowProjectIdAutosave: {
+    type: ControlType.Boolean,
+    title: 'Save With ID',
+    enabledTitle: 'Yes',
+    disabledTitle: 'No',
+    defaultValue: true
+  },
   autoSaveDelayMs: {
     type: ControlType.Number,
     title: 'Autosave ms',
@@ -969,10 +1020,6 @@ addPropertyControls(ScrollixCards, {
           type: ControlType.Color,
           title: 'Panel Color',
           defaultValue: '#171c3d'
-        },
-        linkedComponent: {
-          type: ControlType.ComponentInstance,
-          title: 'Framer Comp'
         }
       }
     }
