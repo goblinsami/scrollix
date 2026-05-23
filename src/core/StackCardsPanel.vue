@@ -821,6 +821,18 @@ onBeforeUnmount(() => {
 const getCardStyle = (index: number, card: StackCardItem) => {
   const color = card.panelColor
   const aspectRatio = card ? resolveCardImageAspectRatio(card) : null
+  const hasImage = normalizeCardImageSrc(card.image).length > 0
+  const cardOverlayEnabled = resolveCardOverlayEnabled(card)
+  const flatImageStyle =
+    hasImage && !cardOverlayEnabled
+      ? {
+          '--stack-card-image-opacity': '1',
+          '--stack-card-surface-opacity-local': '0'
+        }
+      : {
+          '--stack-card-image-opacity': '0.4',
+          '--stack-card-surface-opacity-local': 'var(--stack-card-surface-opacity, 1)'
+        }
   const adaptiveCardShapeStyle =
     aspectRatio !== null
       ? {
@@ -835,6 +847,7 @@ const getCardStyle = (index: number, card: StackCardItem) => {
       opacity: '1',
       zIndex: '1',
       transform: 'none',
+      ...flatImageStyle,
       ...adaptiveCardShapeStyle
     }
   }
@@ -862,6 +875,7 @@ const getCardStyle = (index: number, card: StackCardItem) => {
     opacity: String(Math.max(0, Math.min(1, opacity))),
     zIndex: String(zIndex),
     transform: `translate3d(${translateX}px, 0, ${translateZ}px) rotateY(calc(((${angleY.value}deg + var(--stack-hover-rotate-y, 0deg)) * var(--stack-direction-sign, 1)) + var(--stack-debug-mobile-rotate-y, 0deg))) rotateX(calc(${angleX.value}deg + var(--stack-debug-mobile-rotate-x, 0deg))) scale(${scale})`,
+    ...flatImageStyle,
     ...adaptiveCardShapeStyle
   }
 }

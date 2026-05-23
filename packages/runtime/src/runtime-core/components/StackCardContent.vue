@@ -57,7 +57,6 @@
         <span v-if="useMarkdown" v-html="descriptionHtml" />
         <template v-else>{{ description }}</template>
       </p>
-      <img v-if="image && !overlayVisible" :src="image" alt="" class="card-image" />
     </div>
   </article>
 </template>

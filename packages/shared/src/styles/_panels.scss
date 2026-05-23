@@ -578,7 +578,7 @@ body.snap-mode {
   background:
     radial-gradient(circle at 75% 15%, color-mix(in srgb, var(--card-accent), #0f172a 55%), transparent 52%),
     linear-gradient(165deg, #0f172a, #0b1f45);
-  opacity: var(--stack-card-surface-opacity, 1);
+  opacity: var(--stack-card-surface-opacity-local, var(--stack-card-surface-opacity, 1));
   z-index: 0;
 }
 
@@ -693,7 +693,7 @@ body.snap-mode {
   margin-top: 0;
   border-radius: 0;
   z-index: 0;
-  opacity: 0.4;
+  opacity: var(--stack-card-image-opacity, 0.4);
 }
 
 @container stack-cards (max-width: 1200px) {
