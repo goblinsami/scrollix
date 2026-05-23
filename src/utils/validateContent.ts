@@ -377,6 +377,9 @@ export function validateContentSchema(raw: unknown): ValidationResult {
         if (settings.cardsOnly !== undefined && typeof settings.cardsOnly !== 'boolean') {
           errors.push(`${label}: stackCards.cardsOnly debe ser boolean.`)
         }
+        if (settings.fitCardToImage !== undefined && typeof settings.fitCardToImage !== 'boolean') {
+          errors.push(`${label}: stackCards.fitCardToImage debe ser boolean.`)
+        }
         if (
           settings.mobileTouchHorizontalEnabled !== undefined &&
           typeof settings.mobileTouchHorizontalEnabled !== 'boolean'

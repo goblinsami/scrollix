@@ -86,6 +86,9 @@ export function validateHostedStoryConfig(raw: unknown): ValidationResult {
       if (item.panelColor !== undefined && typeof item.panelColor !== 'string') {
         errors.push(`${label}.panelColor must be a string.`)
       }
+      if (item.overlayEnabled !== undefined && typeof item.overlayEnabled !== 'boolean') {
+        errors.push(`${label}.overlayEnabled must be boolean.`)
+      }
     })
   }
 
@@ -181,6 +184,9 @@ export function validateHostedStoryConfig(raw: unknown): ValidationResult {
       }
       if (payload.autoPlayEnabled !== undefined && typeof payload.autoPlayEnabled !== 'boolean') {
         errors.push('config.settings.autoPlayEnabled must be boolean.')
+      }
+      if (payload.fitCardToImage !== undefined && typeof payload.fitCardToImage !== 'boolean') {
+        errors.push('config.settings.fitCardToImage must be boolean.')
       }
     }
   }

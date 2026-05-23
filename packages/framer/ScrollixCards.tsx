@@ -6,7 +6,6 @@ type ContentAlign = 'left' | 'center' | 'right'
 type TextSide = 'left' | 'right'
 type StackDirection = 'left' | 'right'
 type StackVariant = 'perspective' | 'horizontal'
-type LinkedComponentSlot = 'none' | 'slot1' | 'slot2' | 'slot3' | 'slot4' | 'slot5' | 'slot6'
 
 interface FramerCard {
   title: string
@@ -14,8 +13,6 @@ interface FramerCard {
   image?: string
   eyebrow: string
   panelColor: string
-  linkedComponentSlot?: LinkedComponentSlot
-  linkedComponent?: React.ReactNode
 }
 
 interface ScrollixCardsProps {
@@ -35,17 +32,13 @@ interface ScrollixCardsProps {
   cardSize: number
   cardWidth: number
   cardSurfaceOpacity: number
+  cardOverlayEnabled: boolean
+  fitCardToImage: boolean
   autoPlayEnabled: boolean
   autoPlaySpeed: number
   stackVariant: StackVariant
   stackDirection: StackDirection
   overlayIntensity: number
-  componentSlot1?: React.ReactNode
-  componentSlot2?: React.ReactNode
-  componentSlot3?: React.ReactNode
-  componentSlot4?: React.ReactNode
-  componentSlot5?: React.ReactNode
-  componentSlot6?: React.ReactNode
 }
 
 interface HostedSavePayload {
@@ -58,6 +51,7 @@ interface HostedSavePayload {
       image?: string
       eyebrow: string
       panelColor: string
+      overlayEnabled?: boolean
     }>
     settings: {
       title: string
@@ -73,6 +67,7 @@ interface HostedSavePayload {
       cardSize: number
       cardWidth: number
       cardSurfaceOpacity: number
+      fitCardToImage: boolean
       autoPlayEnabled: boolean
       autoPlaySpeed: number
       variant: StackVariant
@@ -133,12 +128,6 @@ interface RuntimeHookState {
   ready: boolean
   loading: boolean
   error: string | null
-}
-
-interface ActiveCardChangeDetail {
-  index?: unknown
-  cardId?: unknown
-  total?: unknown
 }
 
 const runtimeScriptPromiseByUrl = new Map<string, Promise<void>>()
@@ -331,7 +320,8 @@ const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
       description: card.description,
       image: card.image,
       eyebrow: card.eyebrow,
-      panelColor: card.panelColor
+      panelColor: card.panelColor,
+      overlayEnabled: props.cardOverlayEnabled
     })),
     settings: {
       title: STACK_CARDS_TEMPLATE_SETTINGS.title,
@@ -347,6 +337,7 @@ const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
       cardSize: props.cardSize,
       cardWidth: props.cardWidth,
       cardSurfaceOpacity: props.cardSurfaceOpacity,
+      fitCardToImage: props.fitCardToImage,
       autoPlayEnabled: props.autoPlayEnabled,
       autoPlaySpeed: props.autoPlaySpeed,
       variant: props.stackVariant,
@@ -474,24 +465,6 @@ const runtimePlaceholderStyle: React.CSSProperties = {
   textAlign: 'center'
 }
 
-const linkedComponentLayerStyle: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  display: 'grid',
-  placeItems: 'center',
-  pointerEvents: 'none',
-  zIndex: 9
-}
-
-const linkedComponentSlotStyle: React.CSSProperties = {
-  pointerEvents: 'auto',
-  width: 'min(88%, 520px)',
-  maxWidth: '100%',
-  maxHeight: '100%',
-  display: 'grid',
-  placeItems: 'center'
-}
-
 const DEFAULT_SUPABASE_URL = ''
 const DEFAULT_SUPABASE_ANON_KEY = ''
 const DEFAULT_STORIES_FUNCTION_URL = 'https://xvlpcwygcetcccmorihr.supabase.co/functions/v1/scrollix-story'
@@ -606,38 +579,6 @@ const normalizeProjectIdInput = (input: string) => {
   }
 }
 
-const resolveActiveCardIndexFromEvent = (
-  detail: ActiveCardChangeDetail | null | undefined,
-  cardCount: number
-) => {
-  if (!detail || cardCount <= 0) return 0
-  const candidate = typeof detail.index === 'number' ? detail.index : Number.NaN
-  if (!Number.isFinite(candidate)) return 0
-  return Math.max(0, Math.min(cardCount - 1, Math.trunc(candidate)))
-}
-
-const resolveLinkedComponentForCard = (card: FramerCard, props: ScrollixCardsProps) => {
-  if (card.linkedComponent) return card.linkedComponent
-
-  const slot = card.linkedComponentSlot ?? 'none'
-  switch (slot) {
-    case 'slot1':
-      return props.componentSlot1 ?? null
-    case 'slot2':
-      return props.componentSlot2 ?? null
-    case 'slot3':
-      return props.componentSlot3 ?? null
-    case 'slot4':
-      return props.componentSlot4 ?? null
-    case 'slot5':
-      return props.componentSlot5 ?? null
-    case 'slot6':
-      return props.componentSlot6 ?? null
-    default:
-      return null
-  }
-}
-
 /**
  * @framerSupportedLayoutWidth any-prefer-fixed
  * @framerSupportedLayoutHeight any-prefer-fixed
@@ -659,9 +600,7 @@ function ScrollixCards(props: ScrollixCardsProps) {
   const [runtimeInitError, setRuntimeInitError] = React.useState<string | null>(null)
   const [resolvedProjectId, setResolvedProjectId] = React.useState(normalizeProjectIdInput(props.projectId))
   const [saveState, setSaveState] = React.useState<SaveState>({ status: 'idle', errorMessage: '' })
-  const [activeCardIndex, setActiveCardIndex] = React.useState(0)
   const lastSavedSignatureRef = React.useRef('')
-  const runtimeElementRef = React.useRef<HTMLElement | null>(null)
   const resolvedStoriesFunctionUrl = React.useMemo(
     () => resolveStoriesFunctionUrl(DEFAULT_SUPABASE_URL, props.storiesFunctionUrl),
     [props.storiesFunctionUrl]
@@ -700,48 +639,10 @@ function ScrollixCards(props: ScrollixCardsProps) {
     }),
     []
   )
-  const activeLinkedComponent = React.useMemo(() => {
-    if (props.cards.length === 0) return null
-    const clampedIndex = Math.max(0, Math.min(props.cards.length - 1, activeCardIndex))
-    const activeCard = props.cards[clampedIndex]
-    if (!activeCard) return null
-    return resolveLinkedComponentForCard(activeCard, props)
-  }, [
-    props.cards,
-    props.componentSlot1,
-    props.componentSlot2,
-    props.componentSlot3,
-    props.componentSlot4,
-    props.componentSlot5,
-    props.componentSlot6,
-    activeCardIndex
-  ])
 
   React.useEffect(() => {
     setResolvedProjectId(normalizeProjectIdInput(props.projectId))
   }, [props.projectId])
-
-  React.useEffect(() => {
-    setActiveCardIndex((current) =>
-      props.cards.length > 0 ? Math.max(0, Math.min(props.cards.length - 1, current)) : 0
-    )
-  }, [props.cards.length])
-
-  React.useEffect(() => {
-    const runtimeElement = runtimeElementRef.current
-    if (!runtimeElement) return
-
-    const onActiveCardChange = (event: Event) => {
-      const customEvent = event as CustomEvent<ActiveCardChangeDetail>
-      const nextIndex = resolveActiveCardIndexFromEvent(customEvent.detail, props.cards.length)
-      setActiveCardIndex(nextIndex)
-    }
-
-    runtimeElement.addEventListener('scrollix:active-card-change', onActiveCardChange as EventListener)
-    return () => {
-      runtimeElement.removeEventListener('scrollix:active-card-change', onActiveCardChange as EventListener)
-    }
-  }, [runtimeInitialized, props.cards.length])
 
   const payload = React.useMemo(() => buildPayload(props), [props])
   const payloadSignature = React.useMemo(() => JSON.stringify(payload), [payload])
@@ -895,7 +796,6 @@ function ScrollixCards(props: ScrollixCardsProps) {
       data-save-error={saveState.errorMessage}
     >
       <scrollix-cards
-        ref={runtimeElementRef}
         style={runtimeElementStyle}
         project-id={resolvedProjectId}
         supabase-url={DEFAULT_SUPABASE_URL}
@@ -904,11 +804,6 @@ function ScrollixCards(props: ScrollixCardsProps) {
         stories-table={DEFAULT_STORIES_TABLE}
         live-updates="true"
       />
-      {activeLinkedComponent ? (
-        <div style={linkedComponentLayerStyle} data-linked-component-card-index={String(activeCardIndex)}>
-          <div style={linkedComponentSlotStyle}>{activeLinkedComponent}</div>
-        </div>
-      ) : null}
     </div>
   )
 }
@@ -952,6 +847,8 @@ ScrollixCards.defaultProps = {
   cardSize: 1,
   cardWidth: 1,
   cardSurfaceOpacity: 100,
+  cardOverlayEnabled: false,
+  fitCardToImage: false,
   autoPlayEnabled: true,
   autoPlaySpeed: 0.65,
   stackVariant: 'perspective',
@@ -1109,6 +1006,20 @@ addPropertyControls(ScrollixCards, {
     max: 100,
     step: 1,
     defaultValue: 100
+  },
+  cardOverlayEnabled: {
+    type: ControlType.Boolean,
+    title: 'Card Overlay',
+    enabledTitle: 'On',
+    disabledTitle: 'Off',
+    defaultValue: false
+  },
+  fitCardToImage: {
+    type: ControlType.Boolean,
+    title: 'Fit Img Ratio',
+    enabledTitle: 'On',
+    disabledTitle: 'Off',
+    defaultValue: false
   },
   autoPlayEnabled: {
     type: ControlType.Boolean,

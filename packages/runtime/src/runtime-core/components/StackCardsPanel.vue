@@ -98,7 +98,7 @@
         <StackCardContent
           v-for="(entry, index) in renderCards"
           :key="entry.key"
-          :card-style="getCardStyle(index, entry.card.panelColor)"
+          :card-style="getCardStyle(index, entry.card)"
           :title="entry.card.title"
           :eyebrow="entry.card.eyebrow"
           :description="entry.card.description"
@@ -124,7 +124,7 @@
           :logo-tint-enabled="entry.card.logoTintEnabled"
           :logo-tint-color="entry.card.logoTintColor"
           :background-gradient="entry.card.backgroundGradient"
-          :overlay-enabled="entry.card.overlayEnabled"
+          :overlay-enabled="resolveCardOverlayEnabled(entry.card)"
           :overlay-intensity="entry.card.overlayIntensity"
           :is-text-content-editing-active="isCardTextContentEditingActive(entry.card.id)"
           :text-content-highlight-scope="cardTextContentHighlightScope(entry.card.id)"
@@ -169,13 +169,13 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useSlidePanelPresentation } from '../composables/useSlidePanelPresentation'
-import { useStackCardHoverTilt } from '../composables/useStackCardHoverTilt'
-import { STACK_CARDS_DEFAULTS } from '../constants/stackCards'
-import type { SlidePanelProps } from '../types/slidePanel'
-import { Direction, StackCardsVariant } from '../types/navigation'
+import { useSlidePanelPresentation } from '@/composables/useSlidePanelPresentation'
+import { useStackCardHoverTilt } from '@/composables/useStackCardHoverTilt'
+import { STACK_CARDS_DEFAULTS } from '@/constants/stackCards'
+import type { SlidePanelProps } from '@/types/slidePanel'
+import { Direction, StackCardsVariant, type StackCardItem } from '@/types/navigation'
 import StackCardContent from './StackCardContent.vue'
-import { FEATURE_FLAGS } from '../config/featureFlags'
+import { FEATURE_FLAGS } from '@/config/featureFlags'
 
 const STEP = 0.03
 const BACK_FADE_WINDOW = 0.65
@@ -271,6 +271,9 @@ const cardGap = computed(() => props.stackCards?.cardGap ?? STACK_CARDS_DEFAULTS
 const frontFadeWindow = computed(() => props.stackCards?.frontFadeWindow ?? STACK_CARDS_DEFAULTS.frontFadeWindow)
 const cardSize = computed(() => props.stackCards?.cardSize ?? STACK_CARDS_DEFAULTS.cardSize)
 const cardWidth = computed(() => props.stackCards?.cardWidth ?? STACK_CARDS_DEFAULTS.cardWidth)
+const fitCardToImage = computed(
+  () => props.stackCards?.fitCardToImage ?? STACK_CARDS_DEFAULTS.fitCardToImage
+)
 const cardSurfaceOpacity = computed(() => {
   const rawValue = props.stackCards?.cardSurfaceOpacity
   const fallback = STACK_CARDS_DEFAULTS.cardSurfaceOpacity
@@ -295,6 +298,9 @@ const autoPlayEnabled = computed(() => props.stackCards?.autoPlayEnabled ?? STAC
 const autoPlaySpeed = computed(() => props.stackCards?.autoPlaySpeed ?? STACK_CARDS_DEFAULTS.autoPlaySpeed)
 const autoPlayStoppedByInteraction = ref(false)
 const cardsOnly = computed(() => props.stackCards?.cardsOnly ?? STACK_CARDS_DEFAULTS.cardsOnly)
+const defaultCardOverlayEnabled = computed(() => !cardsOnly.value)
+const cardImageAspectRatios = ref<Record<string, number>>({})
+const pendingCardImageAspectLoads = new Set<string>()
 const showMobileCardsDebug = computed(
   () => import.meta.env.DEV && FEATURE_FLAGS.enableStackCardsMobileDebugOverlay && !cardsOnly.value
 )
@@ -312,6 +318,50 @@ const mobileTextCardsGap = computed(
 const wrap01 = (value: number) => ((value % 1) + 1) % 1
 
 const phase = computed(() => progress.value * totalCards.value)
+const normalizeCardImageSrc = (value: unknown) =>
+  typeof value === 'string' ? value.trim() : ''
+const cacheCardImageAspectRatio = (src: string, ratio: number) => {
+  const clampedRatio = Math.max(0.45, Math.min(2.6, ratio))
+  cardImageAspectRatios.value = {
+    ...cardImageAspectRatios.value,
+    [src]: clampedRatio
+  }
+}
+const ensureCardImageAspectRatio = (src: string) => {
+  if (!fitCardToImage.value || !src) return
+  if (cardImageAspectRatios.value[src] !== undefined || pendingCardImageAspectLoads.has(src)) return
+
+  pendingCardImageAspectLoads.add(src)
+  const image = new Image()
+  image.decoding = 'async'
+  image.onload = () => {
+    pendingCardImageAspectLoads.delete(src)
+    if (!image.naturalWidth || !image.naturalHeight) return
+    cacheCardImageAspectRatio(src, image.naturalWidth / image.naturalHeight)
+  }
+  image.onerror = () => {
+    pendingCardImageAspectLoads.delete(src)
+  }
+  image.src = src
+}
+const resolveCardImageAspectRatio = (card: StackCardItem) => {
+  if (!fitCardToImage.value) return null
+  const src = normalizeCardImageSrc(card.image)
+  if (!src) return null
+  ensureCardImageAspectRatio(src)
+  const ratio = cardImageAspectRatios.value[src]
+  if (typeof ratio !== 'number' || !Number.isFinite(ratio) || ratio <= 0) return null
+  return Math.max(0.45, Math.min(2.6, ratio))
+}
+const resolveCardOverlayEnabled = (card: StackCardItem) => {
+  if (typeof card.overlayEnabled === 'boolean') return card.overlayEnabled
+  return defaultCardOverlayEnabled.value
+}
+const cardImageSources = computed(() =>
+  cards.value
+    .map((card) => normalizeCardImageSrc(card.image))
+    .filter((src): src is string => src.length > 0)
+)
 const activeCardIndex = computed(() => {
   const total = totalCards.value
   if (total <= 1) return 0
@@ -768,13 +818,24 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', updateCardsViewportWidth)
 })
 
-const getCardStyle = (index: number, color?: string) => {
+const getCardStyle = (index: number, card: StackCardItem) => {
+  const color = card.panelColor
+  const aspectRatio = card ? resolveCardImageAspectRatio(card) : null
+  const adaptiveCardShapeStyle =
+    aspectRatio !== null
+      ? {
+          aspectRatio: String(aspectRatio),
+          minHeight: '0px'
+        }
+      : {}
+
   if (isHorizontalVariant.value) {
     return {
       '--card-accent': color || '#7c5cff',
       opacity: '1',
       zIndex: '1',
-      transform: 'none'
+      transform: 'none',
+      ...adaptiveCardShapeStyle
     }
   }
 
@@ -800,7 +861,17 @@ const getCardStyle = (index: number, color?: string) => {
     '--card-accent': color || '#7c5cff',
     opacity: String(Math.max(0, Math.min(1, opacity))),
     zIndex: String(zIndex),
-    transform: `translate3d(${translateX}px, 0, ${translateZ}px) rotateY(calc(((${angleY.value}deg + var(--stack-hover-rotate-y, 0deg)) * var(--stack-direction-sign, 1)) + var(--stack-debug-mobile-rotate-y, 0deg))) rotateX(calc(${angleX.value}deg + var(--stack-debug-mobile-rotate-x, 0deg))) scale(${scale})`
+    transform: `translate3d(${translateX}px, 0, ${translateZ}px) rotateY(calc(((${angleY.value}deg + var(--stack-hover-rotate-y, 0deg)) * var(--stack-direction-sign, 1)) + var(--stack-debug-mobile-rotate-y, 0deg))) rotateX(calc(${angleX.value}deg + var(--stack-debug-mobile-rotate-x, 0deg))) scale(${scale})`,
+    ...adaptiveCardShapeStyle
   }
 }
+
+watch(
+  [fitCardToImage, cardImageSources],
+  ([enabled, sources]) => {
+    if (!enabled) return
+    sources.forEach((src) => ensureCardImageAspectRatio(src))
+  },
+  { immediate: true }
+)
 </script>

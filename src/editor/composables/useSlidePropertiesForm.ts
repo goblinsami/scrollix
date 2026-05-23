@@ -189,6 +189,7 @@ const copyPanelToDraft = (panel: Panel, draft: Panel) => {
         textSide: panel.stackCards.textSide ?? STACK_CARDS_DEFAULTS.textSide,
         stackDirection: panel.stackCards.stackDirection ?? STACK_CARDS_DEFAULTS.stackDirection,
         cardsOnly: panel.stackCards.cardsOnly ?? STACK_CARDS_DEFAULTS.cardsOnly,
+        fitCardToImage: panel.stackCards.fitCardToImage ?? STACK_CARDS_DEFAULTS.fitCardToImage,
         cardSurfaceOpacity:
           panel.stackCards.cardSurfaceOpacity ?? STACK_CARDS_DEFAULTS.cardSurfaceOpacity,
         layoutSidePadding: panel.stackCards.layoutSidePadding ?? STACK_CARDS_DEFAULTS.layoutSidePadding,
@@ -219,6 +220,7 @@ const copyPanelToDraft = (panel: Panel, draft: Panel) => {
         textSide: STACK_CARDS_DEFAULTS.textSide,
         stackDirection: STACK_CARDS_DEFAULTS.stackDirection,
         cardsOnly: STACK_CARDS_DEFAULTS.cardsOnly,
+        fitCardToImage: STACK_CARDS_DEFAULTS.fitCardToImage,
         cardSurfaceOpacity: STACK_CARDS_DEFAULTS.cardSurfaceOpacity,
         layoutSidePadding: STACK_CARDS_DEFAULTS.layoutSidePadding,
         textOffsetX: STACK_CARDS_DEFAULTS.textOffsetX,
@@ -288,6 +290,7 @@ export function useSlidePropertiesForm(options: UseSlidePropertiesFormOptions) {
       textSide: STACK_CARDS_DEFAULTS.textSide,
       stackDirection: STACK_CARDS_DEFAULTS.stackDirection,
       cardsOnly: STACK_CARDS_DEFAULTS.cardsOnly,
+      fitCardToImage: STACK_CARDS_DEFAULTS.fitCardToImage,
       cardSurfaceOpacity: STACK_CARDS_DEFAULTS.cardSurfaceOpacity,
       layoutSidePadding: STACK_CARDS_DEFAULTS.layoutSidePadding,
       textOffsetX: STACK_CARDS_DEFAULTS.textOffsetX,

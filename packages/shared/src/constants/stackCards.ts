@@ -38,6 +38,7 @@ export const STACK_CARDS_DEFAULTS = {
   textSide: 'left' as const,
   stackDirection: 'right' as const,
   cardsOnly: true,
+  fitCardToImage: false,
   cardSurfaceOpacity: 100,
   layoutSidePadding: 48,
   textOffsetX: 0,
