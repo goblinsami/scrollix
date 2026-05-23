@@ -10,9 +10,10 @@ type StackVariant = 'perspective' | 'horizontal'
 interface FramerCard {
   title: string
   description: string
-  image?: string
+  image?: string | { src?: string; srcSet?: string }
   eyebrow: string
   panelColor: string
+  overlayEnabled?: boolean
 }
 
 interface ScrollixCardsProps {
@@ -311,6 +312,20 @@ const useScrollixRuntime = (runtimeUrl: string): RuntimeHookState => {
   return state
 }
 
+const normalizeFramerImageValue = (
+  image: FramerCard['image']
+): string | undefined => {
+  if (typeof image === 'string') {
+    const trimmed = image.trim()
+    return trimmed.length > 0 ? trimmed : undefined
+  }
+  if (image && typeof image === 'object' && typeof image.src === 'string') {
+    const trimmed = image.src.trim()
+    return trimmed.length > 0 ? trimmed : undefined
+  }
+  return undefined
+}
+
 const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
   type: '3d-stack-cards',
   config: {
@@ -318,10 +333,13 @@ const buildPayload = (props: ScrollixCardsProps): HostedSavePayload => ({
       id: `framer-card-${index + 1}`,
       title: card.title,
       description: card.description,
-      image: card.image,
+      image: normalizeFramerImageValue(card.image),
       eyebrow: card.eyebrow,
       panelColor: card.panelColor,
-      overlayEnabled: props.cardOverlayEnabled
+      overlayEnabled:
+        typeof card.overlayEnabled === 'boolean'
+          ? card.overlayEnabled
+          : props.cardOverlayEnabled
     })),
     settings: {
       title: STACK_CARDS_TEMPLATE_SETTINGS.title,
@@ -819,21 +837,24 @@ ScrollixCards.defaultProps = {
       description: 'Define narrative arc and key beats.',
       eyebrow: 'STEP 01',
       panelColor: '#171c3d',
-      image: ''
+      image: '',
+      overlayEnabled: false
     },
     {
       title: 'Design',
       description: 'Shape motion and visual identity.',
       eyebrow: 'STEP 02',
       panelColor: '#143d9a',
-      image: ''
+      image: '',
+      overlayEnabled: false
     },
     {
       title: 'Publish',
       description: 'Embed cinematic runtime without iframe.',
       eyebrow: 'STEP 03',
       panelColor: '#0b6ea6',
-      image: ''
+      image: '',
+      overlayEnabled: false
     }
   ],
   panelColor: '#060914',
@@ -917,6 +938,13 @@ addPropertyControls(ScrollixCards, {
           type: ControlType.Color,
           title: 'Panel Color',
           defaultValue: '#171c3d'
+        },
+        overlayEnabled: {
+          type: ControlType.Boolean,
+          title: 'Show Overlay',
+          defaultValue: false,
+          enabledTitle: 'On',
+          disabledTitle: 'Off'
         }
       }
     }
@@ -1009,10 +1037,11 @@ addPropertyControls(ScrollixCards, {
   },
   cardOverlayEnabled: {
     type: ControlType.Boolean,
-    title: 'Card Overlay',
+    title: 'Default Overlay',
     enabledTitle: 'On',
     disabledTitle: 'Off',
-    defaultValue: false
+    defaultValue: false,
+    description: 'Used only when a card does not set Show Overlay.'
   },
   fitCardToImage: {
     type: ControlType.Boolean,

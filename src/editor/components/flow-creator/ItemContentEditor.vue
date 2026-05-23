@@ -313,6 +313,27 @@
         </label>
         <label class="block-settings__toggle">
           <div class="block-settings__toggle-row">
+            <input
+              v-model="stackCardsOverlayEnabled"
+              type="checkbox"
+              class="block-settings__toggle-input"
+              :disabled="!hasStackCardsImages"
+            />
+            <span class="block-settings__toggle-switch" aria-hidden="true" />
+            <span class="block-settings__toggle-text">
+              {{ hasStackCardsImages ? 'Show card overlay' : 'Add image to enable' }}
+            </span>
+          </div>
+        </label>
+        <label class="block-settings__toggle">
+          <div class="block-settings__toggle-row">
+            <input v-model="localValue.stackCards.fitCardToImage" type="checkbox" class="block-settings__toggle-input" @change="emitUpdate" />
+            <span class="block-settings__toggle-switch" aria-hidden="true" />
+            <span class="block-settings__toggle-text">Fit card to image ratio</span>
+          </div>
+        </label>
+        <label class="block-settings__toggle">
+          <div class="block-settings__toggle-row">
             <input v-model="localValue.stackCards.autoPlayEnabled" type="checkbox" class="block-settings__toggle-input" @change="emitUpdate" />
             <span class="block-settings__toggle-switch" aria-hidden="true" />
             <span class="block-settings__toggle-text">Autoplay cards</span>
@@ -435,6 +456,7 @@ const props = withDefaults(defineProps<{
       textSide?: 'left' | 'right'
       stackDirection?: 'left' | 'right'
       cardsOnly?: boolean
+      fitCardToImage?: boolean
       layoutSidePadding?: number
       textOffsetX?: number
       textOffsetY?: number
@@ -518,6 +540,32 @@ const stackCardControls = STACK_CARDS_CONTROLS
 
 const { gradientType, gradientOrientation, gradientColors, orientationOptions, buildGradient, syncFromGradient } =
   useGradientEditor(localValue.value.backgroundGradient)
+
+const normalizeImageValue = (value: unknown) =>
+  typeof value === 'string' ? value.trim() : ''
+
+const stackCardsWithImage = computed(() => {
+  const cards = localValue.value.stackCards?.cards ?? []
+  return cards.filter((card) => normalizeImageValue(card.image).length > 0)
+})
+
+const hasStackCardsImages = computed(() => stackCardsWithImage.value.length > 0)
+
+const stackCardsOverlayEnabled = computed({
+  get: () => {
+    const cards = stackCardsWithImage.value
+    if (cards.length === 0) return false
+    return cards.every((card) => card.overlayEnabled !== false)
+  },
+  set: (value: boolean) => {
+    if (!localValue.value.stackCards) return
+    localValue.value.stackCards.cards = localValue.value.stackCards.cards.map((card) => ({
+      ...card,
+      overlayEnabled: normalizeImageValue(card.image).length > 0 ? value : false
+    }))
+    emitUpdate()
+  }
+})
 
 watch(
   () => localValue.value.backgroundGradient,
@@ -680,7 +728,8 @@ const addStackCard = () => {
     useMarkdown: false,
     contentAlign: undefined,
     contentWidthMode: ContentWidthMode.Contained,
-    panelColor: '#0f172a'
+    panelColor: '#0f172a',
+    overlayEnabled: false
   })
   stackCardOpenMap.value[nextIndex] = true
   emitUpdate()
