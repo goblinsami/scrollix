@@ -480,7 +480,7 @@ const runtimePlaceholderStyle: React.CSSProperties = {
   color: '#e7eeff',
   fontSize: '12px',
   lineHeight: 1.4,
-  textAlign: 'center'
+  textAlign: 'center'  
 }
 
 const DEFAULT_SUPABASE_URL = ''
@@ -489,7 +489,7 @@ const DEFAULT_STORIES_FUNCTION_URL = 'https://xvlpcwygcetcccmorihr.supabase.co/f
 const DEFAULT_RUNTIME_SCRIPT_URL = 'https://magical-klepon-3c1475.netlify.app/scrollix-runtime.js'
 const DEFAULT_RUNTIME_VERSION = 'auto'
 const DEFAULT_STORIES_TABLE = 'stories'
-const DEFAULT_PROJECT_ID = '21ebaa36-93e1-4356-85c8-78e0c84d4154'
+const DEFAULT_PROJECT_ID = '1eca8734-edfe-423d-89d8-f0390aee155b'
 
 const STACK_CARDS_TEMPLATE_SETTINGS = {
   title: '',

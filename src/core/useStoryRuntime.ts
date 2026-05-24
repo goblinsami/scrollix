@@ -61,7 +61,7 @@ export function useStoryRuntime(contentRef: Ref<ContentSchema | null>, options: 
 
   const { flowSteps } = useFlowBlocks(panelsState)
 
-  const { activeStepIndex, snapShellRef, snapStageRef, stepStyle, focusStep } = useSlideSnapNavigation({
+  const { activeStepIndex, isInitializing, snapShellRef, snapStageRef, stepStyle, focusStep } = useSlideSnapNavigation({
     flowSteps,
     autoSnapEnabled,
     loopEnabled,
@@ -107,6 +107,7 @@ export function useStoryRuntime(contentRef: Ref<ContentSchema | null>, options: 
     autoPlaySpeed,
     activeStepIndex,
     flowSteps,
+    isInitializing,
     isValid,
     loopEnabled,
     panelsState,

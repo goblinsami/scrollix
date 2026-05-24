@@ -34,6 +34,7 @@ export function useSlideSnapNavigation(options: UseSlideSnapNavigationOptions) {
   const snapStageRef = ref<HTMLElement | null>(null)
   const activeStepIndex = ref(0)
   const isTransitioning = ref(false)
+  const isInitializing = ref(true)
 
   let disposeInteractionHandlers: (() => void) | null = null
   let disposeResizeHandler: (() => void) | null = null
@@ -45,6 +46,7 @@ export function useSlideSnapNavigation(options: UseSlideSnapNavigationOptions) {
   let resizeDebounce: number | null = null
   let autoPlayTimer: number | null = null
   let autoPlayNextAt = 0
+  let activeInitRequestId = 0
 
   const normalizeIndex = (value: number, total: number) => normalizeStepIndex(value, total, options.loopEnabled.value)
 
@@ -359,90 +361,99 @@ export function useSlideSnapNavigation(options: UseSlideSnapNavigationOptions) {
   }
 
   const initNavigation = async () => {
-    await nextTick()
-    destroyNavigation()
+    const requestId = ++activeInitRequestId
+    isInitializing.value = true
 
-    if (!options.enabled.value || !options.flowSteps.value.length) return
+    try {
+      await nextTick()
+      destroyNavigation()
 
-    debugLog(`${logPrefix} init`, {
-      autoSnapEnabled: options.autoSnapEnabled.value,
-      loopEnabled: options.loopEnabled.value,
-      snapEase: options.snapEase.value,
-      transitionSpeed: getTransitionSpeed(),
-      totalSteps: options.flowSteps.value.length,
-      steps: options.flowSteps.value.map((step) => ({
-        index: step.index,
-        panelId: step.panel.id,
-        x: step.x,
-        y: step.y,
-        directionToNext: step.directionToNext
-      }))
-    })
+      if (!options.enabled.value || !options.flowSteps.value.length) return
 
-    const total = options.flowSteps.value.length
-    activeStepIndex.value = normalizeIndex(activeStepIndex.value, total)
-    jumpToStep(activeStepIndex.value)
+      debugLog(`${logPrefix} init`, {
+        autoSnapEnabled: options.autoSnapEnabled.value,
+        loopEnabled: options.loopEnabled.value,
+        snapEase: options.snapEase.value,
+        transitionSpeed: getTransitionSpeed(),
+        totalSteps: options.flowSteps.value.length,
+        steps: options.flowSteps.value.map((step) => ({
+          index: step.index,
+          panelId: step.panel.id,
+          x: step.x,
+          y: step.y,
+          directionToNext: step.directionToNext
+        }))
+      })
 
-    if (options.autoSnapEnabled.value) {
-      document.body.classList.add('snap-mode')
-      setupAutoSnapInteractions()
-      setupAutoPlay()
-      return
-    }
+      const total = options.flowSteps.value.length
+      activeStepIndex.value = normalizeIndex(activeStepIndex.value, total)
+      jumpToStep(activeStepIndex.value)
 
-    const stage = snapStageRef.value
-    const shell = snapShellRef.value
-    if (!stage || !shell) return
-
-    const timeline = gsap.timeline({ defaults: { ease: 'none' } })
-    manualTimeline = timeline
-    timeline.addLabel('step-1', 0)
-
-    for (let i = 1; i < options.flowSteps.value.length; i += 1) {
-      const target = getStagePoint(options.flowSteps.value[i])
-      timeline.to(
-        stage,
-        {
-          x: target.x,
-          y: target.y,
-          duration: 1
-        },
-        i - 1
-      )
-      timeline.addLabel(`step-${i + 1}`, i)
-    }
-
-    const segments = Math.max(1, options.flowSteps.value.length - 1)
-    const manualSnapDuration = getManualSnapDurations()
-    manualScrollTrigger = ScrollTrigger.create({
-      animation: timeline,
-      trigger: shell,
-      start: 'top top',
-      end: () => `+=${segments * window.innerHeight}`,
-      scrub: 1,
-      pin: true,
-      anticipatePin: 1,
-      onUpdate: (self) => {
-        const totalSteps = options.flowSteps.value.length
-        if (!totalSteps) return
-        const rawIndex = Math.round(self.progress * (totalSteps - 1))
-        const nextIndex = normalizeIndex(rawIndex, totalSteps)
-        if (nextIndex !== activeStepIndex.value) {
-          activeStepIndex.value = nextIndex
-          debugLog(`${logPrefix} manual:update`, {
-            progress: self.progress,
-            step: nextIndex
-          })
-        }
-      },
-      snap: {
-        snapTo: 'labelsDirectional',
-        inertia: false,
-        duration: manualSnapDuration,
-        delay: 0.06,
-        ease: options.snapEase.value
+      if (options.autoSnapEnabled.value) {
+        document.body.classList.add('snap-mode')
+        setupAutoSnapInteractions()
+        setupAutoPlay()
+        return
       }
-    })
+
+      const stage = snapStageRef.value
+      const shell = snapShellRef.value
+      if (!stage || !shell) return
+
+      const timeline = gsap.timeline({ defaults: { ease: 'none' } })
+      manualTimeline = timeline
+      timeline.addLabel('step-1', 0)
+
+      for (let i = 1; i < options.flowSteps.value.length; i += 1) {
+        const target = getStagePoint(options.flowSteps.value[i])
+        timeline.to(
+          stage,
+          {
+            x: target.x,
+            y: target.y,
+            duration: 1
+          },
+          i - 1
+        )
+        timeline.addLabel(`step-${i + 1}`, i)
+      }
+
+      const segments = Math.max(1, options.flowSteps.value.length - 1)
+      const manualSnapDuration = getManualSnapDurations()
+      manualScrollTrigger = ScrollTrigger.create({
+        animation: timeline,
+        trigger: shell,
+        start: 'top top',
+        end: () => `+=${segments * window.innerHeight}`,
+        scrub: 1,
+        pin: true,
+        anticipatePin: 1,
+        onUpdate: (self) => {
+          const totalSteps = options.flowSteps.value.length
+          if (!totalSteps) return
+          const rawIndex = Math.round(self.progress * (totalSteps - 1))
+          const nextIndex = normalizeIndex(rawIndex, totalSteps)
+          if (nextIndex !== activeStepIndex.value) {
+            activeStepIndex.value = nextIndex
+            debugLog(`${logPrefix} manual:update`, {
+              progress: self.progress,
+              step: nextIndex
+            })
+          }
+        },
+        snap: {
+          snapTo: 'labelsDirectional',
+          inertia: false,
+          duration: manualSnapDuration,
+          delay: 0.06,
+          ease: options.snapEase.value
+        }
+      })
+    } finally {
+      if (requestId === activeInitRequestId) {
+        isInitializing.value = false
+      }
+    }
   }
 
   const handleResize = () => {
@@ -537,6 +548,7 @@ export function useSlideSnapNavigation(options: UseSlideSnapNavigationOptions) {
 
   return {
     activeStepIndex,
+    isInitializing,
     snapShellRef,
     snapStageRef,
     stepStyle,

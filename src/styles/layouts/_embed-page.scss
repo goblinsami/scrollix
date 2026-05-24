@@ -1,4 +1,23 @@
-﻿.embed-status {
+.embed-loader {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 20;
+  background: transparent;
+  pointer-events: none;
+}
+
+.embed-loader__spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(61, 79, 99, 0.24);
+  border-top-color: #3d4f63;
+  border-radius: 50%;
+  animation: embed-loader-spin 0.7s linear infinite;
+}
+
+.embed-status {
   margin: 0;
   min-height: 100vh;
   display: grid;
@@ -6,4 +25,10 @@
   font-size: 0.95rem;
   color: #3d4f63;
   background: #f5f8fc;
+}
+
+@keyframes embed-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
